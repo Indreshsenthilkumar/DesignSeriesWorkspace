@@ -80,8 +80,16 @@ async function ensureDatabaseInitialized(prismaClient: any) {
           fs.copyFileSync(sourceDbPath, dbPath);
           console.log("✅ Pre-built database copied to /tmp.");
         } else {
-          console.log("⚠️ Pre-built database not found, creating empty file...");
-          fs.writeFileSync(dbPath, "");
+          console.error(`❌ Pre-built database not found at ${sourceDbPath}!`);
+          // Try to locate it in fallback paths
+          const fallbackPath = path.join(__dirname, "..", "..", "prisma", "dev.db");
+          if (fs.existsSync(fallbackPath)) {
+            fs.copyFileSync(fallbackPath, dbPath);
+            console.log("✅ Pre-built database copied from fallback path to /tmp.");
+          } else {
+            console.error("❌ Fallback database path also not found! Creating empty file.");
+            fs.writeFileSync(dbPath, "");
+          }
         }
         
         // Block and wait for Google Sheets data sync on first query execution

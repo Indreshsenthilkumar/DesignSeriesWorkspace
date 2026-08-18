@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./prisma/dev.db"],
+    "/login": ["./prisma/dev.db"],
+  },
   async headers() {
     return [
       {
