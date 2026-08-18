@@ -5,7 +5,7 @@
   "description": "KreateUp DesignSeries Portal — attendance, worklogs, tasks, activity passes and analytics for students, mentors and admins.",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "prisma generate && DATABASE_URL=\"file:./dev.db\" prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
