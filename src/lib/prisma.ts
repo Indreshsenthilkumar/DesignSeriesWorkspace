@@ -58,45 +58,43 @@ async function syncGoogleSheetsToLocalCache(prismaClient: any) {
   }
 }
 
-// Automatically initialize SQLite database in /tmp if running on Vercel
-if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL?.startsWith("file:/tmp/")) {
-  const dbPath = process.env.DATABASE_URL.replace("file:", "");
-  if (!fs.existsSync(dbPath)) {
-    console.log("🛠️ Vercel Environment: Initializing SQLite database cache in /tmp...");
-    try {
-      const dir = path.dirname(dbPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+// Keep track of initialization state in memory
+let isDatabaseInitialized = false;
+
+async function ensureDatabaseInitialized(prismaClient: any) {
+  if (isDatabaseInitialized) return;
+
+  if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL?.startsWith("file:/tmp/")) {
+    const dbPath = process.env.DATABASE_URL.replace("file:", "");
+    if (!fs.existsSync(dbPath)) {
+      console.log("🛠️ Vercel Environment: Copying pre-built SQLite database cache to /tmp...");
+      try {
+        const dir = path.dirname(dbPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        
+        // Copy pre-built db file created during build time
+        const sourceDbPath = path.join(process.cwd(), "prisma", "dev.db");
+        if (fs.existsSync(sourceDbPath)) {
+          fs.copyFileSync(sourceDbPath, dbPath);
+          console.log("✅ Pre-built database copied to /tmp.");
+        } else {
+          console.log("⚠️ Pre-built database not found, creating empty file...");
+          fs.writeFileSync(dbPath, "");
+        }
+        
+        // Block and wait for Google Sheets data sync on first query execution
+        console.log("⏳ Initializing local SQLite cache from Google Sheets...");
+        await syncGoogleSheetsToLocalCache(prismaClient);
+        console.log("✅ SQLite cache successfully populated from Google Sheets.");
+      } catch (err) {
+        console.error("❌ Auto-initialization failed:", err);
       }
-      
-      // Copy pre-built db file created during build time
-      const sourceDbPath = path.join(process.cwd(), "prisma", "dev.db");
-      if (fs.existsSync(sourceDbPath)) {
-        fs.copyFileSync(sourceDbPath, dbPath);
-        console.log("✅ Pre-built database copied to /tmp.");
-      } else {
-        console.log("⚠️ Pre-built database not found, creating empty file...");
-        fs.writeFileSync(dbPath, "");
-      }
-      
-      // Populate database from Google Sheets at startup
-      const tempPrisma = new PrismaClient();
-      syncGoogleSheetsToLocalCache(tempPrisma)
-        .then(() => {
-          console.log("✅ SQLite cache successfully populated from Google Sheets.");
-          tempPrisma.$disconnect();
-        })
-        .catch((err) => {
-          console.error("❌ Google Sheets startup sync failed:", err);
-          tempPrisma.$disconnect();
-        });
-    } catch (err) {
-      console.error("❌ Auto-initialization failed:", err);
     }
   }
+  isDatabaseInitialized = true;
 }
-
-
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
@@ -124,46 +122,29 @@ const prismaToSheetMapping: Record<string, string> = {
 export const prisma = basePrisma.$extends({
   query: {
     $allModels: {
-      async create({ model, args, query }) {
+      async $allOperations({ model, operation, args, query }) {
+        // Intercept operation to ensure database is copied and synced before executing query
+        await ensureDatabaseInitialized(basePrisma);
+        
         const result = await query(args);
-        const sheetName = prismaToSheetMapping[model.toLowerCase()];
-        if (sheetName) {
-          writeSheetRow(sheetName, "CREATE", result).catch((err) =>
-            console.error(`❌ Google Sheets sync failed on create for ${model}:`, err)
-          );
+        
+        // Mirror write operations back to Google Sheets
+        const writeActions = ["create", "update", "upsert", "delete"];
+        if (writeActions.includes(operation)) {
+          const sheetName = prismaToSheetMapping[model.toLowerCase()];
+          if (sheetName) {
+            let action: "CREATE" | "UPDATE" | "DELETE" = "UPDATE";
+            if (operation === "create") action = "CREATE";
+            if (operation === "delete") action = "DELETE";
+
+            writeSheetRow(sheetName, action, result).catch((err) =>
+              console.error(`❌ Google Sheets sync failed on ${operation} for ${model}:`, err)
+            );
+          }
         }
+        
         return result;
-      },
-      async update({ model, args, query }) {
-        const result = await query(args);
-        const sheetName = prismaToSheetMapping[model.toLowerCase()];
-        if (sheetName) {
-          writeSheetRow(sheetName, "UPDATE", result).catch((err) =>
-            console.error(`❌ Google Sheets sync failed on update for ${model}:`, err)
-          );
-        }
-        return result;
-      },
-      async upsert({ model, args, query }) {
-        const result = await query(args);
-        const sheetName = prismaToSheetMapping[model.toLowerCase()];
-        if (sheetName) {
-          writeSheetRow(sheetName, "UPDATE", result).catch((err) =>
-            console.error(`❌ Google Sheets sync failed on upsert for ${model}:`, err)
-          );
-        }
-        return result;
-      },
-      async delete({ model, args, query }) {
-        const result = await query(args);
-        const sheetName = prismaToSheetMapping[model.toLowerCase()];
-        if (sheetName) {
-          writeSheetRow(sheetName, "DELETE", result).catch((err) =>
-            console.error(`❌ Google Sheets sync failed on delete for ${model}:`, err)
-          );
-        }
-        return result;
-      },
+      }
     },
   },
 });
