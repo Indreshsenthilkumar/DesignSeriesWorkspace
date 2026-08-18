@@ -73,7 +73,7 @@ async function main() {
     role: "SUPER_ADMIN",
     systemStatus: "ACTIVE",
     // bcrypt hash of "designseries@2026"
-    passwordHash: "$2a$10$9c3w1c/56T0pWv5U70qU9.nS.oQ/7T4f.8vLXe3nS77jX.eW5uW4q",
+    passwordHash: "$2a$10$rF6lJCedOjyCbMKwduh0YuFtjCd6AP5komOkwXGlOAikoDkFS9QUm",
     mustChangePassword: "false",
     rewardPoints: "0",
     avatarSeed: "42",
