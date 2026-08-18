@@ -19,7 +19,15 @@ if (!process.env.GOOGLE_SPREADSHEET_ID && fs.existsSync(".env")) {
 function getAuth() {
   const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
   const CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  
+  let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
+  if (PRIVATE_KEY) {
+    PRIVATE_KEY = PRIVATE_KEY.trim();
+    // Strip surrounding single or double quotes
+    PRIVATE_KEY = PRIVATE_KEY.replace(/^["'](.*)["']$/, "$1");
+    // Convert literal \n back to real newlines
+    PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n");
+  }
 
   if (!CLIENT_EMAIL || !PRIVATE_KEY || !SPREADSHEET_ID) {
     throw new Error("Missing Google Sheets credentials in environment variables.");
