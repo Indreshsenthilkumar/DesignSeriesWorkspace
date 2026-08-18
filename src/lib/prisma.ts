@@ -1,10 +1,64 @@
 import { PrismaClient } from "@prisma/client";
-import { writeSheetRow } from "./google-sheets";
-import { execSync } from "child_process";
+import { writeSheetRow, getSheetRows } from "./google-sheets";
 import * as fs from "fs";
 import path from "path";
 
-// Automatically initialize and seed the SQLite database in /tmp if running on Vercel
+// Populate cache function directly in JS to avoid shell sub-processes
+async function syncGoogleSheetsToLocalCache(prismaClient: any) {
+  const tabs = [
+    { name: "Users", model: "user" },
+    { name: "Attendance", model: "attendance" },
+    { name: "Worklogs", model: "worklog" },
+    { name: "Tasks", model: "task" },
+    { name: "ActivityPasses", model: "activityPass" },
+    { name: "Notifications", model: "notification" },
+    { name: "NotificationReads", model: "notificationRead" },
+    { name: "Notes", model: "note" },
+    { name: "LinkedinPosts", model: "linkedinPost" },
+    { name: "RewardEntries", model: "rewardEntry" },
+    { name: "ExtensionRequests", model: "extensionRequest" },
+    { name: "AuditLogs", model: "auditLog" }
+  ];
+
+  for (const tab of tabs) {
+    try {
+      const rows = await getSheetRows(tab.name);
+      await prismaClient[tab.model].deleteMany({});
+      
+      const records = rows.map((row) => {
+        const formatted: Record<string, any> = {};
+        for (const [key, value] of Object.entries(row)) {
+          if (value === "") {
+            if (key.endsWith("Id") || key === "lastLoginAt" || key === "reviewedAt" || key === "completedAt" || key === "dueDate" || key === "markedBy") {
+              formatted[key] = null;
+            } else {
+              formatted[key] = "";
+            }
+          } else if (key.endsWith("At") || key === "lastLoginAt" || key === "reviewedAt" || key === "completedAt") {
+            const cleanVal = typeof value === "string" ? value.replace(/^\*/, "").trim() : value;
+            const parsedDate = new Date(cleanVal);
+            formatted[key] = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+          } else if (["rollNo", "mobile", "year", "date", "fromTime", "toTime", "dueDate"].includes(key)) {
+            formatted[key] = String(value);
+          } else {
+            formatted[key] = value;
+          }
+        }
+        return formatted;
+      });
+
+      if (records.length > 0) {
+        await prismaClient[tab.model].createMany({
+          data: records,
+        });
+      }
+    } catch (e) {
+      console.error(`❌ Failed to sync ${tab.name}:`, e);
+    }
+  }
+}
+
+// Automatically initialize SQLite database in /tmp if running on Vercel
 if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL?.startsWith("file:/tmp/")) {
   const dbPath = process.env.DATABASE_URL.replace("file:", "");
   if (!fs.existsSync(dbPath)) {
@@ -15,24 +69,33 @@ if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL?.startsWit
         fs.mkdirSync(dir, { recursive: true });
       }
       
-      // Push the database schema
-      execSync("npx prisma db push --accept-data-loss", {
-        stdio: "inherit",
-        env: { ...process.env }
-      });
-      console.log("✅ Schema created.");
+      // Copy pre-built db file created during build time
+      const sourceDbPath = path.join(process.cwd(), "prisma", "dev.db");
+      if (fs.existsSync(sourceDbPath)) {
+        fs.copyFileSync(sourceDbPath, dbPath);
+        console.log("✅ Pre-built database copied to /tmp.");
+      } else {
+        console.log("⚠️ Pre-built database not found, creating empty file...");
+        fs.writeFileSync(dbPath, "");
+      }
       
-      // Populate from Google Sheets
-      execSync("npx tsx scripts/sync-sheets-to-db.ts", {
-        stdio: "inherit",
-        env: { ...process.env }
-      });
-      console.log("✅ Seeding from Google Sheets complete.");
+      // Populate database from Google Sheets at startup
+      const tempPrisma = new PrismaClient();
+      syncGoogleSheetsToLocalCache(tempPrisma)
+        .then(() => {
+          console.log("✅ SQLite cache successfully populated from Google Sheets.");
+          tempPrisma.$disconnect();
+        })
+        .catch((err) => {
+          console.error("❌ Google Sheets startup sync failed:", err);
+          tempPrisma.$disconnect();
+        });
     } catch (err) {
       console.error("❌ Auto-initialization failed:", err);
     }
   }
 }
+
 
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
