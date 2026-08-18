@@ -1,5 +1,39 @@
 import { PrismaClient } from "@prisma/client";
 import { writeSheetRow } from "./google-sheets";
+import { execSync } from "child_process";
+import * as fs from "fs";
+import path from "path";
+
+// Automatically initialize and seed the SQLite database in /tmp if running on Vercel
+if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL?.startsWith("file:/tmp/")) {
+  const dbPath = process.env.DATABASE_URL.replace("file:", "");
+  if (!fs.existsSync(dbPath)) {
+    console.log("🛠️ Vercel Environment: Initializing SQLite database cache in /tmp...");
+    try {
+      const dir = path.dirname(dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Push the database schema
+      execSync("npx prisma db push --accept-data-loss", {
+        stdio: "inherit",
+        env: { ...process.env }
+      });
+      console.log("✅ Schema created.");
+      
+      // Populate from Google Sheets
+      execSync("npx tsx scripts/sync-sheets-to-db.ts", {
+        stdio: "inherit",
+        env: { ...process.env }
+      });
+      console.log("✅ Seeding from Google Sheets complete.");
+    } catch (err) {
+      console.error("❌ Auto-initialization failed:", err);
+    }
+  }
+}
+
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
