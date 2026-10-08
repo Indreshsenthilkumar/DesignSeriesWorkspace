@@ -9,7 +9,7 @@ import { cohortAttendance, filterOptions } from "@/lib/queries";
 
 import { AttendanceMatrix, type MatrixStudent } from "./AttendanceMatrix";
 
-export const metadata: Metadata = { title: "Attendance matrix" };
+export const metadata: Metadata = { title: "Missed OTP Attendance matrix" };
 export const dynamic = "force-dynamic";
 
 export default async function ConsoleAttendancePage({
@@ -48,7 +48,7 @@ export default async function ConsoleAttendancePage({
   return (
     <div>
       <PageHeader
-        title="Attendance matrix"
+        title="Missed OTP Attendance matrix"
         description="Every student, every tracked day, in one grid. Sundays are excluded. Click a student to open their full record, or use Add to enter attendance on their behalf."
         actions={
           <LinkButton href={`/api/export?${exportQuery.toString()}`} variant="secondary" icon="download" size="sm">

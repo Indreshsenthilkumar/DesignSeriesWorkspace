@@ -22,13 +22,13 @@ async function main() {
     {
       name: "Attendance",
       model: "attendance",
-      headers: ["id", "userId", "date", "hour", "reason", "status", "source", "markedBy", "createdAt"]
+      headers: ["id", "userId", "rollNo", "email", "name", "department", "year", "date", "hour", "reason", "status", "source", "markedBy", "createdAt"]
     },
     {
       name: "Worklogs",
       model: "worklog",
       headers: [
-        "id", "userId", "date", "s1", "s2", "s3", "s4", "s5", "taskId", "status",
+        "id", "userId", "rollNo", "email", "name", "department", "year", "date", "s1", "s2", "s3", "s4", "s5", "taskId", "status",
         "mentorRemark", "reviewedBy", "reviewedAt", "createdAt", "updatedAt"
       ]
     },

@@ -95,7 +95,7 @@ export default async function DashboardPage() {
       {/* ------------------------------------------------------------------ */}
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
-          label="Attendance"
+          label="Missed OTP Attendance"
           value={`${data.attendance.rate}%`}
           icon="check-circle"
           tone={data.attendance.rate >= 85 ? "green" : data.attendance.rate >= 70 ? "amber" : "red"}

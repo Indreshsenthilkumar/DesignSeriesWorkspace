@@ -5,7 +5,7 @@
   "description": "KreateUp DesignSeries Portal — attendance, worklogs, tasks, activity passes and analytics for students, mentors and admins.",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && DATABASE_URL=\"file:./dev.db\" prisma db push && next build",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -20,6 +20,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@neon/config": "^1.8.4",
+    "@neon/env": "^1.5.1",
     "@prisma/client": "^6.3.0",
     "bcryptjs": "^2.4.3",
     "googleapis": "^175.0.0",
@@ -36,6 +38,7 @@
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
+    "neon": "^8.0.12",
     "prisma": "^6.3.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",

@@ -50,6 +50,11 @@ export const POST = handler(async (request: Request) => {
   await prisma.attendance.createMany({
     data: fresh.map((hour) => ({
       userId: user.id,
+      rollNo: user.rollNo || "",
+      email: user.email || user.id,
+      name: user.name || "",
+      department: user.department || "",
+      year: user.year || "",
       date,
       hour,
       reason,
@@ -99,7 +104,10 @@ export const PUT = handler(async (request: Request) => {
 
   if (date > toDayKey()) return fail("You cannot record attendance for a future date.", 422);
 
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true } });
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, rollNo: true, email: true, department: true, year: true }
+  });
   if (!target) return fail("That student is not on the roster.", 404);
 
   await prisma.$transaction([
@@ -107,6 +115,11 @@ export const PUT = handler(async (request: Request) => {
     prisma.attendance.createMany({
       data: hours.map((hour) => ({
         userId,
+        rollNo: target.rollNo || "",
+        email: target.email || target.id,
+        name: target.name || "",
+        department: target.department || "",
+        year: target.year || "",
         date,
         hour,
         reason,

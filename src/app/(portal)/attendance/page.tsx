@@ -15,7 +15,7 @@ import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/
 import { formatDay, minutesSinceMidnight, monthLabel, startOfMonth, toDayKey } from "@/lib/dates";
 import { attendanceMonth, attendanceSummary } from "@/lib/queries";
 
-export const metadata: Metadata = { title: "Attendance" };
+export const metadata: Metadata = { title: "Missed OTP Attendance" };
 export const dynamic = "force-dynamic";
 
 export default async function AttendancePage({
@@ -46,7 +46,7 @@ export default async function AttendancePage({
   return (
     <div>
       <PageHeader
-        title="Attendance"
+        title="Missed OTP Attendance"
         description="Seven trackable hours a day. Check in for the ones you attended, and keep an eye on the running percentage — anything under 75% gets flagged to your mentor."
         actions={
           <Badge tone={summary.streak >= 5 ? "green" : "blue"} icon="sparkle">

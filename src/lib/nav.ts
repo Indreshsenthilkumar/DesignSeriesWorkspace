@@ -24,7 +24,7 @@ export const STUDENT_NAV: NavItem[] = [
   },
   {
     href: "/attendance",
-    label: "Attendance",
+    label: "Missed OTP Attendance",
     icon: "check-circle",
     primary: true,
     description: "Check in for the day and review your hour-by-hour history.",
@@ -42,6 +42,12 @@ export const STUDENT_NAV: NavItem[] = [
     icon: "target",
     primary: true,
     description: "Sprint deliverables assigned to you by your mentor.",
+  },
+  {
+    href: "/leaves",
+    label: "My Leave",
+    icon: "calendar",
+    description: "Apply for leaves or OnDuty requests and track mentor approvals.",
   },
   {
     href: "/passes",
@@ -85,6 +91,13 @@ export const CONSOLE_NAV: NavItem[] = [
     description: "Live programme health: today's floor, trends and what is waiting on you.",
   },
   {
+    href: "/console/leaves",
+    label: "Leave Request",
+    icon: "calendar",
+    primary: true,
+    description: "Review, approve or reject student leave and on-duty requests.",
+  },
+  {
     href: "/console/people",
     label: "People",
     icon: "users",
@@ -94,7 +107,7 @@ export const CONSOLE_NAV: NavItem[] = [
   },
   {
     href: "/console/attendance",
-    label: "Attendance",
+    label: "Missed OTP Attendance",
     icon: "check-circle",
     permission: "permAttendanceLogs",
     primary: true,

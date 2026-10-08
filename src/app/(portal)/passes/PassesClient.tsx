@@ -418,7 +418,7 @@ function GatePass({ pass, holder }: { pass: PassRow; holder: PassHolder }) {
         )}
 
         <p className="mt-3 text-center text-[10.5px] leading-relaxed" style={{ color: "var(--text-faint)" }}>
-          Issued by the KreateUp DesignSeries Portal. Valid only for the window shown above and only
+          Issued by the DesignSeries Portal. Valid only for the window shown above and only
           when the status reads Approved. Present this slip at the gate on request.
         </p>
       </div>

@@ -3,12 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id                   String             @id @default(cuid())
+  id                   String             @id
   name                 String
   rollNo               String             @unique
   email                String             @unique
@@ -44,6 +45,8 @@ model User {
   auditLogs            AuditLog[]
   reviewedExtensions   ExtensionRequest[] @relation("ExtensionReviewer")
   extensions           ExtensionRequest[] @relation("ExtensionOwner")
+  leaveRequests        LeaveRequest[]     @relation("LeaveOwner")
+  reviewedLeaves       LeaveRequest[]     @relation("LeaveReviewer")
   linkedinPosts        LinkedinPost[]
   notes                Note[]
   notifications        Notification[]     @relation("NotificationAuthor")
@@ -60,25 +63,37 @@ model User {
 }
 
 model Attendance {
-  id        String   @id @default(cuid())
-  userId    String
-  date      String
-  hour      Int
-  reason    String   @default("")
-  status    String   @default("PRESENT")
-  source    String   @default("SELF")
-  markedBy  String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  rollNo     String   @default("")
+  email      String   @default("")
+  name       String   @default("")
+  department String   @default("")
+  year       String   @default("")
+  date       String
+  hour       Int
+  reason     String   @default("")
+  status     String   @default("PRESENT")
+  source     String   @default("SELF")
+  markedBy   String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date, hour])
   @@index([date])
   @@index([userId, date])
+  @@index([rollNo])
+  @@index([email])
 }
 
 model Worklog {
   id           String    @id @default(cuid())
   userId       String
+  rollNo       String    @default("")
+  email        String    @default("")
+  name         String    @default("")
+  department   String    @default("")
+  year         String    @default("")
   date         String
   s1           String    @default("")
   s2           String    @default("")
@@ -98,6 +113,8 @@ model Worklog {
   @@unique([userId, date])
   @@index([date])
   @@index([status])
+  @@index([rollNo])
+  @@index([email])
 }
 
 model Task {
@@ -246,4 +263,37 @@ model AuditLog {
 
   @@index([createdAt])
   @@index([entity])
+}
+
+model LeaveRequest {
+  id              String    @id @default(cuid())
+  userId          String
+  rollNo          String    @default("")
+  email           String    @default("")
+  name            String    @default("")
+  department      String    @default("")
+  year            String    @default("")
+  leaveType       String
+  fromDate        String
+  toDate          String
+  gateOut         String?
+  gateIn          String?
+  duration        String    @default("")
+  reason          String    @default("")
+  remarks         String    @default("")
+  venueDetails    String    @default("")
+  companyDetails  String    @default("")
+  status          String    @default("PENDING")
+  reviewerId      String?
+  reviewedAt      DateTime?
+  reviewerRemark  String    @default("")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  reviewer        User?     @relation("LeaveReviewer", fields: [reviewerId], references: [id])
+  user            User      @relation("LeaveOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([userId, fromDate])
+  @@index([rollNo])
+  @@index([email])
 }

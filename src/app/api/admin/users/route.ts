@@ -38,11 +38,13 @@ export const POST = handler(async (request: Request) => {
   });
   if (clash) return fail("An account already exists with that email or roll number.", 409);
 
+  const normalizedEmail = data.email.toLowerCase().trim();
   const user = await prisma.user.create({
     data: {
       ...data,
-      email: data.email.toLowerCase(),
-      rollNo: data.rollNo.toUpperCase(),
+      id: normalizedEmail,
+      email: normalizedEmail,
+      rollNo: data.rollNo.toUpperCase().trim(),
       passwordHash: await hashPassword(password),
       mustChangePassword: true,
     },

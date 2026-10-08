@@ -21,6 +21,7 @@ import {
   PASS_CATEGORY,
   REWARD_RULES,
 } from "../src/lib/constants";
+import { calculateDuration } from "../src/lib/leaves";
 
 const prisma = new PrismaClient();
 
@@ -309,6 +310,7 @@ async function wipe() {
   await prisma.notificationRead.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.activityPass.deleteMany();
+  await prisma.leaveRequest.deleteMany();
   await prisma.worklog.deleteMany();
   await prisma.task.deleteMany();
   await prisma.attendance.deleteMany();
@@ -322,31 +324,41 @@ async function main() {
   const roster = loadRoster();
   console.log(`→ Importing ${roster.length} roster entries…`);
 
-  const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+  const defaultPasswordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
+  // Pre-calculate user records with id set to email and password hash set to roll number
+  const userRows = await Promise.all(
+    roster.map(async (row, index) => {
+      const email = row.email.toLowerCase().trim();
+      const rollPassHash = row.rollNo ? await bcrypt.hash(row.rollNo.toUpperCase().trim(), 10) : defaultPasswordHash;
+      return {
+        id: email,
+        name: row.name,
+        rollNo: row.rollNo,
+        email: email,
+        department: row.department,
+        year: row.year,
+        mobile: row.mobile,
+        domain: row.domain,
+        mentorName: row.mentorName,
+        linkedin: row.linkedin,
+        github: row.github,
+        role: row.role,
+        systemStatus: "ACTIVE",
+        passwordHash: rollPassHash,
+        mustChangePassword: true,
+        avatarSeed: index,
+        ...row.perms,
+      };
+    })
+  );
 
   await prisma.user.createMany({
-    data: roster.map((row, index) => ({
-      name: row.name,
-      rollNo: row.rollNo,
-      email: row.email,
-      department: row.department,
-      year: row.year,
-      mobile: row.mobile,
-      domain: row.domain,
-      mentorName: row.mentorName,
-      linkedin: row.linkedin,
-      github: row.github,
-      role: row.role,
-      systemStatus: "ACTIVE",
-      passwordHash,
-      mustChangePassword: true,
-      avatarSeed: index,
-      ...row.perms,
-    })),
+    data: userRows,
   });
 
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, role: true, domain: true, year: true, rollNo: true },
+    select: { id: true, email: true, name: true, role: true, domain: true, year: true, department: true, rollNo: true },
   });
   const students = users.filter((u) => u.role === "STUDENT");
   const staff = users.filter((u) => u.role !== "STUDENT");
@@ -362,6 +374,11 @@ async function main() {
 
   const attendanceRows: Array<{
     userId: string;
+    rollNo: string;
+    email: string;
+    name: string;
+    department: string;
+    year: string;
     date: string;
     hour: number;
     reason: string;
@@ -384,6 +401,11 @@ async function main() {
       for (const hour of hours) {
         attendanceRows.push({
           userId: student.id,
+          rollNo: student.rollNo,
+          email: student.email,
+          name: student.name,
+          department: student.department,
+          year: student.year,
           date,
           hour,
           reason,
@@ -447,6 +469,11 @@ async function main() {
       const reviewed = chance(0.45);
       worklogRows.push({
         userId: student.id,
+        rollNo: student.rollNo,
+        email: student.email,
+        name: student.name,
+        department: student.department,
+        year: student.year,
         date,
         s1: workFor(student.domain),
         s2: workFor(student.domain),
@@ -512,6 +539,69 @@ async function main() {
 
   await prisma.activityPass.createMany({ data: passRows });
   console.log(`   ${passRows.length} activity passes.`);
+
+  // -- Leave Requests ------------------------------------------------------
+  console.log("→ Creating leave requests…");
+
+  const LEAVE_TYPES_SAMPLE = [
+    "Leave",
+    "Emergency Leave",
+    "Sick Leave",
+    "OnDuty - Project Competition",
+    "OnDuty - Events",
+    "OnDuty - Sports",
+    "OnDuty - NSS/NCC",
+    "OnDuty - Internship",
+    "OnDuty - Offcampus Placement",
+    "GP",
+  ];
+
+  const leaveRows = students
+    .filter(() => chance(0.5))
+    .flatMap((student) =>
+      Array.from({ length: between(1, 2) }, () => {
+        const leaveType = pick(LEAVE_TYPES_SAMPLE);
+        const status = pick(["PENDING", "PENDING", "APPROVED", "APPROVED", "REJECTED"] as const);
+        const decided = status === "APPROVED" || status === "REJECTED";
+        const fromDay = pick(days.slice(-14));
+        const toDay = pick(days.slice(-10));
+        const fromDate = `${fromDay}T08:30`;
+        const toDate = `${toDay >= fromDay ? toDay : fromDay}T18:00`;
+        const duration = calculateDuration(fromDate, toDate);
+
+        return {
+          userId: student.id,
+          rollNo: student.rollNo,
+          email: student.email,
+          name: student.name,
+          department: student.department,
+          year: student.year,
+          leaveType,
+          fromDate,
+          toDate,
+          gateOut: status === "APPROVED" ? `${fromDay}T09:15` : null,
+          gateIn: status === "APPROVED" ? `${toDate}` : null,
+          duration: duration || "2 days",
+          reason: pick([
+            "Going to Home for festival vacation.",
+            "Attending national level hackathon competition.",
+            "Health consultation and recuperation.",
+            "University sports tournament selection trials.",
+            "Company pre-placement interview and technical assessment.",
+          ]),
+          remarks: "Approved by mentor for external participation.",
+          venueDetails: "PSG Tech / IIT Madras Campus",
+          companyDetails: "TCS / Zoho Corporation",
+          status,
+          reviewerId: decided ? superAdmin.id : null,
+          reviewedAt: decided ? new Date() : null,
+          reviewerRemark: status === "REJECTED" ? "Incomplete event details provided." : "Approved by domain mentor.",
+        };
+      })
+    );
+
+  await prisma.leaveRequest.createMany({ data: leaveRows });
+  console.log(`   ${leaveRows.length} leave requests.`);
 
   // -- Announcements -------------------------------------------------------
   console.log("→ Publishing announcements…");

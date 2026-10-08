@@ -5,7 +5,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 
 import "./globals.css";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "KreateUp DesignSeries Portal";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "DesignSeries Portal";
 
 export const metadata: Metadata = {
   title: {
@@ -13,8 +13,13 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Attendance, worklogs, sprint tasks, gate passes and programme analytics for the KreateUp DesignSeries cohort.",
+    "Attendance, worklogs, sprint tasks, gate passes and programme analytics for the DesignSeries cohort.",
   applicationName: APP_NAME,
+  icons: {
+    icon: "/brand/designseries-logo.png",
+    shortcut: "/brand/designseries-logo.png",
+    apple: "/brand/designseries-logo.png",
+  },
   appleWebApp: { capable: true, title: "DesignSeries", statusBarStyle: "default" },
   formatDetection: { telephone: false },
   manifest: "/manifest.webmanifest",

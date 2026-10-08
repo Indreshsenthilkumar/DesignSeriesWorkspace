@@ -57,7 +57,7 @@ export default async function LoginPage() {
             <FeatureRow
               tone="blue"
               icon="check-circle"
-              title="Hour-accurate attendance"
+              title="Missed OTP Attendance"
               body="Seven trackable hours a day, with your own live percentage."
             />
             <FeatureRow
@@ -111,8 +111,7 @@ export default async function LoginPage() {
               Sign in
             </h1>
             <p className="mt-2 text-[13.5px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              Use your college email address. If you have not set a password yet, use the one your
-              mentor shared with you — you will be asked to change it.
+              Use your college email address as your username and your <strong>Roll Number</strong> as your password.
             </p>
           </div>
 

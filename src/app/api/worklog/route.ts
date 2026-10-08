@@ -76,6 +76,11 @@ export const POST = handler(async (request: Request) => {
     where: { userId_date: { userId: user.id, date: data.date } },
     create: {
       userId: user.id,
+      rollNo: user.rollNo || "",
+      email: user.email || user.id,
+      name: user.name || "",
+      department: user.department || "",
+      year: user.year || "",
       date: data.date,
       s1: data.s1,
       s2: data.s2,

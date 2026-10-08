@@ -165,7 +165,7 @@ function TopBar({
           <Icon name="menu" className="h-[19px] w-[19px]" />
         </button>
 
-        <Link href="/dashboard" className="shrink-0 lg:hidden" aria-label="KreateUp DesignSeries Portal">
+        <Link href="/dashboard" className="shrink-0 lg:hidden" aria-label="DesignSeries Portal">
           <LogoMark size={30} />
         </Link>
 
