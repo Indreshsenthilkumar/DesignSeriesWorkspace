@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -115,7 +116,9 @@ export default async function LoginPage() {
             </p>
           </div>
 
-          <LoginForm />
+          <Suspense fallback={<div className="py-8 text-center text-xs text-[var(--text-muted)]">Loading sign in...</div>}>
+            <LoginForm />
+          </Suspense>
 
           <p className="mt-8 text-center text-[11.5px] leading-relaxed" style={{ color: "var(--text-faint)" }}>
             Trouble signing in? Contact your domain mentor or the DesignSeries office.

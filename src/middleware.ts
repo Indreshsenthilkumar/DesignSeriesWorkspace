@@ -31,6 +31,6 @@ export const config = {
      * Everything except Next internals, the API (which returns JSON 401s of its
      * own) and static assets.
      */
-    "/((?!api|_next/static|_next/image|brand|dev-login|favicon.ico|icon.svg|manifest.webmanifest).*)",
+    "/((?!api|_next/static|_next/image|brand|favicon.ico|icon.svg|manifest.webmanifest).*)",
   ],
 };

@@ -1,21 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 
+function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
+
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [devLoadingRole, setDevLoadingRole] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const emailParam = searchParams.get("email");
+
+    if (errorParam === "unregistered_email" && emailParam) {
+      setError(`Your Google account (${emailParam}) is not registered in the portal. Please contact the administrator to create your account.`);
+    } else if (errorParam === "account_inactive") {
+      setError("Your account is currently inactive. Please contact your domain mentor or administrator.");
+    } else if (errorParam === "google_cancelled") {
+      setError("Google sign-in was cancelled.");
+    } else if (errorParam === "invalid_state" || errorParam === "token_exchange_failed" || errorParam === "oauth_internal_error") {
+      setError("Google authentication failed. Please try again or use your password.");
+    }
+  }, [searchParams]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -50,155 +89,21 @@ export function LoginForm() {
     }
   };
 
-  const handleDevLogin = async (role: "SUPER_ADMIN" | "ADMIN" | "STUDENT", email?: string) => {
-    setError(null);
-    setDevLoadingRole(role);
-    try {
-      const response = await fetch("/api/auth/dev-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, email }),
-      });
-      const payload = await response.json();
-
-      if (!response.ok || !payload.ok) {
-        setError(payload.error ?? "Developer sign-in failed.");
-        setDevLoadingRole(null);
-        return;
-      }
-
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      setError("Network problem during developer sign-in.");
-      setDevLoadingRole(null);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      {/* ------------------------------------------------------------- */}
-      {/* Developer Quick Login Section                                 */}
-      {/* ------------------------------------------------------------- */}
-      <div
-        className="rounded-[14px] border p-4 transition-all"
-        style={{
-          background: "var(--surface-sunken)",
-          borderColor: "var(--color-brand-blue)",
-          boxShadow: "0 0 0 1px color-mix(in srgb, var(--color-brand-blue) 25%, transparent)",
-        }}
+      {/* Google Sign-in Button */}
+      <a
+        href="/api/auth/google"
+        onClick={() => setGoogleLoading(true)}
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] px-4 py-2.5 text-xs font-semibold text-[var(--text-strong)] shadow-sm hover:border-[var(--color-brand-blue)] hover:bg-[var(--surface-sunken)] transition-all cursor-pointer"
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span
-              className="grid h-6 w-6 place-items-center rounded-[6px] text-xs font-bold"
-              style={{
-                background: "var(--color-brand-blue)",
-                color: "#ffffff",
-              }}
-            >
-              ⚡
-            </span>
-            <div>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--text-strong)" }}>
-                Developer Quick Login
-              </p>
-              <p className="text-[11.5px]" style={{ color: "var(--text-muted)" }}>
-                1-click instant login — no password required
-              </p>
-            </div>
-          </div>
-          <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-            style={{
-              background: "color-mix(in srgb, var(--color-brand-blue) 15%, transparent)",
-              color: "var(--color-brand-blue)",
-            }}
-          >
-            Dev Mode
-          </span>
-        </div>
-
-        <div className="mt-3.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <button
-            type="button"
-            disabled={loading || Boolean(devLoadingRole)}
-            onClick={() => handleDevLogin("SUPER_ADMIN", "indreshs.it24@bitsathy.ac.in")}
-            className="group relative flex flex-col items-start gap-0.5 rounded-[10px] border p-2.5 text-left transition-all hover:scale-[1.02] hover:border-[var(--color-brand-blue)] active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "var(--surface-raised)",
-              borderColor: "var(--line-default)",
-            }}
-          >
-            <div className="flex w-full items-center justify-between">
-              <span className="text-sm">👑</span>
-              {devLoadingRole === "SUPER_ADMIN" ? (
-                <Icon name="spinner" className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <span className="text-[10px] font-medium opacity-60">Instant</span>
-              )}
-            </div>
-            <span className="text-[12px] font-bold leading-tight" style={{ color: "var(--text-strong)" }}>
-              Super Admin
-            </span>
-            <span className="text-[10.5px] leading-tight truncate w-full" style={{ color: "var(--text-faint)" }}>
-              Indresh S (Full)
-            </span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || Boolean(devLoadingRole)}
-            onClick={() => handleDevLogin("ADMIN")}
-            className="group relative flex flex-col items-start gap-0.5 rounded-[10px] border p-2.5 text-left transition-all hover:scale-[1.02] hover:border-[var(--color-brand-blue)] active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "var(--surface-raised)",
-              borderColor: "var(--line-default)",
-            }}
-          >
-            <div className="flex w-full items-center justify-between">
-              <span className="text-sm">🛡️</span>
-              {devLoadingRole === "ADMIN" ? (
-                <Icon name="spinner" className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <span className="text-[10px] font-medium opacity-60">Instant</span>
-              )}
-            </div>
-            <span className="text-[12px] font-bold leading-tight" style={{ color: "var(--text-strong)" }}>
-              Admin / Mentor
-            </span>
-            <span className="text-[10.5px] leading-tight truncate w-full" style={{ color: "var(--text-faint)" }}>
-              Staff Access
-            </span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || Boolean(devLoadingRole)}
-            onClick={() => handleDevLogin("STUDENT")}
-            className="group relative flex flex-col items-start gap-0.5 rounded-[10px] border p-2.5 text-left transition-all hover:scale-[1.02] hover:border-[var(--color-brand-blue)] active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "var(--surface-raised)",
-              borderColor: "var(--line-default)",
-            }}
-          >
-            <div className="flex w-full items-center justify-between">
-              <span className="text-sm">🎓</span>
-              {devLoadingRole === "STUDENT" ? (
-                <Icon name="spinner" className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <span className="text-[10px] font-medium opacity-60">Instant</span>
-              )}
-            </div>
-            <span className="text-[12px] font-bold leading-tight" style={{ color: "var(--text-strong)" }}>
-              Student
-            </span>
-            <span className="text-[10.5px] leading-tight truncate w-full" style={{ color: "var(--text-faint)" }}>
-              Student Access
-            </span>
-          </button>
-        </div>
-      </div>
+        {googleLoading ? (
+          <Icon name="spinner" className="h-4 w-4 animate-spin text-[var(--color-brand-blue)]" />
+        ) : (
+          <GoogleIcon className="h-4 w-4 shrink-0" />
+        )}
+        <span>Continue with Google</span>
+      </a>
 
       {/* Divider */}
       <div className="relative flex items-center justify-center">
