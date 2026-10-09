@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 
-function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
+function GoogleIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24">
       <path
@@ -61,7 +58,7 @@ export function LoginForm() {
     setError(null);
 
     if (!identifier.trim() || !password) {
-      setError("Enter both your email (or roll number) and your password.");
+      setError("Enter both your username/email and password.");
       return;
     }
 
@@ -75,12 +72,11 @@ export function LoginForm() {
       const payload = await response.json();
 
       if (!response.ok || !payload.ok) {
-        setError(payload.error ?? "Could not sign you in. Please try again.");
+        setError(payload.error ?? "Could not sign you in. Please check your credentials.");
         setLoading(false);
         return;
       }
 
-      // A full refresh so the server layout picks up the new session cookie.
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -90,105 +86,134 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mt-7 flex flex-col">
       {/* Google Sign-in Button */}
       <a
         href="/api/auth/google"
         onClick={() => setGoogleLoading(true)}
-        className="flex w-full items-center justify-center gap-3 rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] px-4 py-2.5 text-xs font-semibold text-[var(--text-strong)] shadow-sm hover:border-[var(--color-brand-blue)] hover:bg-[var(--surface-sunken)] transition-all cursor-pointer"
+        className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#DADCE0] bg-white py-3 px-5 text-[14px] font-medium text-[#3C4043] shadow-xs hover:bg-[#F8F9FA] hover:border-[#BDC1C6] active:bg-[#F1F3F4] transition-all cursor-pointer"
       >
         {googleLoading ? (
-          <Icon name="spinner" className="h-4 w-4 animate-spin text-[var(--color-brand-blue)]" />
+          <Icon name="spinner" className="h-5 w-5 animate-spin text-[#1A73E8]" />
         ) : (
-          <GoogleIcon className="h-4 w-4 shrink-0" />
+          <GoogleIcon className="h-5 w-5 shrink-0" />
         )}
         <span>Continue with Google</span>
       </a>
 
       {/* Divider */}
-      <div className="relative flex items-center justify-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t" style={{ borderColor: "var(--line-default)" }} />
-        </div>
-        <span
-          className="relative px-3 text-[11px] font-semibold uppercase tracking-wider"
-          style={{ background: "var(--surface-page)", color: "var(--text-faint)" }}
-        >
-          Or sign in with credentials
+      <div className="relative my-7 flex items-center justify-center">
+        <div className="w-full border-t border-[#E8EAED]" />
+        <span className="absolute bg-white px-3 text-[10.5px] font-bold uppercase tracking-wider text-[#80868B]">
+          OR LOG IN WITH CREDENTIALS
         </span>
       </div>
 
-      {/* Standard Form */}
+      {/* Error Alert */}
+      {error ? (
+        <div
+          role="alert"
+          className="mb-5 flex items-start gap-2.5 rounded-2xl bg-red-50 p-3 text-red-700 border border-red-200"
+        >
+          <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+          <p className="text-[12.5px] font-medium leading-snug">{error}</p>
+        </div>
+      ) : null}
+
+      {/* Credentials Form */}
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        {error ? (
-          <div
-            data-accent="red"
-            role="alert"
-            className="animate-scale-in flex items-start gap-2.5 rounded-[11px] p-3"
-            style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
-          >
-            <Icon name="alert" className="mt-px h-4 w-4 shrink-0" />
-            <p className="text-[12.5px] font-medium leading-snug">{error}</p>
-          </div>
-        ) : null}
-
-        <Field label="College Email" htmlFor="identifier" required>
-          <Input
-            id="identifier"
-            name="identifier"
-            type="text"
-            icon="mail"
-            autoComplete="username"
-            autoCapitalize="none"
-            spellCheck={false}
-            inputMode="email"
-            placeholder="yourname.dept24@bitsathy.ac.in"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            invalid={Boolean(error)}
-          />
-        </Field>
-
-        <Field label="Password (Roll Number)" htmlFor="password" required>
+        {/* Username Field */}
+        <div>
+          <label htmlFor="identifier" className="block text-[13px] font-semibold text-[#202124] mb-2">
+            Username <span className="text-[#EA4335]">*</span>
+          </label>
           <div className="relative">
-            <Input
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#80868B]">
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </span>
+            <input
+              id="identifier"
+              name="identifier"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="Enter your username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              className="w-full h-12 pl-11 pr-4 rounded-2xl border border-[#DADCE0] bg-white text-[14px] text-[#202124] placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/20 focus:outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Password Field */}
+        <div className="mt-1">
+          <label htmlFor="password" className="block text-[13px] font-semibold text-[#202124] mb-2">
+            Password <span className="text-[#EA4335]">*</span>
+          </label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#80868B]">
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+            <input
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              icon="lock"
               autoComplete="current-password"
-              placeholder="e.g. 7376241IT101"
+              placeholder="••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pr-11"
-              invalid={Boolean(error)}
+              className="w-full h-12 pl-11 pr-11 rounded-2xl border border-[#DADCE0] bg-white text-[14px] text-[#202124] placeholder:text-[#9AA0A6] focus:border-[#1A73E8] focus:ring-2 focus:ring-[#1A73E8]/20 focus:outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[8px] transition-colors hover:bg-[var(--surface-inset)]"
-              style={{ color: "var(--text-faint)" }}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-lg text-[#80868B] hover:text-[#202124] transition-colors"
             >
-              <Icon name={showPassword ? "eye-off" : "eye"} className="h-[17px] w-[17px]" />
+              <Icon name={showPassword ? "eye-off" : "eye"} className="h-[18px] w-[18px]" />
             </button>
           </div>
-        </Field>
+        </div>
 
-        <label className="flex cursor-pointer select-none items-center gap-2.5 text-[12.5px]" style={{ color: "var(--text-muted)" }}>
+        {/* Keep signed in checkbox */}
+        <label className="flex items-center gap-2.5 text-[13px] text-[#3C4043] cursor-pointer select-none mt-2">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="h-4 w-4 cursor-pointer rounded-[4px] accent-[var(--color-brand-blue)]"
+            className="h-[18px] w-[18px] rounded-[5px] border-[#DADCE0] text-[#1A73E8] accent-[#1A73E8] cursor-pointer"
           />
-          Keep me signed in on this device
+          <span>Keep me signed in on this device</span>
         </label>
 
-        <Button type="submit" size="lg" block loading={loading} iconRight={loading ? undefined : "arrow-right"}>
-          {loading ? "Signing in…" : "Sign in"}
-        </Button>
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-3 w-full h-12 rounded-2xl bg-[#1A73E8] hover:bg-[#1557D0] active:bg-[#174EA6] text-white font-medium text-[14.5px] flex items-center justify-center gap-2 shadow-[0_1px_2px_rgba(26,115,232,0.3)] hover:shadow-md transition-all disabled:opacity-70 cursor-pointer"
+        >
+          {loading ? (
+            <>
+              <Icon name="spinner" className="h-5 w-5 animate-spin" />
+              <span>Logging in…</span>
+            </>
+          ) : (
+            <>
+              <span>Log in</span>
+              <span className="text-base leading-none">→</span>
+            </>
+          )}
+        </button>
       </form>
     </div>
   );
 }
+
+

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function ConsoleAttendancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; year?: string; domain?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; year?: string; domain?: string; role?: string }>;
 }) {
   await requirePermission("permAttendanceLogs");
   const params = await searchParams;
@@ -27,11 +27,13 @@ export default async function ConsoleAttendancePage({
 
   const year = params.year ?? "ALL";
   const domain = params.domain ?? "ALL";
+  const role = params.role ?? "ALL";
 
   const [{ students, trackedDays }, options] = await Promise.all([
     cohortAttendance(from, to, {
       year: year === "ALL" ? undefined : year,
       domain: domain === "ALL" ? undefined : domain,
+      role: role === "ALL" ? undefined : role,
     }),
     filterOptions(),
   ]);
@@ -43,18 +45,11 @@ export default async function ConsoleAttendancePage({
   const perfect = rows.filter((s) => s.rate === 100).length;
   const totalHours = rows.reduce((sum, s) => sum + s.hours, 0);
 
-  const exportQuery = new URLSearchParams({ table: "attendance", from, to });
-
   return (
     <div>
       <PageHeader
         title="Missed OTP Attendance matrix"
-        description="Every student, every tracked day, in one grid. Sundays are excluded. Click a student to open their full record, or use Add to enter attendance on their behalf."
-        actions={
-          <LinkButton href={`/api/export?${exportQuery.toString()}`} variant="secondary" icon="download" size="sm">
-            Export range
-          </LinkButton>
-        }
+        description="View and manage missed OTP attendance for all users including students, mentors, and administrators. Click any day cell or '+ Add' to log or edit hours."
       />
 
       <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -70,10 +65,10 @@ export default async function ConsoleAttendancePage({
           value={belowThreshold}
           icon="alert"
           tone={belowThreshold > 0 ? "red" : "green"}
-          caption={belowThreshold > 0 ? "Need a conversation" : "Everyone is above the line"}
+          caption={belowThreshold > 0 ? "Need follow-up" : "Everyone is above the line"}
         />
         <StatTile label="At 100%" value={perfect} icon="trophy" tone="green" caption="Perfect attendance" />
-        <StatTile label="Hours logged" value={totalHours} icon="clock" tone="blue" caption="Across the range" />
+        <StatTile label="Hours logged" value={totalHours} icon="clock" tone="blue" caption="Across all members" />
       </div>
 
       <AttendanceMatrix
@@ -81,8 +76,8 @@ export default async function ConsoleAttendancePage({
         trackedDays={trackedDays}
         from={from}
         to={to}
-        options={{ years: options.years, domains: options.domains }}
-        filters={{ year, domain }}
+        options={{ years: options.years, domains: options.domains, roles: options.roles }}
+        filters={{ year, domain, role }}
       />
     </div>
   );

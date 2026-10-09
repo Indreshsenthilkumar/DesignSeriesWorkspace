@@ -86,6 +86,7 @@ export type AttendanceSummary = {
   daysTracked: number;
   streak: number;
   todayHours: number[];
+  todayReason?: string;
   byDay: Array<{ key: string; value: number; max: number }>;
 };
 
@@ -111,14 +112,18 @@ export async function attendanceSummary(
 
   const rows = await prisma.attendance.findMany({
     where: { userId, date: { gte: previousWindow[0], lte: today } },
-    select: { date: true, hour: true },
+    select: { date: true, hour: true, reason: true },
   });
 
   const byDate = new Map<string, Set<number>>();
+  let todayReason = "";
   for (const row of rows) {
     const set = byDate.get(row.date) ?? new Set<number>();
     set.add(row.hour);
     byDate.set(row.date, set);
+    if (row.date === today && row.reason && !todayReason) {
+      todayReason = row.reason;
+    }
   }
 
   const countIn = (keys: string[]) => {
@@ -158,6 +163,7 @@ export async function attendanceSummary(
     daysTracked: current.trackedDays.length,
     streak,
     todayHours: [...(byDate.get(today) ?? [])].sort((a, b) => a - b),
+    todayReason,
     byDay: window.map((key) => ({
       key,
       value: byDate.get(key)?.size ?? 0,
@@ -361,65 +367,140 @@ export async function consoleOverview() {
   };
 }
 
-/** Per-student attendance table for the console, over a date range. */
-export async function cohortAttendance(from: string, to: string, filters: { year?: string; domain?: string } = {}) {
-  const students = await prisma.user.findMany({
+/** Attendance table for the console across all users (students, mentors, admins) over a date range. */
+export async function cohortAttendance(
+  from: string,
+  to: string,
+  filters: { year?: string; domain?: string; role?: string } = {}
+) {
+  const users = await prisma.user.findMany({
     where: {
-      role: "STUDENT",
-      ...(filters.year ? { year: filters.year } : {}),
-      ...(filters.domain ? { domain: filters.domain } : {}),
+      ...(filters.role && filters.role !== "ALL" ? { role: filters.role as any } : {}),
+      ...(filters.year && filters.year !== "ALL" ? { year: filters.year } : {}),
+      ...(filters.domain && filters.domain !== "ALL" ? { domain: filters.domain } : {}),
     },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, rollNo: true, year: true, domain: true, mentorName: true },
+    orderBy: [{ role: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      rollNo: true,
+      year: true,
+      domain: true,
+      mentorName: true,
+      role: true,
+    },
   });
 
-  const ids = students.map((s) => s.id);
+  const ids = users.map((s) => s.id);
   const rows = await prisma.attendance.findMany({
     where: { userId: { in: ids }, date: { gte: from, lte: to } },
-    select: { userId: true, date: true, hour: true },
+    select: { userId: true, date: true, hour: true, reason: true, status: true },
   });
 
   const trackedDays = rangeOfDays(from, to).filter((key) => new Date(key).getDay() !== 0);
   const possible = trackedDays.length * ATTENDANCE_HOURS.length;
 
-  const byUser = new Map<string, Map<string, Set<number>>>();
+  const byUser = new Map<string, Map<string, { hours: Set<number>; reason: string; status: string }>>();
   for (const row of rows) {
-    const days = byUser.get(row.userId) ?? new Map<string, Set<number>>();
-    const hours = days.get(row.date) ?? new Set<number>();
-    hours.add(row.hour);
-    days.set(row.date, hours);
+    const days = byUser.get(row.userId) ?? new Map<string, { hours: Set<number>; reason: string; status: string }>();
+    const entry = days.get(row.date) ?? { hours: new Set<number>(), reason: row.reason || "", status: row.status };
+    entry.hours.add(row.hour);
+    if (!entry.reason && row.reason) entry.reason = row.reason;
+    days.set(row.date, entry);
     byUser.set(row.userId, days);
   }
 
   return {
     trackedDays,
-    students: students.map((student) => {
-      const days = byUser.get(student.id) ?? new Map<string, Set<number>>();
-      const logged = [...days.values()].reduce((sum, set) => sum + set.size, 0);
-      const fullDays = [...days.values()].filter((set) => set.size >= ATTENDANCE_HOURS.length).length;
+    students: users.map((user) => {
+      const days = byUser.get(user.id) ?? new Map<string, { hours: Set<number>; reason: string; status: string }>();
+      const logged = [...days.values()].reduce((sum, entry) => sum + entry.hours.size, 0);
+      const fullDays = [...days.values()].filter((entry) => entry.hours.size >= ATTENDANCE_HOURS.length).length;
       return {
-        ...student,
+        ...user,
         hours: logged,
         rate: pct(logged, possible),
         fullDays,
         daysPresent: days.size,
-        perDay: trackedDays.map((key) => days.get(key)?.size ?? 0),
+        perDay: trackedDays.map((key) => days.get(key)?.hours.size ?? 0),
+        dayDetails: Object.fromEntries(
+          [...days.entries()].map(([dateKey, val]) => [
+            dateKey,
+            { hours: [...val.hours].sort((a, b) => a - b), reason: val.reason, status: val.status },
+          ])
+        ),
       };
     }),
   };
 }
 
-/** Distinct filter values, derived from the roster rather than hard-coded. */
+/** Distinct filter values, derived from dynamic RosterOptions and the user database. */
 export async function filterOptions() {
-  const [years, domains, mentors] = await Promise.all([
-    prisma.user.groupBy({ by: ["year"], where: { role: "STUDENT" }, orderBy: { year: "asc" } }),
-    prisma.user.groupBy({ by: ["domain"], where: { role: "STUDENT" }, orderBy: { domain: "asc" } }),
-    prisma.user.groupBy({ by: ["mentorName"], where: { role: "STUDENT" }, orderBy: { mentorName: "asc" } }),
+  const [rosterOptions, userYears, userDomains, userMentors, userRoles, userDepts, staffUsers] = await Promise.all([
+    (prisma as any).rosterOption?.findMany
+      ? (prisma as any).rosterOption.findMany({ orderBy: [{ order: "asc" }, { value: "asc" }] })
+      : Promise.resolve([]),
+    prisma.user.groupBy({ by: ["year"], orderBy: { year: "asc" } }),
+    prisma.user.groupBy({ by: ["domain"], orderBy: { domain: "asc" } }),
+    prisma.user.groupBy({ by: ["mentorName"], orderBy: { mentorName: "asc" } }),
+    prisma.user.groupBy({ by: ["role"], orderBy: { role: "asc" } }),
+    prisma.user.groupBy({ by: ["department"], orderBy: { department: "asc" } }),
+    prisma.user.findMany({
+      where: { role: { in: ["MENTOR", "ADMIN", "SUPER_ADMIN"] }, systemStatus: "ACTIVE" },
+      select: { name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
+  const deptsFromOptions = (rosterOptions as Array<{ category: string; value: string }>).filter((o) => o.category === "DEPARTMENT").map((o) => o.value);
+  const yearsFromOptions = (rosterOptions as Array<{ category: string; value: string }>).filter((o) => o.category === "YEAR").map((o) => o.value);
+  const domainsFromOptions = (rosterOptions as Array<{ category: string; value: string }>).filter((o) => o.category === "DOMAIN").map((o) => o.value);
+  const mentorsFromOptions = (rosterOptions as Array<{ category: string; value: string }>).filter((o) => o.category === "MENTOR").map((o) => o.value);
+
+  const departments = Array.from(new Set([
+    ...deptsFromOptions,
+    ...userDepts.map((d) => d.department),
+  ])).filter(Boolean);
+
+  const years = Array.from(new Set([
+    ...yearsFromOptions,
+    ...userYears.map((y) => y.year),
+  ])).filter(Boolean);
+
+  const domains = Array.from(new Set([
+    ...domainsFromOptions,
+    ...userDomains.map((d) => d.domain),
+  ])).filter(Boolean);
+
+  const mentors = Array.from(new Set([
+    ...mentorsFromOptions,
+    ...staffUsers.map((s) => s.name),
+    ...userMentors.map((m) => m.mentorName),
+  ])).filter(Boolean);
+
+  const roles = Array.from(new Set([
+    "STUDENT",
+    "MENTOR",
+    "ADMIN",
+    "SUPER_ADMIN",
+    ...userRoles.map((r) => r.role),
+  ])).filter(Boolean);
+
   return {
-    years: years.map((y) => y.year).filter(Boolean),
-    domains: domains.map((d) => d.domain).filter(Boolean),
-    mentors: mentors.map((m) => m.mentorName).filter(Boolean),
+    departments: departments.length > 0 ? departments : [
+      "Artificial Intelligence and Data Science",
+      "Computer Science and Engineering",
+      "Information Technology",
+      "Electronics and Communication Engineering",
+      "Mechanical Engineering",
+      "Electrical and Electronics Engineering",
+      "Civil Engineering",
+      "Biotechnology",
+      "Mechatronics Engineering",
+    ],
+    years: years.length > 0 ? years : ["1st Year", "2nd Year", "3rd Year", "4th Year", "Staff"],
+    domains: domains.length > 0 ? domains : ["UI/UX Design", "Full Stack Development", "AI & Machine Learning", "Mobile App Development", "Cloud & DevOps", "Data not Feeded"],
+    mentors: mentors.length > 0 ? mentors : ["Dr. Sarah Jenkins - Lead Architect", "Prof. Alex Rivera - Systems & UI", "Elena Rostova - Full Stack Specialist", "Karthik Raman - AI/ML Lead"],
+    roles,
   };
 }

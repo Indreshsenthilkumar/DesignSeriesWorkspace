@@ -151,7 +151,13 @@ export default async function DashboardPage() {
                 </LinkButton>
               }
             />
-            <CheckInPanel date={today} loggedHours={data.attendance.todayHours} closed={closed} compact />
+            <CheckInPanel
+              date={today}
+              loggedHours={data.attendance.todayHours}
+              loggedReason={data.attendance.todayReason}
+              closed={closed}
+              compact
+            />
           </Card>
 
           {/* Attendance trend */}

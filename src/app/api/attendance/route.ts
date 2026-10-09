@@ -7,72 +7,89 @@ import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS, REWARD_RULES } from "@/lib
 import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
 
 const checkInSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date."),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format."),
   hours: z.array(z.number().int().min(1).max(7)).min(1, "Select at least one hour."),
-  reason: z.string().trim().min(4, "Say what you worked on (at least 4 characters).").max(400),
+  reason: z.string().trim().min(4, "Please describe what you worked on (at least 4 characters).").max(400),
 });
 
 /**
- * Student self check-in.
+ * Missed OTP Attendance — Student Submission.
  *
- * Rules enforced server-side (the client mirrors them, but the server is the
- * authority): today or a past day only, never the future; the 23:30 cutoff
- * applies to same-day submissions; hours already logged are skipped rather
- * than erroring, so a partial re-submit tops up the day.
+ * Rules:
+ * 1. Date must be the current calendar day (same-day submission only).
+ * 2. Only ONE submission allowed per day. Records cannot be edited, appended to, or deleted once submitted.
+ * 3. Row-per-Hour Storage: Each selected hour is stored as a distinct database row sharing
+ *    the same student details, reason, date, and authoritative submission timestamp.
+ * 4. 23:30 cutoff enforcement.
  */
 export const POST = handler(async (request: Request) => {
   const user = await requireApiUser();
   const { date, hours, reason } = checkInSchema.parse(await request.json());
 
   const today = toDayKey();
-  if (date > today) return fail("You cannot check in for a future date.", 422);
+  if (date > today) return fail("You cannot submit Missed OTP Attendance for a future date.", 422);
   if (date < today) {
     return fail(
-      "Back-dated check-ins have to be added by an admin. Ask your mentor to log it for you.",
+      "Back-dated Missed OTP Attendance must be added by your mentor or an administrator.",
       422
     );
   }
   if (minutesSinceMidnight() > ATTENDANCE_CUTOFF_MINUTES) {
-    return fail("Check-in for today closed at 11:30 PM.", 422);
+    return fail("Missed OTP Attendance for today closed at 11:30 PM.", 422);
   }
 
-  const existing = await prisma.attendance.findMany({
+  // Enforce one-submission-per-day rule
+  const existingSubmissions = await prisma.attendance.findMany({
     where: { userId: user.id, date },
-    select: { hour: true },
+    select: { id: true, hour: true },
   });
-  const already = new Set(existing.map((row) => row.hour));
-  const fresh = [...new Set(hours)].filter((hour) => !already.has(hour));
 
-  if (fresh.length === 0) {
-    return fail("You have already checked in for those hours today.", 409);
+  if (existingSubmissions.length > 0) {
+    return fail(
+      "You have already submitted Missed OTP Attendance for today. Only one submission is allowed per day, and records cannot be edited or deleted.",
+      409
+    );
   }
+
+  // Deduplicate and sort requested hours (1 to 7)
+  const uniqueHours = Array.from(new Set(hours)).sort((a, b) => a - b);
+  if (uniqueHours.length === 0) {
+    return fail("Select at least one valid hour (1 to 7).", 422);
+  }
+
+  // Authoritative timestamp for all rows in this submission batch
+  const submissionTimestamp = new Date();
+
+  // Create Row-per-Hour records
+  const recordsData = uniqueHours.map((hour) => ({
+    userId: user.id,
+    rollNo: user.rollNo || "",
+    name: user.name || "",
+    email: user.email || user.id,
+    department: user.department || "",
+    year: user.year || "",
+    date,
+    hour,
+    reason: reason.trim(),
+    status: "PRESENT",
+    source: "SELF",
+    createdAt: submissionTimestamp,
+  }));
 
   await prisma.attendance.createMany({
-    data: fresh.map((hour) => ({
-      userId: user.id,
-      rollNo: user.rollNo || "",
-      email: user.email || user.id,
-      name: user.name || "",
-      department: user.department || "",
-      year: user.year || "",
-      date,
-      hour,
-      reason,
-      status: "PRESENT",
-      source: "SELF",
-    })),
+    data: recordsData,
   });
 
-  // A full day earns points once, at the moment the day becomes complete.
-  const total = already.size + fresh.length;
-  if (already.size < ATTENDANCE_HOURS.length && total >= ATTENDANCE_HOURS.length) {
+  // Award reward points if a full day (all 7 hours) was submitted
+  if (uniqueHours.length >= ATTENDANCE_HOURS.length) {
     await prisma.$transaction([
       prisma.rewardEntry.create({
         data: {
           userId: user.id,
           points: REWARD_RULES.fullDayAttendance,
-          reason: `Full attendance on ${date}`,
+          reason: `Full Missed OTP Attendance on ${date}`,
           source: "ATTENDANCE",
+          createdAt: submissionTimestamp,
         },
       }),
       prisma.user.update({
@@ -82,9 +99,19 @@ export const POST = handler(async (request: Request) => {
     ]);
   }
 
-  await audit(user.id, "ATTENDANCE_CHECKIN", "Attendance", `${user.id}:${date}`, { hours: fresh });
+  await audit(user.id, "MISSED_OTP_ATTENDANCE_SUBMIT", "Attendance", `${user.id}:${date}`, {
+    hours: uniqueHours,
+    hoursCount: uniqueHours.length,
+    timestamp: submissionTimestamp.toISOString(),
+  });
 
-  return ok({ date, recorded: fresh, totalHours: total });
+  return ok({
+    date,
+    recorded: uniqueHours,
+    recordedHours: uniqueHours,
+    totalHours: uniqueHours.length,
+    timestamp: submissionTimestamp.toISOString(),
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -108,10 +135,10 @@ export const PUT = handler(async (request: Request) => {
     where: { id: userId },
     select: { id: true, name: true, rollNo: true, email: true, department: true, year: true }
   });
-  if (!target) return fail("That student is not on the roster.", 404);
+  if (!target) return fail("User is not on the roster.", 404);
 
   await prisma.$transaction([
-    prisma.attendance.deleteMany({ where: { userId, date, hour: { in: hours } } }),
+    prisma.attendance.deleteMany({ where: { userId, date } }),
     prisma.attendance.createMany({
       data: hours.map((hour) => ({
         userId,

@@ -25,6 +25,7 @@ import {
 } from "@/lib/constants";
 import { relativeTime } from "@/lib/dates";
 import { shortYear } from "@/lib/utils";
+import { ManageRosterOptionsModal } from "@/components/features/ManageRosterOptionsModal";
 
 export type PersonRow = {
   id: string;
@@ -50,7 +51,7 @@ export function PeopleClient({
   canManage,
 }: {
   people: PersonRow[];
-  options: { years: string[]; domains: string[]; mentors: string[] };
+  options: { departments: string[]; years: string[]; domains: string[]; mentors: string[] };
   actorRole: string;
   canManage: boolean;
 }) {
@@ -59,6 +60,7 @@ export function PeopleClient({
 
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("ALL");
+  const [department, setDepartment] = useState("ALL");
   const [year, setYear] = useState("ALL");
   const [domain, setDomain] = useState("ALL");
   const [status, setStatus] = useState("ALL");
@@ -66,21 +68,23 @@ export function PeopleClient({
   const [editing, setEditing] = useState<PersonRow | null>(null);
   const [suspending, setSuspending] = useState<PersonRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const [managingOptions, setManagingOptions] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return people.filter((person) => {
       if (role !== "ALL" && person.role !== role) return false;
+      if (department !== "ALL" && person.department !== department) return false;
       if (year !== "ALL" && person.year !== year) return false;
       if (domain !== "ALL" && person.domain !== domain) return false;
       if (status !== "ALL" && person.systemStatus !== status) return false;
       if (!q) return true;
-      return `${person.name} ${person.rollNo} ${person.email} ${person.domain} ${person.mentorName}`
+      return `${person.name} ${person.rollNo} ${person.email} ${person.department} ${person.domain} ${person.mentorName}`
         .toLowerCase()
         .includes(q);
     });
-  }, [people, query, role, year, domain, status]);
+  }, [people, query, role, department, year, domain, status]);
 
   const suspend = async () => {
     if (!suspending) return;
@@ -109,12 +113,19 @@ export function PeopleClient({
   const resetFilters = () => {
     setQuery("");
     setRole("ALL");
+    setDepartment("ALL");
     setYear("ALL");
     setDomain("ALL");
     setStatus("ALL");
   };
 
-  const filtersActive = query || role !== "ALL" || year !== "ALL" || domain !== "ALL" || status !== "ALL";
+  const filtersActive =
+    query ||
+    role !== "ALL" ||
+    department !== "ALL" ||
+    year !== "ALL" ||
+    domain !== "ALL" ||
+    status !== "ALL";
 
   return (
     <>
@@ -128,23 +139,32 @@ export function PeopleClient({
           </div>
 
           {canManage && (
-            <Button
-              variant="primary"
-              icon="plus"
-              size="sm"
-              onClick={() => setCreating(true)}
-              className="w-full sm:w-auto"
-            >
-              Add Person
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                icon="layers"
+                size="sm"
+                onClick={() => setManagingOptions(true)}
+              >
+                Manage Categories
+              </Button>
+              <Button
+                variant="primary"
+                icon="plus"
+                size="sm"
+                onClick={() => setCreating(true)}
+              >
+                Add Person
+              </Button>
+            </div>
           )}
         </div>
 
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <Input
               icon="search"
-              placeholder="Search name, roll number, email…"
+              placeholder="Search name, roll, email, dept…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search people"
@@ -155,6 +175,14 @@ export function PeopleClient({
             {ROLES.map((r) => (
               <option key={r} value={r}>
                 {ROLE_LABEL[r]}
+              </option>
+            ))}
+          </Select>
+          <Select value={department} onChange={(e) => setDepartment(e.target.value)} aria-label="Filter by department">
+            <option value="ALL">All departments</option>
+            {options.departments.map((d) => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </Select>
@@ -325,6 +353,12 @@ export function PeopleClient({
         />
       ) : null}
 
+      <ManageRosterOptionsModal
+        open={managingOptions}
+        onClose={() => setManagingOptions(false)}
+        onChanged={() => router.refresh()}
+      />
+
       <ConfirmDialog
         open={Boolean(suspending)}
         onClose={() => setSuspending(null)}
@@ -349,7 +383,7 @@ function ManageDialog({
   onSuspend,
 }: {
   person: PersonRow;
-  options: { years: string[]; domains: string[]; mentors: string[] };
+  options: { departments: string[]; years: string[]; domains: string[]; mentors: string[] };
   actorRole: string;
   onClose: () => void;
   onSuspend: () => void;
@@ -359,6 +393,7 @@ function ManageDialog({
 
   const [form, setForm] = useState({
     name: person.name,
+    department: person.department || "",
     year: person.year,
     domain: person.domain,
     mentorName: person.mentorName,
@@ -445,6 +480,16 @@ function ManageDialog({
             <Field label="Mobile" htmlFor="m-mobile">
               <Input id="m-mobile" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
             </Field>
+            <Field label="Department" htmlFor="m-dept">
+              <Select id="m-dept" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
+                <option value="">Not set</option>
+                {options.departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field label="Year / batch" htmlFor="m-year">
               <Select id="m-year" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
                 <option value="">Not set</option>
@@ -464,7 +509,7 @@ function ManageDialog({
                 ))}
               </Select>
             </Field>
-            <Field label="Mentor" htmlFor="m-mentor" className="sm:col-span-2">
+            <Field label="Mentor" htmlFor="m-mentor">
               <Select id="m-mentor" value={form.mentorName} onChange={(e) => setForm({ ...form, mentorName: e.target.value })}>
                 <option value="">Not assigned</option>
                 {options.mentors.map((m) => (
@@ -602,7 +647,7 @@ function CreatePersonDialog({
   actorRole,
   onClose,
 }: {
-  options: { years: string[]; domains: string[]; mentors: string[] };
+  options: { departments: string[]; years: string[]; domains: string[]; mentors: string[] };
   actorRole: string;
   onClose: () => void;
 }) {
@@ -751,12 +796,14 @@ function CreatePersonDialog({
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Department" htmlFor="create-dept">
-              <Input
-                id="create-dept"
-                placeholder="e.g. Artificial Intelligence and Data Science"
-                value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value })}
-              />
+              <Select id="create-dept" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
+                <option value="">Select Department</option>
+                {options.departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
             </Field>
 
             <Field label="Year / Batch" htmlFor="create-year">
