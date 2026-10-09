@@ -42,16 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Applies the stored theme before first paint — no flash on reload. */}
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-        {/*
-          Roboto — Google's own UI typeface, Apache 2.0 licensed and therefore
-          free to ship. Google Sans / Product Sans are deliberately NOT used:
-          they are proprietary to Google and not licensed for third parties.
-        */}
+        {/* Google Sans Text & Google Sans typography */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Google+Sans+Text:wght@400;500;600;700&family=Google+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
         />
       </head>
       <body>
