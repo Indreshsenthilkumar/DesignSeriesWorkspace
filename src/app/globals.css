@@ -7,22 +7,22 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* --- Brand ----------------------------------------------------------- */
+  /* --- Google Workspace Brand Colors ----------------------------------- */
   --color-brand-blue: #1a73e8;
-  --color-brand-blue-600: #1765cc;
-  --color-brand-blue-700: #1257ae;
+  --color-brand-blue-600: #1557d0;
+  --color-brand-blue-700: #174ea6;
   --color-brand-blue-050: #e8f0fe;
 
-  --color-brand-red: #ea4335;
-  --color-brand-red-600: #d33426;
+  --color-brand-red: #d93025;
+  --color-brand-red-600: #c5221f;
   --color-brand-red-050: #fce8e6;
 
-  --color-brand-amber: #f9ab00;
-  --color-brand-amber-600: #e09600;
+  --color-brand-amber: #e37400;
+  --color-brand-amber-600: #b06000;
   --color-brand-amber-050: #fef7e0;
 
-  --color-brand-green: #34a853;
-  --color-brand-green-600: #2c8f46;
+  --color-brand-green: #188038;
+  --color-brand-green-600: #137333;
   --color-brand-green-050: #e6f4ea;
 
   /* --- Typography ------------------------------------------------------- */
@@ -39,28 +39,29 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Semantic tokens
+   Semantic tokens — Exact Google Workspace UI Theme
    --------------------------------------------------------------------------- */
 
 :root {
   color-scheme: light;
 
-  --surface-page: #f4f6fb;
+  --surface-page: #f8fafd;
   --surface-raised: #ffffff;
-  --surface-sunken: #eceff7;
-  --surface-inset: #f8f9fc;
+  --surface-sunken: #f1f3f4;
+  --surface-inset: #f8f9fa;
   --surface-rail: #ffffff;
-  --surface-overlay: rgba(15, 23, 42, 0.42);
+  --surface-overlay: rgba(32, 33, 36, 0.45);
 
-  --text-strong: #0f1b33;
-  --text-default: #26324a;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
+  /* Exact Google Workspace Typography Role Colors */
+  --text-strong: #202124;         /* Headings, Titles & Primary text — Contrast: 16.09:1 */
+  --text-default: #3c4043;        /* Secondary & Standard text */
+  --text-muted: #5f6368;          /* Paragraphs & Generic text — Contrast: 6.04:1 */
+  --text-faint: #80868b;          /* Captions, subtexts & placeholder hints */
   --text-inverse: #ffffff;
 
-  --line-soft: #e3e8f2;
-  --line-default: #d5dded;
-  --line-strong: #b9c4da;
+  --line-soft: #f1f3f4;
+  --line-default: #dadce0;        /* Standard Google Workspace border */
+  --line-strong: #bdc1c6;
 
   --accent: var(--color-brand-blue);
   --accent-contrast: #ffffff;
@@ -68,45 +69,45 @@
 
   --ring: rgba(26, 115, 232, 0.45);
 
-  --shadow-card: 0 1px 2px rgba(15, 27, 51, 0.05), 0 1px 3px rgba(15, 27, 51, 0.04);
-  --shadow-raised: 0 4px 14px rgba(15, 27, 51, 0.08), 0 1px 3px rgba(15, 27, 51, 0.05);
-  --shadow-pop: 0 18px 45px rgba(15, 27, 51, 0.16), 0 2px 8px rgba(15, 27, 51, 0.08);
+  --shadow-card: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --shadow-raised: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --shadow-pop: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 8px 16px 6px rgba(60, 64, 67, 0.15);
 
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-xl: 24px;
 }
 
 .dark {
   color-scheme: dark;
 
-  --surface-page: #0b1020;
-  --surface-raised: #141a2e;
-  --surface-sunken: #0f1425;
-  --surface-inset: #1a2138;
-  --surface-rail: #10162a;
-  --surface-overlay: rgba(2, 6, 18, 0.66);
+  --surface-page: #202124;
+  --surface-raised: #2d2e30;
+  --surface-sunken: #171717;
+  --surface-inset: #28292c;
+  --surface-rail: #202124;
+  --surface-overlay: rgba(0, 0, 0, 0.65);
 
-  --text-strong: #f2f5fb;
-  --text-default: #d3daea;
-  --text-muted: #93a0bb;
-  --text-faint: #6b7896;
-  --text-inverse: #0b1020;
+  --text-strong: #e8eaed;
+  --text-default: #dadce0;
+  --text-muted: #bdc1c6;
+  --text-faint: #9aa0a6;
+  --text-inverse: #202124;
 
-  --line-soft: #232b45;
-  --line-default: #2c3552;
-  --line-strong: #3c4767;
+  --line-soft: #3c4043;
+  --line-default: #5f6368;
+  --line-strong: #7f868d;
 
-  --accent: #4d93f0;
-  --accent-contrast: #071021;
-  --accent-soft: rgba(77, 147, 240, 0.16);
+  --accent: #8ab4f8;
+  --accent-contrast: #202124;
+  --accent-soft: rgba(138, 180, 248, 0.18);
 
-  --ring: rgba(109, 168, 245, 0.55);
+  --ring: rgba(138, 180, 248, 0.55);
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-raised: 0 6px 20px rgba(0, 0, 0, 0.45);
-  --shadow-pop: 0 22px 55px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.5), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
+  --shadow-raised: 0 2px 6px 2px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 6px 16px 4px rgba(0, 0, 0, 0.6);
 }
 
 /* ---------------------------------------------------------------------------
@@ -125,7 +126,7 @@ html {
 
 body {
   background: var(--surface-page);
-  color: var(--text-default);
+  color: var(--text-muted); /* Generic text defaults to #5f6368 (contrast 6.04) */
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -144,11 +145,18 @@ kbd {
   font-family: inherit;
 }
 
+/* Heading role: exact #202124 color (contrast 16.09) with Google Sans */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--text-strong);
+  color: var(--text-strong); /* #202124 */
   font-family: var(--font-heading);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   font-weight: 600;
+}
+
+/* Paragraphs & generic text: exact #5F6368 color (contrast 6.04) */
+p {
+  color: var(--text-muted); /* #5F6368 */
+  line-height: 1.6;
 }
 
 ::selection {
