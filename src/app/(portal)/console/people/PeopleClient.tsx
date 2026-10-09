@@ -65,6 +65,7 @@ export function PeopleClient({
 
   const [editing, setEditing] = useState<PersonRow | null>(null);
   const [suspending, setSuspending] = useState<PersonRow | null>(null);
+  const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const filtered = useMemo(() => {
@@ -117,8 +118,28 @@ export function PeopleClient({
 
   return (
     <>
-      {/* Filters -------------------------------------------------------- */}
+      {/* Filters & Action Bar -------------------------------------------- */}
       <Card className="mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3 mb-3 border-b border-[var(--line-soft)]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold tracking-tight text-[var(--text-strong)]">
+              Roster Directory ({people.length})
+            </h2>
+          </div>
+
+          {canManage && (
+            <Button
+              variant="primary"
+              icon="plus"
+              size="sm"
+              onClick={() => setCreating(true)}
+              className="w-full sm:w-auto"
+            >
+              Add Person
+            </Button>
+          )}
+        </div>
+
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Input
@@ -293,6 +314,14 @@ export function PeopleClient({
             setSuspending(editing);
             setEditing(null);
           }}
+        />
+      ) : null}
+
+      {creating ? (
+        <CreatePersonDialog
+          options={options}
+          actorRole={actorRole}
+          onClose={() => setCreating(false)}
         />
       ) : null}
 
@@ -561,5 +590,290 @@ function Segment({
         </button>
       ))}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Create Person Dialog (Feeds new users directly into the database)
+// ---------------------------------------------------------------------------
+
+function CreatePersonDialog({
+  options,
+  actorRole,
+  onClose,
+}: {
+  options: { years: string[]; domains: string[]; mentors: string[] };
+  actorRole: string;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+
+  const [form, setForm] = useState({
+    name: "",
+    rollNo: "",
+    email: "",
+    department: "",
+    year: options.years[0] || "1st Year",
+    mobile: "",
+    domain: options.domains[0] || "Data not Feeded",
+    mentorName: "",
+    role: "STUDENT",
+    password: "",
+  });
+
+  const [permissions, setPermissions] = useState<Record<Permission, boolean>>(
+    Object.fromEntries(PERMISSIONS.map((p) => [p, false])) as Record<Permission, boolean>
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const assignableRoles = ROLES.filter((r) => actorRole === "SUPER_ADMIN" || r === "STUDENT" || r === "MENTOR");
+  const permissionsLocked = form.role === "SUPER_ADMIN";
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!form.name.trim()) {
+      setError("Please enter the person's full name.");
+      return;
+    }
+    if (!form.rollNo.trim()) {
+      setError("Please enter the roll number.");
+      return;
+    }
+    if (!form.email.trim()) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          name: form.name.trim(),
+          rollNo: form.rollNo.trim().toUpperCase(),
+          email: form.email.trim().toLowerCase(),
+          department: form.department.trim(),
+          mobile: form.mobile.trim(),
+          ...(form.role !== "STUDENT" ? permissions : {}),
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Failed to create user record.");
+      }
+
+      toast.success(
+        "User added to database!",
+        `${form.name} (${form.rollNo.toUpperCase()}) is now active. They can log in with their email and roll number.`
+      );
+      onClose();
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Failed to create user.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Add New Person to Portal"
+      description="Create a real user account in the database. Students can sign in with their email and roll number."
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreate} loading={saving}>
+            Add to Database
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleCreate} className="flex flex-col gap-5">
+        {error && (
+          <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-500">
+            {error}
+          </div>
+        )}
+
+        <section>
+          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+            Primary Identification
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Full Name" htmlFor="create-name" required>
+              <Input
+                id="create-name"
+                placeholder="e.g. John Doe"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </Field>
+
+            <Field label="Roll Number" htmlFor="create-roll" required help="Used as their default login password">
+              <Input
+                id="create-roll"
+                placeholder="e.g. 21AD001"
+                value={form.rollNo}
+                onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
+                required
+              />
+            </Field>
+
+            <Field label="College Email" htmlFor="create-email" required className="sm:col-span-2">
+              <Input
+                id="create-email"
+                type="email"
+                placeholder="e.g. user21ad@bitsathy.ac.in"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+            Academic & Programme Details
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Department" htmlFor="create-dept">
+              <Input
+                id="create-dept"
+                placeholder="e.g. Artificial Intelligence and Data Science"
+                value={form.department}
+                onChange={(e) => setForm({ ...form, department: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Year / Batch" htmlFor="create-year">
+              <Select id="create-year" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
+                {options.years.length > 0 ? (
+                  options.years.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="Staff">Staff</option>
+                  </>
+                )}
+              </Select>
+            </Field>
+
+            <Field label="Domain Track" htmlFor="create-domain">
+              <Select id="create-domain" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })}>
+                {options.domains.length > 0 ? (
+                  options.domains.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="UI/UX Design">UI/UX Design</option>
+                    <option value="Full Stack Development">Full Stack Development</option>
+                    <option value="AI & Machine Learning">AI & Machine Learning</option>
+                    <option value="Mobile App Development">Mobile App Development</option>
+                    <option value="Cloud & DevOps">Cloud & DevOps</option>
+                    <option value="Data not Feeded">Data not Feeded</option>
+                  </>
+                )}
+              </Select>
+            </Field>
+
+            <Field label="Assigned Mentor" htmlFor="create-mentor">
+              <Select id="create-mentor" value={form.mentorName} onChange={(e) => setForm({ ...form, mentorName: e.target.value })}>
+                <option value="">Not assigned</option>
+                {options.mentors.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="Mobile Number" htmlFor="create-mobile" className="sm:col-span-2">
+              <Input
+                id="create-mobile"
+                placeholder="e.g. 9876543210"
+                value={form.mobile}
+                onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+            Role & Security
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Account Role" htmlFor="create-role">
+              <Select id="create-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                {assignableRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {ROLE_LABEL[role]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="Custom Password (Optional)" htmlFor="create-pass" help="Leave empty to use Roll Number as password">
+              <Input
+                id="create-pass"
+                type="text"
+                placeholder="Defaults to roll number"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            </Field>
+          </div>
+        </section>
+
+        {form.role !== "STUDENT" && (
+          <section>
+            <h3 className="mb-1 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+              Console Module Permissions
+            </h3>
+            <p className="mb-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
+              {permissionsLocked
+                ? "Super admins hold every permission implicitly."
+                : "Select the specific console modules this staff member can access."}
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {PERMISSIONS.map((permission) => (
+                <Checkbox
+                  key={permission}
+                  label={PERMISSION_LABEL[permission]}
+                  description={PERMISSION_HINT[permission]}
+                  checked={permissionsLocked ? true : permissions[permission]}
+                  disabled={permissionsLocked}
+                  onChange={(e) => setPermissions({ ...permissions, [permission]: e.target.checked })}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </form>
+    </Modal>
   );
 }

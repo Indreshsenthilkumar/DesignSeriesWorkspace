@@ -11,16 +11,16 @@ const permissionShape = Object.fromEntries(
 ) as Record<(typeof PERMISSIONS)[number], z.ZodOptional<z.ZodBoolean>>;
 
 const createSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  rollNo: z.string().trim().min(3).max(40),
-  email: z.string().trim().email().max(160),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
+  rollNo: z.string().trim().min(2, "Roll number must be at least 2 characters").max(40),
+  email: z.string().trim().email("Invalid email address").max(160),
   department: z.string().trim().max(160).default(""),
   year: z.string().trim().max(80).default(""),
   mobile: z.string().trim().max(20).default(""),
   domain: z.string().trim().max(120).default("Data not Feeded"),
   mentorName: z.string().trim().max(120).default(""),
   role: z.enum(ROLES).default("STUDENT"),
-  password: z.string().min(10, "Use at least 10 characters.").max(200),
+  password: z.string().min(3).max(200).optional(),
   ...permissionShape,
 });
 
@@ -32,26 +32,48 @@ export const POST = handler(async (request: Request) => {
     return fail("You cannot create an account at or above your own role.", 403);
   }
 
-  const clash = await prisma.user.findFirst({
-    where: { OR: [{ email: data.email.toLowerCase() }, { rollNo: data.rollNo.toUpperCase() }] },
-    select: { id: true },
-  });
-  if (clash) return fail("An account already exists with that email or roll number.", 409);
-
   const normalizedEmail = data.email.toLowerCase().trim();
+  const normalizedRollNo = data.rollNo.toUpperCase().trim();
+
+  const clash = await prisma.user.findFirst({
+    where: { OR: [{ email: normalizedEmail }, { rollNo: normalizedRollNo }] },
+    select: { id: true, email: true, rollNo: true },
+  });
+  if (clash) {
+    if (clash.email.toLowerCase() === normalizedEmail) {
+      return fail("An account already exists with that email address.", 409);
+    }
+    return fail("An account already exists with that roll number.", 409);
+  }
+
+  const initialPassword = password?.trim() || normalizedRollNo || "designseries@2026";
   const user = await prisma.user.create({
     data: {
       ...data,
       id: normalizedEmail,
       email: normalizedEmail,
-      rollNo: data.rollNo.toUpperCase().trim(),
-      passwordHash: await hashPassword(password),
+      rollNo: normalizedRollNo,
+      passwordHash: await hashPassword(initialPassword),
       mustChangePassword: true,
     },
-    select: { id: true, name: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      rollNo: true,
+      department: true,
+      year: true,
+      mobile: true,
+      domain: true,
+      mentorName: true,
+      role: true,
+      systemStatus: true,
+      rewardPoints: true,
+      lastLoginAt: true,
+    },
   });
 
-  await audit(admin.id, "USER_CREATE", "User", user.id, { role: user.role });
+  await audit(admin.id, "USER_CREATE", "User", user.id, { role: user.role, email: user.email });
 
   return ok(user, 201);
 });

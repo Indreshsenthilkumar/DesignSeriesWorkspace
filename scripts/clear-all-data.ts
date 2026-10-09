@@ -1,5 +1,5 @@
-import { getSheetsClient } from "../src/lib/google-sheets";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import * as fs from "fs";
 
 // Load .env manually to ensure script is fully standalone
@@ -16,117 +16,217 @@ if (fs.existsSync(".env")) {
   });
 }
 
-
-const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🧹 Clearing all data from Google Sheets and local database...");
-  const sheets = getSheetsClient();
+  console.log("🧹 Clearing all demo data from the database...");
 
-  const tabs = [
-    { name: "Users", model: "user" },
-    { name: "Attendance", model: "attendance" },
-    { name: "Worklogs", model: "worklog" },
-    { name: "Tasks", model: "task" },
-    { name: "ActivityPasses", model: "activityPass" },
-    { name: "Notifications", model: "notification" },
-    { name: "NotificationReads", model: "notificationRead" },
-    { name: "Notes", model: "note" },
-    { name: "LinkedinPosts", model: "linkedinPost" },
-    { name: "RewardEntries", model: "rewardEntry" },
-    { name: "ExtensionRequests", model: "extensionRequest" },
-    { name: "AuditLogs", model: "auditLog" }
-  ];
+  // 1. Delete all transactional tables (LeaveRequest, Attendance, Worklog, Tasks, Passes, etc.)
+  console.log("Deleting leave requests...");
+  await prisma.leaveRequest.deleteMany({});
 
-  // 1. Clear all rows in Google Sheets (except header row 1)
-  for (const tab of tabs) {
-    console.log(`Clearing tab "${tab.name}"...`);
-    try {
-      // Clear everything from row 2 onwards
-      await sheets.spreadsheets.values.clear({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${tab.name}!A2:Z`,
-      });
-    } catch (e) {
-      console.warn(`Could not clear tab ${tab.name}:`, e);
-    }
+  console.log("Deleting attendance records...");
+  await prisma.attendance.deleteMany({});
 
-    // Clear local SQLite table
-    await (prisma as any)[tab.model].deleteMany({});
-  }
+  console.log("Deleting worklogs...");
+  await prisma.worklog.deleteMany({});
 
-  // 2. Re-create exactly ONE default Super Admin user in Google Sheets so they can log in
-  // Default password hash for "designseries@2026"
-  const defaultAdmin = {
-    id: "cm01adminid1234567890",
-    name: "Super Admin",
-    rollNo: "20354",
-    email: "do20354@bitsathy.ac.in",
-    department: "Administration",
-    year: "Staff",
-    mobile: "9876543210",
-    domain: "Administration",
-    mentorName: "Director",
-    linkedin: "",
-    github: "",
-    role: "SUPER_ADMIN",
-    systemStatus: "ACTIVE",
-    // bcrypt hash of "designseries@2026"
-    passwordHash: "$2a$10$rF6lJCedOjyCbMKwduh0YuFtjCd6AP5komOkwXGlOAikoDkFS9QUm",
-    mustChangePassword: "false",
-    rewardPoints: "0",
-    avatarSeed: "42",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  console.log("Deleting tasks...");
+  await prisma.task.deleteMany({});
 
-  const userHeaders = [
-    "id", "name", "rollNo", "email", "department", "year", "mobile", "domain",
-    "mentorName", "linkedin", "github", "role", "systemStatus", "passwordHash",
-    "mustChangePassword", "rewardPoints", "avatarSeed", "createdAt", "updatedAt"
-  ];
+  console.log("Deleting activity passes...");
+  await prisma.activityPass.deleteMany({});
 
-  const adminRow = userHeaders.map(h => (defaultAdmin as any)[h]);
+  console.log("Deleting notification reads...");
+  await prisma.notificationRead.deleteMany({});
 
-  console.log("👤 Creating default Super Admin user in Google Sheets...");
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: "Users!A:A",
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [adminRow],
+  console.log("Deleting notifications...");
+  await prisma.notification.deleteMany({});
+
+  console.log("Deleting notes...");
+  await prisma.note.deleteMany({});
+
+  console.log("Deleting LinkedIn posts...");
+  await prisma.linkedinPost.deleteMany({});
+
+  console.log("Deleting reward entries...");
+  await prisma.rewardEntry.deleteMany({});
+
+  console.log("Deleting extension requests...");
+  await prisma.extensionRequest.deleteMany({});
+
+  console.log("Deleting audit logs...");
+  await prisma.auditLog.deleteMany({});
+
+  // 2. Delete all demo users except the official Super Admin & Admin
+  console.log("Deleting all demo users...");
+  await prisma.user.deleteMany({
+    where: {
+      email: {
+        notIn: ["do20354@bitsathy.ac.in", "admin@bitsathy.ac.in"],
+      },
+      rollNo: {
+        notIn: ["20354", "ADMIN01"],
+      },
     },
   });
 
-  // 3. Sync SQLite from Google Sheets (which now only has the one admin user)
-  console.log("🔄 Syncing local database cache...");
-  // Clear and insert to local prisma User table
-  await prisma.user.create({
-    data: {
-      id: defaultAdmin.id,
-      name: defaultAdmin.name,
-      rollNo: defaultAdmin.rollNo,
-      email: defaultAdmin.email,
-      department: defaultAdmin.department,
-      year: defaultAdmin.year,
-      mobile: defaultAdmin.mobile,
-      domain: defaultAdmin.domain,
-      mentorName: defaultAdmin.mentorName,
-      linkedin: defaultAdmin.linkedin,
-      github: defaultAdmin.github,
-      role: defaultAdmin.role,
-      systemStatus: defaultAdmin.systemStatus,
-      passwordHash: defaultAdmin.passwordHash,
+  // 3. Ensure Super Admin and Admin accounts exist with valid password hashes
+  const adminPasswordHash = await bcrypt.hash("designseries@2026", 10);
+
+  const superAdminEmail = "do20354@bitsathy.ac.in";
+  await prisma.user.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      name: "Super Admin",
+      rollNo: "20354",
+      department: "Administration",
+      year: "Staff",
+      mobile: "9876543210",
+      domain: "Administration",
+      mentorName: "Director",
+      role: "SUPER_ADMIN",
+      systemStatus: "ACTIVE",
+      passwordHash: adminPasswordHash,
       mustChangePassword: false,
-      rewardPoints: 0,
-      avatarSeed: 42,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
+      permUserManagement: true,
+      permScanStudentQr: true,
+      permMentorTasks: true,
+      permLinkedinTracker: true,
+      permWorklogs: true,
+      permNotifications: true,
+      permAttendanceLogs: true,
+      permExtensionRequest: true,
+      permAdminDatabase: true,
+      permActivityApproval: true,
+    },
+    create: {
+      id: superAdminEmail,
+      email: superAdminEmail,
+      name: "Super Admin",
+      rollNo: "20354",
+      department: "Administration",
+      year: "Staff",
+      mobile: "9876543210",
+      domain: "Administration",
+      mentorName: "Director",
+      role: "SUPER_ADMIN",
+      systemStatus: "ACTIVE",
+      passwordHash: adminPasswordHash,
+      mustChangePassword: false,
+      permUserManagement: true,
+      permScanStudentQr: true,
+      permMentorTasks: true,
+      permLinkedinTracker: true,
+      permWorklogs: true,
+      permNotifications: true,
+      permAttendanceLogs: true,
+      permExtensionRequest: true,
+      permAdminDatabase: true,
+      permActivityApproval: true,
+    },
   });
 
-  console.log("✅ All test data cleared! Only 1 Super Admin remains in Google Sheets and local database.");
+  const adminEmail = "admin@bitsathy.ac.in";
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      name: "Portal Admin",
+      rollNo: "ADMIN01",
+      department: "DesignSeries Administration",
+      year: "Staff",
+      mobile: "9876543211",
+      domain: "Administration",
+      mentorName: "Director",
+      role: "ADMIN",
+      systemStatus: "ACTIVE",
+      passwordHash: adminPasswordHash,
+      mustChangePassword: false,
+      permUserManagement: true,
+      permScanStudentQr: true,
+      permMentorTasks: true,
+      permLinkedinTracker: true,
+      permWorklogs: true,
+      permNotifications: true,
+      permAttendanceLogs: true,
+      permExtensionRequest: true,
+      permAdminDatabase: true,
+      permActivityApproval: true,
+    },
+    create: {
+      id: adminEmail,
+      email: adminEmail,
+      name: "Portal Admin",
+      rollNo: "ADMIN01",
+      department: "DesignSeries Administration",
+      year: "Staff",
+      mobile: "9876543211",
+      domain: "Administration",
+      mentorName: "Director",
+      role: "ADMIN",
+      systemStatus: "ACTIVE",
+      passwordHash: adminPasswordHash,
+      mustChangePassword: false,
+      permUserManagement: true,
+      permScanStudentQr: true,
+      permMentorTasks: true,
+      permLinkedinTracker: true,
+      permWorklogs: true,
+      permNotifications: true,
+      permAttendanceLogs: true,
+      permExtensionRequest: true,
+      permAdminDatabase: true,
+      permActivityApproval: true,
+    },
+  });
+
+  // Optional: clear Google Sheets if credentials are present
+  if (process.env.GOOGLE_SPREADSHEET_ID) {
+    try {
+      const { getSheetsClient } = await import("../src/lib/google-sheets");
+      const sheets = getSheetsClient();
+      const sheetTabs = [
+        "Attendance",
+        "Worklogs",
+        "Tasks",
+        "ActivityPasses",
+        "Notifications",
+        "NotificationReads",
+        "Notes",
+        "LinkedinPosts",
+        "RewardEntries",
+        "ExtensionRequests",
+        "AuditLogs",
+        "LeaveRequests",
+      ];
+      for (const tab of sheetTabs) {
+        try {
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID,
+            range: `${tab}!A2:Z`,
+          });
+        } catch (e) {
+          // ignore if tab doesn't exist
+        }
+      }
+      console.log("Cleared Google Sheets transaction tabs.");
+    } catch (e) {
+      console.log("Skipping Google Sheets cleanup (not configured or offline).");
+    }
+  }
+
+  const remainingUsers = await prisma.user.count();
+  const remainingAttendance = await prisma.attendance.count();
+  const remainingWorklogs = await prisma.worklog.count();
+  const remainingLeaves = await prisma.leaveRequest.count();
+
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("✅ All demo data successfully wiped from the database!");
+  console.log(`   • Users in DB:          ${remainingUsers} (Super Admin & Admin only)`);
+  console.log(`   • Attendance in DB:     ${remainingAttendance}`);
+  console.log(`   • Worklogs in DB:       ${remainingWorklogs}`);
+  console.log(`   • Leave Requests in DB: ${remainingLeaves}`);
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }
 
 main()
