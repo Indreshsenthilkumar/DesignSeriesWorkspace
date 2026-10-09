@@ -84,25 +84,25 @@ export function LeaveDetailClient({
     switch (status) {
       case "APPROVED":
         return (
-          <span className="inline-flex items-center rounded-full bg-[#107c41] px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-[#107c41] px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
             Approved
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center rounded-full bg-rose-600 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
             Rejected
           </span>
         );
       case "CANCELLED":
         return (
-          <span className="inline-flex items-center rounded-full bg-slate-500 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-slate-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
             Cancelled
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center rounded-full bg-amber-500 px-3 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-amber-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
             Pending
           </span>
         );
@@ -113,7 +113,7 @@ export function LeaveDetailClient({
     const isOD = isLeaveTypeOnDuty(type);
     return (
       <span
-        className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium text-white shadow-sm ${
+        className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ${
           isOD ? "bg-[#2563eb]" : "bg-[#6366f1]"
         }`}
       >
@@ -137,7 +137,7 @@ export function LeaveDetailClient({
         {/* Share Button */}
         <button
           onClick={handleShare}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] transition-all shadow-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] transition-all shadow-sm"
         >
           <Icon name="link" className="h-3.5 w-3.5" />
           Share Link
@@ -145,7 +145,7 @@ export function LeaveDetailClient({
       </div>
 
       {/* Main Leave Details Slip Card */}
-      <div className="overflow-hidden rounded-2xl border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xl text-[var(--text-strong)]">
+      <div className="overflow-hidden rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-sm text-[var(--text-strong)]">
         {/* Slip Header */}
         <div className="flex items-center justify-between border-b border-[var(--line-soft)] px-4 py-3.5 sm:px-6 sm:py-5 bg-[var(--surface-sunken)]">
           <div className="min-w-0 pr-2">
@@ -161,40 +161,40 @@ export function LeaveDetailClient({
 
         <div className="p-4 sm:p-7 space-y-4 sm:space-y-6">
           {/* Section 1: HIGHLIGHTED Student Details, Department & Mentor Name at the TOP */}
-          <div className="rounded-xl border border-[var(--color-brand-blue)]/25 bg-[var(--color-brand-blue)]/5 p-3.5 sm:p-5 shadow-sm">
+          <div className="rounded-lg border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 p-3.5 sm:p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[var(--color-brand-blue)]/15 text-[var(--color-brand-blue)]">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--color-brand-blue)]/15 text-[var(--color-brand-blue)]">
                 <Icon name="user" className="h-3.5 w-3.5" />
               </div>
-              <span className="text-[10.5px] sm:text-xs font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+              <span className="text-xs sm:text-sm font-bold text-[#1967d2] dark:text-[#8ab4f8]">
                 Student & Mentor Details
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
                   Student Name & Roll No
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] break-words">
-                  {studentName} <span className="font-medium text-[var(--text-muted)]">({studentRollNo})</span>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words">
+                  {studentName} <span className="font-semibold text-[#5f6368] dark:text-[#9aa0a6]">({studentRollNo})</span>
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
                   Department
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] leading-snug break-words">
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white leading-snug break-words">
                   {studentDept}
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
                   Mentor Name
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] leading-snug break-words">
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white leading-snug break-words">
                   {mentorDisplayName}
                 </p>
               </div>
@@ -203,56 +203,62 @@ export function LeaveDetailClient({
 
           {/* Section 2: Leave Information (Mobile-responsive 2 col grid) */}
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-[var(--text-strong)] uppercase tracking-wider text-[var(--text-muted)] mb-2.5">
+            <h3 className="text-sm sm:text-base font-bold text-[#202124] dark:text-white mb-2.5">
               Leave Information
             </h3>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+            <div className="grid grid-cols-2 gap-3.5 sm:gap-4 text-xs sm:text-sm">
               <div className="min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Leave Type</p>
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Leave Type</p>
                 <div className="mt-1">{getTypeBadge(leave.leaveType)}</div>
               </div>
               <div className="min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Status</p>
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Status</p>
                 <div className="mt-1">{getStatusBadge(leave.status)}</div>
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">From Date</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-semibold text-[var(--text-strong)] break-words leading-tight">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">From Date</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
                   {formatLeaveDateTime(leave.fromDate)}
                 </p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">To Date</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-semibold text-[var(--text-strong)] break-words leading-tight">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">To Date</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
                   {formatLeaveDateTime(leave.toDate)}
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Duration</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)]">{leave.duration || "1 day"}</p>
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Duration</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white">{leave.duration || "1 day"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Applied On</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
+                  {leave.createdAt ? formatLeaveDateTime(leave.createdAt) : "—"}
+                </p>
               </div>
 
-              <div className="col-span-2 pt-1 min-w-0">
-                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Remarks / Reason</p>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] whitespace-pre-wrap break-words rounded-lg bg-[var(--surface-sunken)] p-3 border border-[var(--line-soft)] leading-relaxed">
+              <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
+                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Remarks / Reason</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] whitespace-pre-wrap break-words leading-relaxed">
                   {displayReason}
                 </p>
               </div>
 
               {leave.venueDetails ? (
-                <div className="col-span-2 min-w-0">
-                  <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Venue Details</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] break-words rounded-lg bg-[var(--surface-sunken)] p-2.5 border border-[var(--line-soft)]">{leave.venueDetails}</p>
+                <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
+                  <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Venue Details</p>
+                  <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] break-words leading-relaxed">{leave.venueDetails}</p>
                 </div>
               ) : null}
 
               {leave.companyDetails ? (
-                <div className="col-span-2 min-w-0">
-                  <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Company Details</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] break-words rounded-lg bg-[var(--surface-sunken)] p-2.5 border border-[var(--line-soft)]">{leave.companyDetails}</p>
+                <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
+                  <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Company Details</p>
+                  <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] break-words leading-relaxed">{leave.companyDetails}</p>
                 </div>
               ) : null}
             </div>
@@ -260,11 +266,11 @@ export function LeaveDetailClient({
 
           {/* Section 3: Approval Status */}
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-[var(--text-strong)] mb-3">
+            <h3 className="text-sm sm:text-base font-bold text-[#202124] dark:text-white mb-2.5">
               Approval Status
             </h3>
 
-            <div className="rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3.5 sm:p-5">
+            <div className="rounded-lg border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3.5 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm font-bold text-[var(--text-strong)]">Review Decision</span>
                 {getStatusBadge(leave.status)}
@@ -281,14 +287,14 @@ export function LeaveDetailClient({
               )}
 
               {leave.reviewerRemark ? (
-                <div className="mt-3 rounded-lg bg-[var(--surface-raised)] p-3 border border-[var(--line-soft)] text-xs break-words">
+                <div className="mt-3 rounded-md bg-[var(--surface-raised)] p-3 border border-[var(--line-soft)] text-xs break-words">
                   <span className="font-semibold text-[var(--text-strong)]">Reviewer Remark: </span>
                   <span className="text-[var(--text-muted)]">{leave.reviewerRemark}</span>
                 </div>
               ) : null}
 
               {error && (
-                <div className="mt-3 rounded-lg bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-500">
+                <div className="mt-3 rounded-md bg-rose-500/10 border border-rose-500/20 p-2.5 text-xs text-rose-500">
                   {error}
                 </div>
               )}
@@ -301,20 +307,20 @@ export function LeaveDetailClient({
                     placeholder="Optional review remark (e.g., Approved for competition)..."
                     value={remark}
                     onChange={(e) => setRemark(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-blue)]"
+                    className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-blue)]"
                   />
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
                     <button
                       disabled={loading}
                       onClick={() => handleDecision("APPROVED")}
-                      className="flex-1 rounded-lg bg-[#107c41] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0e6b37] disabled:opacity-50 transition-colors shadow-sm"
+                      className="flex-1 rounded-md bg-[#107c41] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0e6b37] disabled:opacity-50 transition-colors shadow-sm"
                     >
                       {loading ? "Processing..." : "Approve Request"}
                     </button>
                     <button
                       disabled={loading}
                       onClick={() => handleDecision("REJECTED")}
-                      className="flex-1 rounded-lg bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-sm"
+                      className="flex-1 rounded-md bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-sm"
                     >
                       {loading ? "Processing..." : "Reject Request"}
                     </button>
@@ -328,7 +334,7 @@ export function LeaveDetailClient({
                   <button
                     disabled={loading}
                     onClick={() => handleDecision("CANCELLED")}
-                    className="w-full rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-500 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
+                    className="w-full rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-500 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
                   >
                     {loading ? "Cancelling..." : "Cancel Leave Request"}
                   </button>
@@ -345,7 +351,7 @@ export function LeaveDetailClient({
           </span>
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] transition-colors shadow-sm"
           >
             <Icon name="link" className="h-3.5 w-3.5" />
             Share

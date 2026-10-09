@@ -72,7 +72,7 @@ export function ApplyLeaveModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2.5 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative flex flex-col w-full max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-hidden rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] shadow-2xl text-[var(--text-strong)]">
+      <div className="relative flex flex-col w-full max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-hidden rounded-xl bg-[var(--surface-raised)] border border-[var(--line-default)] shadow-2xl text-[var(--text-strong)]">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--line-soft)] px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="min-w-0 pr-2">
@@ -87,7 +87,7 @@ export function ApplyLeaveModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)] transition-colors"
+            className="shrink-0 rounded-md p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)] transition-colors"
           >
             <Icon name="close" className="h-5 w-5" />
           </button>
@@ -96,7 +96,7 @@ export function ApplyLeaveModal({
         {/* Form Scrollable Body */}
         <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 overscroll-contain">
           {error && (
-            <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-500">
+            <div className="rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-500">
               {error}
             </div>
           )}
@@ -109,7 +109,7 @@ export function ApplyLeaveModal({
             <select
               value={leaveType}
               onChange={(e) => setLeaveType(e.target.value)}
-              className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-sm text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+              className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-sm text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
               required
             >
               {LEAVE_TYPES.map((type) => (
@@ -130,7 +130,7 @@ export function ApplyLeaveModal({
                 type="datetime-local"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -143,14 +143,14 @@ export function ApplyLeaveModal({
                 type="datetime-local"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-strong)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                 required
               />
             </div>
           </div>
 
           {estimatedDuration && (
-            <div className="rounded-lg bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-muted)] flex items-center justify-between">
+            <div className="rounded-md bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-muted)] flex items-center justify-between">
               <span>Estimated Duration:</span>
               <span className="font-semibold text-[var(--text-strong)]">{estimatedDuration}</span>
             </div>
@@ -167,7 +167,7 @@ export function ApplyLeaveModal({
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 placeholder="Explain the reason for your leave (e.g. Going to Home, Medical rest)..."
-                className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -185,7 +185,7 @@ export function ApplyLeaveModal({
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={2}
                   placeholder="Details of the event or examination..."
-                  className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -198,7 +198,7 @@ export function ApplyLeaveModal({
                   value={venueDetails}
                   onChange={(e) => setVenueDetails(e.target.value)}
                   placeholder="Venue location, college name or exam center..."
-                  className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -217,7 +217,7 @@ export function ApplyLeaveModal({
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={2}
                   placeholder="Competition or presentation details..."
-                  className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -230,7 +230,7 @@ export function ApplyLeaveModal({
                   value={companyDetails}
                   onChange={(e) => setCompanyDetails(e.target.value)}
                   placeholder="Company name, institution or organizing body..."
-                  className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -249,7 +249,7 @@ export function ApplyLeaveModal({
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={2}
                   placeholder="Details of the placement drive or training course..."
-                  className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                  className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] p-3 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                   required
                 />
               </div>
@@ -263,7 +263,7 @@ export function ApplyLeaveModal({
                     value={venueDetails}
                     onChange={(e) => setVenueDetails(e.target.value)}
                     placeholder="Venue location..."
-                    className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                    className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                     required
                   />
                 </div>
@@ -276,7 +276,7 @@ export function ApplyLeaveModal({
                     value={companyDetails}
                     onChange={(e) => setCompanyDetails(e.target.value)}
                     placeholder="Company name..."
-                    className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+                    className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
                     required
                   />
                 </div>
@@ -289,14 +289,14 @@ export function ApplyLeaveModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] px-4 py-2.5 text-xs font-semibold text-[var(--text-strong)] hover:bg-[var(--surface-raised)] transition-colors"
+              className="rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] px-4 py-2.5 text-xs font-semibold text-[var(--text-strong)] hover:bg-[var(--surface-raised)] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-[var(--color-brand-blue)] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-50 transition-all shadow-md"
+              className="rounded-md bg-[var(--color-brand-blue)] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-50 transition-all shadow-md"
             >
               {loading ? "Submitting..." : "Submit Leave Request"}
             </button>

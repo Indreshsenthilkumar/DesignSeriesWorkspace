@@ -35,25 +35,25 @@ export function ConsoleLeavesClient({
     switch (status) {
       case "APPROVED":
         return (
-          <span className="inline-flex items-center rounded-full bg-[#107c41] px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-[#107c41] px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
             Approved
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
             Rejected
           </span>
         );
       case "CANCELLED":
         return (
-          <span className="inline-flex items-center rounded-full bg-slate-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-slate-500 px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
             Cancelled
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+          <span className="inline-flex items-center rounded-md bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
             Pending
           </span>
         );
@@ -64,7 +64,7 @@ export function ConsoleLeavesClient({
     const isOD = isLeaveTypeOnDuty(type);
     return (
       <span
-        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ${
+        className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium text-white shadow-sm ${
           isOD ? "bg-[#2563eb]" : "bg-[#6366f1]"
         }`}
       >
@@ -78,7 +78,7 @@ export function ConsoleLeavesClient({
       {/* Top Filter & Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl bg-[var(--surface-sunken)] p-1 border border-[var(--line-soft)]">
+        <div className="flex items-center gap-1.5 overflow-x-auto rounded-lg bg-[var(--surface-sunken)] p-1 border border-[var(--line-soft)]">
           {[
             { id: "PENDING", label: "Pending" },
             { id: "APPROVED", label: "Approved" },
@@ -88,7 +88,7 @@ export function ConsoleLeavesClient({
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id)}
-              className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
+              className={`rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all ${
                 filter === tab.id
                   ? "bg-[var(--surface-raised)] text-[var(--text-strong)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--text-strong)]"
@@ -110,15 +110,15 @@ export function ConsoleLeavesClient({
             placeholder="Search by student, roll no, type..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-[var(--line-default)] bg-[var(--surface-sunken)] pl-9 pr-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
+            className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-sunken)] pl-9 pr-3.5 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:border-[var(--color-brand-blue)] focus:outline-none transition-colors"
           />
         </div>
       </div>
 
       {/* Requests Table */}
       {filteredLeaves.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--line-default)] bg-[var(--surface-raised)] p-12 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[var(--surface-sunken)] text-[var(--text-muted)] mb-3">
+        <div className="rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] p-12 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-[var(--surface-sunken)] text-[var(--text-muted)] mb-3">
             <Icon name="calendar" className="h-6 w-6" />
           </div>
           <h3 className="text-base font-semibold text-[var(--text-strong)]">No leave requests found</h3>
@@ -129,7 +129,7 @@ export function ConsoleLeavesClient({
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-sm">
+        <div className="overflow-hidden rounded-lg border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-[var(--line-soft)] bg-[var(--surface-sunken)] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
