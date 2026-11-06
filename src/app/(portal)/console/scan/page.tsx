@@ -19,7 +19,7 @@ export default async function ScanPage() {
 
   const [students, todayRows] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "STUDENT", systemStatus: "ACTIVE" },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, rollNo: true, domain: true, year: true },
     }),

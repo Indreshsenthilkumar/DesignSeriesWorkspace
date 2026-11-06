@@ -49,6 +49,7 @@ export const STATUS_TONE: Record<string, Tone> = {
   MENTOR: "amber",
   ADMIN: "green",
   SUPER_ADMIN: "red",
+  STUDENT_ADMIN: "green",
 };
 
 export function toneFor(value: string): Tone {

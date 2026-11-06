@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import { audit, fail, handler, ok } from "@/lib/api";
-import { hashPassword, requireApiPermission } from "@/lib/auth";
+import { ApiError, hashPassword, requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PERMISSIONS, ROLES } from "@/lib/constants";
-import { outranks, type PermissionSubject } from "@/lib/permissions";
+import { can, isStaff, outranks, type PermissionSubject } from "@/lib/permissions";
 
 const permissionShape = Object.fromEntries(
   PERMISSIONS.map((p) => [p, z.boolean().optional()])
@@ -19,18 +19,32 @@ const createSchema = z.object({
   mobile: z.string().trim().max(20).default(""),
   domain: z.string().trim().max(120).default("Data not Feeded"),
   mentorName: z.string().trim().max(120).default(""),
+  linkedin: z.string().trim().max(300).default(""),
+  github: z.string().trim().max(300).default(""),
   role: z.enum(ROLES).default("STUDENT"),
   password: z.string().min(3).max(200).optional(),
+  portalNavDisabled: z.string().max(500).optional().default(""),
   ...permissionShape,
 });
 
-export const POST = handler(async (request: Request) => {
-  const admin = await requireApiPermission("permUserManagement");
-  const { password, ...data } = createSchema.parse(await request.json());
-
-  if (!outranks(admin as PermissionSubject, data.role) && admin.role !== "SUPER_ADMIN") {
-    return fail("You cannot create an account at or above your own role.", 403);
+async function requireCanManageUsers() {
+  const user = await requireApiUser();
+  const subject = user as PermissionSubject;
+  const allowed =
+    subject.role === "SUPER_ADMIN" ||
+    subject.role === "ADMIN" ||
+    subject.role === "MENTOR" ||
+    subject.role === "STUDENT_ADMIN" ||
+    can(subject, "permUserManagement");
+  if (!allowed) {
+    throw new ApiError(403, "You do not have permission to manage accounts.");
   }
+  return user;
+}
+
+export const POST = handler(async (request: Request) => {
+  const admin = await requireCanManageUsers();
+  const { password, ...data } = createSchema.parse(await request.json());
 
   const normalizedEmail = data.email.toLowerCase().trim();
   const normalizedRollNo = data.rollNo.toUpperCase().trim();
@@ -66,6 +80,8 @@ export const POST = handler(async (request: Request) => {
       mobile: true,
       domain: true,
       mentorName: true,
+      linkedin: true,
+      github: true,
       role: true,
       systemStatus: true,
       rewardPoints: true,
@@ -93,11 +109,12 @@ const updateSchema = z.object({
   role: z.enum(ROLES).optional(),
   systemStatus: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
   resetPassword: z.string().min(10).max(200).optional(),
+  portalNavDisabled: z.string().max(500).optional(),
   ...permissionShape,
 });
 
 export const PATCH = handler(async (request: Request) => {
-  const admin = await requireApiPermission("permUserManagement");
+  const admin = await requireCanManageUsers();
   const { id, resetPassword, ...changes } = updateSchema.parse(await request.json());
 
   const target = await prisma.user.findUnique({
@@ -105,18 +122,6 @@ export const PATCH = handler(async (request: Request) => {
     select: { id: true, name: true, role: true },
   });
   if (!target) return fail("That account no longer exists.", 404);
-
-  // Never let an admin edit a peer or a superior, and never let anyone edit
-  // themselves into a different role through this endpoint.
-  if (admin.role !== "SUPER_ADMIN" && !outranks(admin as PermissionSubject, target.role)) {
-    return fail("You cannot modify an account at or above your own role.", 403);
-  }
-  if (target.id === admin.id && changes.role && changes.role !== target.role) {
-    return fail("You cannot change your own role.", 403);
-  }
-  if (changes.role && admin.role !== "SUPER_ADMIN" && !outranks(admin as PermissionSubject, changes.role)) {
-    return fail("You cannot promote someone to that role.", 403);
-  }
 
   const data: Record<string, unknown> = { ...changes };
   if (resetPassword) {
@@ -140,16 +145,13 @@ export const PATCH = handler(async (request: Request) => {
  * programme's record and must survive an account being closed.
  */
 export const DELETE = handler(async (request: Request) => {
-  const admin = await requireApiPermission("permUserManagement");
+  const admin = await requireCanManageUsers();
   const { id } = z.object({ id: z.string().min(1) }).parse(await request.json());
 
   if (id === admin.id) return fail("You cannot suspend your own account.", 403);
 
   const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
   if (!target) return fail("That account no longer exists.", 404);
-  if (admin.role !== "SUPER_ADMIN" && !outranks(admin as PermissionSubject, target.role)) {
-    return fail("You cannot suspend an account at or above your own role.", 403);
-  }
 
   await prisma.user.update({ where: { id }, data: { systemStatus: "SUSPENDED" } });
   await audit(admin.id, "USER_SUSPEND", "User", id);

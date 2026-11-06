@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { getLeaveFieldGroup, LEAVE_TYPES, calculateDuration } from "@/lib/leaves";
 import type { LeaveRecord } from "./LeaveDetailsModal";
@@ -70,9 +70,23 @@ export function ApplyLeaveModal({
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2.5 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative flex flex-col w-full max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-hidden rounded-xl bg-[var(--surface-raised)] border border-[var(--line-default)] shadow-2xl text-[var(--text-strong)]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2.5 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex flex-col w-full max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-hidden rounded-xl bg-[var(--surface-raised)] border border-[var(--line-default)] shadow-2xl text-[var(--text-strong)] cursor-default"
+      >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--line-soft)] px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="min-w-0 pr-2">

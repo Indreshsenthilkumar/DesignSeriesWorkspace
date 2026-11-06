@@ -50,10 +50,12 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
       mobile: true, domain: true, mentorName: true, linkedin: true, github: true,
       role: true, systemStatus: true, rewardPoints: true, lastLoginAt: true, createdAt: true,
       mustChangePassword: true,
+      permOverview: true, permLeaveRequests: true,
       permUserManagement: true, permScanStudentQr: true, permMentorTasks: true,
       permLinkedinTracker: true, permWorklogs: true, permNotifications: true,
       permAttendanceLogs: true, permExtensionRequest: true, permAdminDatabase: true,
       permActivityApproval: true,
+      portalNavDisabled: true,
     },
   });
 

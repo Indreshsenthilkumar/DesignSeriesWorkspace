@@ -122,11 +122,13 @@ export function CommandPalette({
   };
 
   return (
-    <div className="fixed inset-0 z-[85] flex items-start justify-center p-4 pt-[12vh]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[85] flex items-start justify-center p-4 pt-[12vh] cursor-pointer"
+    >
       <div
         className="animate-fade absolute inset-0"
         style={{ background: "var(--surface-overlay)", backdropFilter: "blur(3px)" }}
-        onClick={onClose}
         aria-hidden
       />
 
@@ -134,7 +136,8 @@ export function CommandPalette({
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="animate-scale-in relative w-full max-w-xl overflow-hidden rounded-[16px]"
+        onClick={(e) => e.stopPropagation()}
+        className="animate-scale-in relative w-full max-w-xl overflow-hidden rounded-[16px] cursor-default"
         style={{ background: "var(--surface-raised)", boxShadow: "var(--shadow-pop)" }}
         onKeyDown={onKeyDown}
       >

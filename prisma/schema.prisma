@@ -25,16 +25,19 @@ model User {
   passwordHash         String
   mustChangePassword   Boolean            @default(true)
   lastLoginAt          DateTime?
+  permOverview         Boolean            @default(false)
+  permLeaveRequests    Boolean            @default(false)
   permUserManagement   Boolean            @default(false)
-  permScanStudentQr    Boolean            @default(false)
-  permMentorTasks      Boolean            @default(false)
-  permLinkedinTracker  Boolean            @default(false)
-  permWorklogs         Boolean            @default(false)
-  permNotifications    Boolean            @default(false)
   permAttendanceLogs   Boolean            @default(false)
-  permExtensionRequest Boolean            @default(false)
-  permAdminDatabase    Boolean            @default(false)
+  permWorklogs         Boolean            @default(false)
+  permMentorTasks      Boolean            @default(false)
   permActivityApproval Boolean            @default(false)
+  permExtensionRequest Boolean            @default(false)
+  permNotifications    Boolean            @default(false)
+  permLinkedinTracker  Boolean            @default(false)
+  permScanStudentQr    Boolean            @default(false)
+  permAdminDatabase    Boolean            @default(false)
+  portalNavDisabled    String             @default("")
   rewardPoints         Int                @default(0)
   avatarSeed           Int                @default(0)
   createdAt            DateTime           @default(now())
@@ -55,6 +58,7 @@ model User {
   tasksAssigned        Task[]             @relation("TaskAssignee")
   tasksCreated         Task[]             @relation("TaskAuthor")
   worklogs             Worklog[]
+  sectionViews         UserSectionView[]
 
   @@index([role])
   @@index([year])
@@ -309,4 +313,15 @@ model RosterOption {
 
   @@unique([category, value])
   @@index([category])
+}
+
+model UserSectionView {
+  id        String   @id @default(cuid())
+  userId    String
+  section   String
+  viewedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, section])
+  @@index([userId])
 }

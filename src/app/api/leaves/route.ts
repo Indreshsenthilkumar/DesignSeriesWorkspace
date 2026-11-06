@@ -3,7 +3,8 @@ import { z } from "zod";
 import { audit, fail, handler, ok } from "@/lib/api";
 import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { calculateDuration, getLeaveFieldGroup, LEAVE_TYPES } from "@/lib/leaves";
+import { calculateDuration, getLeaveFieldGroup, LEAVE_TYPES, matchesMentor } from "@/lib/leaves";
+import { isAdminLike, type PermissionSubject } from "@/lib/permissions";
 
 const createLeaveSchema = z
   .object({
@@ -121,7 +122,7 @@ export const PATCH = handler(async (request: Request) => {
 
   // Student self-cancellation
   if (status === "CANCELLED") {
-    if (leave.userId !== user.id && user.role === "STUDENT") {
+    if (leave.userId !== user.id && (user.role === "STUDENT" || user.role === "STUDENT_ADMIN")) {
       return fail("You can only cancel your own leave requests.", 403);
     }
     if (leave.status !== "PENDING") {
@@ -135,10 +136,14 @@ export const PATCH = handler(async (request: Request) => {
     return ok(updated);
   }
 
-  // Admin / Mentor review
-  const isStaff = user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "MENTOR" || user.permActivityApproval;
-  if (!isStaff) {
-    return fail("You do not have permission to approve or reject leave requests.", 403);
+  // Only Admin, Super Admin, and Student+ Admin can approve or reject leave requests.
+  const canApprove =
+    user.role === "ADMIN" ||
+    user.role === "SUPER_ADMIN" ||
+    user.role === "STUDENT_ADMIN";
+
+  if (!canApprove) {
+    return fail("Only administrators, super administrators, and student+ admins can approve or reject leave requests.", 403);
   }
 
   if (leave.status !== "PENDING") {
@@ -171,7 +176,15 @@ export const GET = handler(async (request: Request) => {
   const status = url.searchParams.get("status");
   const studentOnly = url.searchParams.get("self") === "true" || user.role === "STUDENT";
 
-  const isStaff = user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "MENTOR" || user.permActivityApproval;
+  const isStaff =
+    user.role === "ADMIN" ||
+    user.role === "SUPER_ADMIN" ||
+    user.role === "MENTOR" ||
+    user.role === "STUDENT_ADMIN" ||
+    user.permLeaveRequests ||
+    user.permActivityApproval;
+
+  const isGlobalAdmin = isAdminLike(user as PermissionSubject);
 
   const where: any = {};
   if (studentOnly || !isStaff) {
@@ -181,7 +194,7 @@ export const GET = handler(async (request: Request) => {
     where.status = status;
   }
 
-  const leaves = await prisma.leaveRequest.findMany({
+  let leaves = await prisma.leaveRequest.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: {
@@ -192,8 +205,13 @@ export const GET = handler(async (request: Request) => {
         select: { id: true, name: true, role: true },
       },
     },
-    take: 200,
+    take: 300,
   });
+
+  // Mentors only see leaves of their assigned mentees
+  if (!studentOnly && isStaff && !isGlobalAdmin) {
+    leaves = leaves.filter((l) => matchesMentor(l.user?.mentorName, user.name));
+  }
 
   return ok(leaves);
 });

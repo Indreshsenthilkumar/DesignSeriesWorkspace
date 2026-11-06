@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/StatTile";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
 import { toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { WorklogReview, type ReviewRow } from "./WorklogReview";
 
@@ -19,6 +20,8 @@ export default async function ConsoleWorklogsPage({
   searchParams: Promise<{ status?: string; domain?: string; year?: string; date?: string }>;
 }) {
   await requirePermission("permWorklogs");
+  const user = await requireUser();
+  await markSectionViewed(user.id, "console_worklogs");
   const params = await searchParams;
 
   const status = params.status ?? "SUBMITTED";

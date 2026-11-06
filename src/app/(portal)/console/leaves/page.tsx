@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdminLike, type PermissionSubject } from "@/lib/permissions";
+import { matchesMentor } from "@/lib/leaves";
+import { markSectionViewed } from "@/lib/badge-tracking";
 import { ConsoleLeavesClient } from "./ConsoleLeavesClient";
 
 export const metadata: Metadata = { title: "Leave Request" };
@@ -16,9 +20,19 @@ export default async function ConsoleLeavesPage() {
     user.role === "ADMIN" ||
     user.role === "SUPER_ADMIN" ||
     user.role === "MENTOR" ||
+    user.role === "STUDENT_ADMIN" ||
+    user.permLeaveRequests ||
     user.permActivityApproval;
 
-  const leaves = await prisma.leaveRequest.findMany({
+  if (!isStaff) {
+    redirect("/dashboard?denied=1");
+  }
+
+  await markSectionViewed(user.id, "console_leaves");
+
+  const isGlobalAdmin = isAdminLike(user as PermissionSubject);
+
+  const rawLeaves = await prisma.leaveRequest.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       user: {
@@ -28,8 +42,14 @@ export default async function ConsoleLeavesPage() {
         select: { id: true, name: true, role: true },
       },
     },
-    take: 300,
+    take: 500,
   });
+
+  // If the user is a mentor (not a Super Admin / Admin / Student+ Admin),
+  // they only see leave requests for students whose assigned mentor matches them.
+  const leaves = isGlobalAdmin
+    ? rawLeaves
+    : rawLeaves.filter((l) => matchesMentor(l.user?.mentorName, user.name));
 
   const formatted = leaves.map((l) => ({
     id: l.id,
@@ -67,7 +87,11 @@ export default async function ConsoleLeavesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Leave Request"
-        description="Review student leave and on-duty applications, verify event and venue details, and grant gate release approvals."
+        description={
+          !isGlobalAdmin
+            ? `Viewing leave and on-duty requests for mentees assigned to ${user.name}.`
+            : "Review student leave and on-duty applications, verify event and venue details, and grant gate release approvals."
+        }
       />
 
       <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -76,7 +100,7 @@ export default async function ConsoleLeavesPage() {
           value={pending}
           icon="clock"
           tone={pending > 0 ? "amber" : "slate"}
-          caption="Action required"
+          caption={isGlobalAdmin ? "Action required" : "Under review"}
         />
         <StatTile
           label="Approved Leaves"
@@ -97,11 +121,17 @@ export default async function ConsoleLeavesPage() {
           value={total}
           icon="calendar"
           tone="blue"
-          caption="All cohort submissions"
+          caption={isGlobalAdmin ? "All cohort submissions" : "All mentee requests"}
         />
       </div>
 
-      <ConsoleLeavesClient initialLeaves={formatted} isStaff={isStaff} />
+      <ConsoleLeavesClient
+        initialLeaves={formatted}
+        isStaff={isStaff}
+        isGlobalAdmin={isGlobalAdmin}
+        canApprove={isGlobalAdmin}
+        mentorName={user.name}
+      />
     </div>
   );
 }

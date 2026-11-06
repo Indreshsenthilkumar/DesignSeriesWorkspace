@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/StatTile";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
 import { toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { TaskConsole, type Candidate, type ConsoleTaskRow } from "./TaskConsole";
 
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ConsoleTasksPage() {
   await requirePermission("permMentorTasks");
+  const user = await requireUser();
+  await markSectionViewed(user.id, "console_tasks");
   const today = toDayKey();
 
   const [tasks, students, options] = await Promise.all([
@@ -29,7 +32,7 @@ export default async function ConsoleTasksPage() {
       },
     }),
     prisma.user.findMany({
-      where: { role: "STUDENT", systemStatus: "ACTIVE" },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, rollNo: true, domain: true, year: true },
     }),

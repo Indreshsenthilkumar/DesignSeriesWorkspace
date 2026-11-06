@@ -12,6 +12,7 @@ import { formatDay, relativeTime, toDayKey } from "@/lib/dates";
 import { grantedPermissions, type PermissionSubject } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, leaderboardRank } from "@/lib/queries";
+import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSection";
 import { titleCase } from "@/lib/utils";
 
 import { PasswordForm, ProfileLinksForm } from "./ProfileClient";
@@ -22,13 +23,27 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const user = await requireUser();
 
-  const [attendance, rank, worklogCount, taskCount, passCount, linkedinCount] = await Promise.all([
+  const [attendance, rank, worklogCount, taskCount, passCount, linkedinCount, linkedinPosts] = await Promise.all([
     attendanceSummary(user.id, { days: 30, joinedAt: user.createdAt }),
     leaderboardRank(user.id),
     prisma.worklog.count({ where: { userId: user.id } }),
     prisma.task.count({ where: { assigneeId: user.id, status: "DONE" } }),
     prisma.activityPass.count({ where: { userId: user.id, status: "APPROVED" } }),
     prisma.linkedinPost.count({ where: { userId: user.id, verified: true } }),
+    prisma.linkedinPost.findMany({
+      where: { userId: user.id },
+      orderBy: { postedOn: "desc" },
+      select: {
+        id: true,
+        url: true,
+        caption: true,
+        postedOn: true,
+        reactions: true,
+        comments: true,
+        verified: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   const permissions = grantedPermissions(user as PermissionSubject);
@@ -109,6 +124,8 @@ export default async function ProfilePage() {
           <ProfileLinksForm
             initial={{ mobile: user.mobile, linkedin: user.linkedin, github: user.github }}
           />
+
+          <StudentLinkedinSection initialPosts={linkedinPosts} />
 
           <div id="security" className="scroll-mt-20">
             <PasswordForm mustChange={user.mustChangePassword} />

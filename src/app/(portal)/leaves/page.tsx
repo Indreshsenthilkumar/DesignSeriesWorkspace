@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { markSectionViewed } from "@/lib/badge-tracking";
 import { LeavesClient } from "./LeavesClient";
 
 export const metadata: Metadata = { title: "My Leave" };
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LeavesPage() {
   const user = await requireUser();
+  await markSectionViewed(user.id, "leaves");
 
   const leaves = await prisma.leaveRequest.findMany({
     where: { userId: user.id },

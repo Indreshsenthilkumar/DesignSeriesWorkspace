@@ -127,9 +127,8 @@ export function LeaveDetailsModal({
     const isOD = isLeaveTypeOnDuty(type);
     return (
       <span
-        className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ${
-          isOD ? "bg-[#2563eb]" : "bg-[#6366f1]"
-        }`}
+        className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ${isOD ? "bg-[#2563eb]" : "bg-[#6366f1]"
+          }`}
       >
         {type}
       </span>
@@ -156,40 +155,40 @@ export function LeaveDetailsModal({
         {/* Modal Scrollable Body */}
         <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6 overscroll-contain">
           {/* Section 1: HIGHLIGHTED Student Details, Department & Mentor Name at the TOP */}
-          <div className="rounded-lg border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 p-3.5 sm:p-5 shadow-sm">
+          <div className="rounded-lg border border-[var(--color-brand-blue)]/25 bg-[var(--color-brand-blue)]/5 p-3.5 sm:p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-2.5 sm:mb-3">
               <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--color-brand-blue)]/15 text-[var(--color-brand-blue)]">
                 <Icon name="user" className="h-3.5 w-3.5" />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-[#1967d2] dark:text-[#8ab4f8]">
+              <span className="text-xs sm:text-sm font-semibold text-[var(--color-brand-blue)]">
                 Student & Mentor Details
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
+                <p className="text-[11px] sm:text-xs font-medium text-[var(--text-muted)]">
                   Student Name & Roll No
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words">
-                  {studentName} <span className="font-semibold text-[#5f6368] dark:text-[#9aa0a6]">({studentRollNo})</span>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] break-words">
+                  {studentName} <span className="font-medium text-[var(--text-muted)]">({studentRollNo})</span>
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
+                <p className="text-[11px] sm:text-xs font-medium text-[var(--text-muted)]">
                   Department
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white leading-snug break-words">
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] leading-snug break-words">
                   {studentDept}
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">
+                <p className="text-[11px] sm:text-xs font-medium text-[var(--text-muted)]">
                   Mentor Name
                 </p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white leading-snug break-words">
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)] leading-snug break-words">
                   {mentorDisplayName}
                 </p>
               </div>
@@ -198,62 +197,62 @@ export function LeaveDetailsModal({
 
           {/* Section 2: Leave Information (Mobile-responsive 2 col grid) */}
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#202124] dark:text-white mb-2.5">
+            <h3 className="text-xs sm:text-sm font-bold text-[var(--text-strong)] mb-2.5">
               Leave Information
             </h3>
 
             <div className="grid grid-cols-2 gap-3.5 sm:gap-4 text-xs sm:text-sm">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Leave Type</p>
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Leave Type</p>
                 <div className="mt-1">{getTypeBadge(leave.leaveType)}</div>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Status</p>
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Status</p>
                 <div className="mt-1">{getStatusBadge(leave.status)}</div>
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">From Date</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">From Date</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-semibold text-[var(--text-strong)] break-words leading-tight">
                   {formatLeaveDateTime(leave.fromDate)}
                 </p>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">To Date</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">To Date</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-semibold text-[var(--text-strong)] break-words leading-tight">
                   {formatLeaveDateTime(leave.toDate)}
                 </p>
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Duration</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white">{leave.duration || "1 day"}</p>
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Duration</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[var(--text-strong)]">{leave.duration || "1 day"}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Applied On</p>
-                <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-white break-words leading-tight">
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Applied On</p>
+                <p className="mt-0.5 text-xs sm:text-sm font-semibold text-[var(--text-strong)] break-words leading-tight">
                   {leave.createdAt ? formatLeaveDateTime(leave.createdAt) : "—"}
                 </p>
               </div>
 
               <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
-                <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Remarks / Reason</p>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] whitespace-pre-wrap break-words leading-relaxed">
+                <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Remarks / Reason</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] whitespace-pre-wrap break-words leading-relaxed">
                   {displayReason}
                 </p>
               </div>
 
               {leave.venueDetails ? (
                 <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
-                  <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Venue Details</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] break-words leading-relaxed">{leave.venueDetails}</p>
+                  <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Venue Details</p>
+                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] break-words leading-relaxed">{leave.venueDetails}</p>
                 </div>
               ) : null}
 
               {leave.companyDetails ? (
                 <div className="col-span-2 pt-2.5 border-t border-[var(--line-soft)] min-w-0">
-                  <p className="text-xs font-semibold text-[#3c4043] dark:text-[#dadce0]">Company Details</p>
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-[#202124] dark:text-[#f1f3f4] break-words leading-relaxed">{leave.companyDetails}</p>
+                  <p className="text-[10.5px] sm:text-xs font-medium text-[var(--text-muted)]">Company Details</p>
+                  <p className="mt-1 text-xs sm:text-sm font-medium text-[var(--text-strong)] break-words leading-relaxed">{leave.companyDetails}</p>
                 </div>
               ) : null}
             </div>
@@ -261,7 +260,7 @@ export function LeaveDetailsModal({
 
           {/* Section 3: Approval Status */}
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#202124] dark:text-white mb-2.5">
+            <h3 className="text-xs sm:text-sm font-bold text-[var(--text-strong)] mb-2.5">
               Approval Status
             </h3>
 

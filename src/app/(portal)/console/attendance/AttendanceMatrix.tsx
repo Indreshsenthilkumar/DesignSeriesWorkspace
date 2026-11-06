@@ -18,6 +18,7 @@ import { ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/constants";
 import { formatDay, weekdayShort } from "@/lib/dates";
 import { cn, shortYear } from "@/lib/utils";
 import { ExportAttendanceModal } from "@/components/features/ExportAttendanceModal";
+import { BulkImportAttendanceModal } from "@/components/features/BulkImportAttendanceModal";
 
 export type MatrixStudent = {
   id: string;
@@ -64,6 +65,7 @@ export function AttendanceMatrix({
   const [sort, setSort] = useState<"name" | "rate" | "hours" | "role">("rate");
   const [manualEntry, setManualEntry] = useState<{ student: MatrixStudent; date?: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -175,6 +177,15 @@ export function AttendanceMatrix({
           <Badge tone="slate">{filtered.length} members</Badge>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="upload"
+              onClick={() => setImportOpen(true)}
+            >
+              Import Sheet / CSV
+            </Button>
+
             <Button
               variant="secondary"
               size="sm"
@@ -369,6 +380,12 @@ export function AttendanceMatrix({
         defaultTo={to}
         currentYear={filters.year}
         currentDomain={filters.domain}
+      />
+
+      <BulkImportAttendanceModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={() => router.refresh()}
       />
     </>
   );

@@ -93,11 +93,13 @@ export function Modal({
   }[size];
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 cursor-pointer"
+      onClick={dismissible ? onClose : undefined}
+    >
       <div
         className="animate-fade absolute inset-0"
         style={{ background: "var(--surface-overlay)", backdropFilter: "blur(3px)" }}
-        onClick={dismissible ? onClose : undefined}
         aria-hidden
       />
 
@@ -106,8 +108,9 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
+        onClick={(e) => e.stopPropagation()}
         className={cn(
-          "animate-sheet relative flex max-h-[92vh] w-full flex-col overflow-hidden",
+          "animate-sheet relative flex max-h-[92vh] w-full flex-col overflow-hidden cursor-default",
           "rounded-t-[20px] sm:animate-scale-in sm:rounded-[16px]",
           widths
         )}

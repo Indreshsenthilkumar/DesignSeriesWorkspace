@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { visibleNotifications } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { AnnouncementsClient, type AnnouncementRow } from "./AnnouncementsClient";
 
@@ -12,6 +14,19 @@ export const dynamic = "force-dynamic";
 export default async function AnnouncementsPage() {
   const user = await requireUser();
   const items = await visibleNotifications(user);
+
+  // Mark all unread announcements as read upon visiting the page
+  const unreadItems = items.filter((item) => !item.read);
+  if (unreadItems.length > 0) {
+    await prisma.notificationRead.createMany({
+      data: unreadItems.map((n) => ({
+        notificationId: n.id,
+        userId: user.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  await markSectionViewed(user.id, "announcements");
 
   const rows: AnnouncementRow[] = items.map((item) => ({
     id: item.id,

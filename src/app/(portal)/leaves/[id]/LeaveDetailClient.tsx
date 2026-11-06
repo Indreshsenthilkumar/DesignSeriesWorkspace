@@ -11,6 +11,7 @@ export function LeaveDetailClient({
   initialLeave,
   currentUser,
   isStaff,
+  canApprove = false,
 }: {
   initialLeave: LeaveRecord;
   currentUser: {
@@ -19,6 +20,7 @@ export function LeaveDetailClient({
     name: string;
   };
   isStaff: boolean;
+  canApprove?: boolean;
 }) {
   const toast = useToast();
   const [leave, setLeave] = useState<LeaveRecord>(initialLeave);
@@ -27,7 +29,7 @@ export function LeaveDetailClient({
   const [error, setError] = useState<string | null>(null);
 
   const isOwner = currentUser.id === leave.userId;
-  const canReview = isStaff && leave.status === "PENDING";
+  const canReview = canApprove && leave.status === "PENDING";
   const displayReason = leave.reason || leave.remarks || "—";
   const studentName = leave.user?.name || leave.name || "Student";
   const studentRollNo = leave.user?.rollNo || leave.rollNo || "—";
@@ -278,11 +280,11 @@ export function LeaveDetailClient({
 
               {leave.reviewedAt ? (
                 <p className="mt-2 text-[11px] sm:text-xs text-[var(--text-muted)] leading-relaxed break-words">
-                  Approved by: <span className="font-semibold text-[var(--text-strong)]">{leave.reviewer?.name || "Admin / Mentor"}</span> on {formatLeaveDateTime(leave.reviewedAt)}
+                  Approved by: <span className="font-semibold text-[var(--text-strong)]">{leave.reviewer?.name || "Administrator"}</span> on {formatLeaveDateTime(leave.reviewedAt)}
                 </p>
               ) : (
                 <p className="mt-2 text-[11px] sm:text-xs text-[var(--text-muted)]">
-                  Pending review by domain mentor or administrator.
+                  Pending review by administrator or student+ admin.
                 </p>
               )}
 
@@ -299,37 +301,58 @@ export function LeaveDetailClient({
                 </div>
               )}
 
-              {/* Review Actions for Admin / Mentor */}
+              {/* Review Actions for Admin / Student+ Admin only */}
               {canReview && (
                 <div className="mt-4 pt-4 border-t border-[var(--line-soft)] space-y-3">
                   <input
                     type="text"
+                    disabled={leave.status !== "PENDING" || loading}
                     placeholder="Optional review remark (e.g., Approved for competition)..."
-                    value={remark}
+                    value={leave.status !== "PENDING" ? (leave.reviewerRemark || "") : remark}
                     onChange={(e) => setRemark(e.target.value)}
-                    className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-blue)]"
+                    className="w-full rounded-md border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-2 text-xs text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-blue)] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--surface-sunken)]"
                   />
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
                     <button
-                      disabled={loading}
+                      disabled={leave.status !== "PENDING" || loading}
                       onClick={() => handleDecision("APPROVED")}
-                      className="flex-1 rounded-md bg-[#107c41] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0e6b37] disabled:opacity-50 transition-colors shadow-sm"
+                      className={`flex-1 rounded-md px-4 py-2.5 text-xs font-semibold shadow-sm transition-colors ${
+                        leave.status === "APPROVED"
+                          ? "bg-[#107c41] text-white opacity-60 cursor-not-allowed"
+                          : leave.status !== "PENDING"
+                          ? "bg-[#107c41]/30 text-white/50 cursor-not-allowed"
+                          : "bg-[#107c41] text-white hover:bg-[#0e6b37] disabled:opacity-50"
+                      }`}
                     >
-                      {loading ? "Processing..." : "Approve Request"}
+                      {loading ? "Processing..." : leave.status === "APPROVED" ? "Approved" : "Approve Request"}
                     </button>
                     <button
-                      disabled={loading}
+                      disabled={leave.status !== "PENDING" || loading}
                       onClick={() => handleDecision("REJECTED")}
-                      className="flex-1 rounded-md bg-rose-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors shadow-sm"
+                      className={`flex-1 rounded-md px-4 py-2.5 text-xs font-semibold shadow-sm transition-colors ${
+                        leave.status === "REJECTED"
+                          ? "bg-rose-600 text-white opacity-60 cursor-not-allowed"
+                          : leave.status !== "PENDING"
+                          ? "bg-rose-600/30 text-white/50 cursor-not-allowed"
+                          : "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+                      }`}
                     >
-                      {loading ? "Processing..." : "Reject Request"}
+                      {loading ? "Processing..." : leave.status === "REJECTED" ? "Rejected" : "Reject Request"}
                     </button>
                   </div>
                 </div>
               )}
 
+              {/* Notice for mentors and other non-admins */}
+              {!canReview && !isOwner && leave.status === "PENDING" && (
+                <div className="mt-4 pt-4 border-t border-[var(--line-soft)] text-xs text-[var(--text-muted)] flex items-center gap-1.5">
+                  <Icon name="info" className="h-4 w-4 shrink-0 text-amber-500" />
+                  <span>Only administrators and student+ admins can approve or reject leave requests.</span>
+                </div>
+              )}
+
               {/* Cancel Action for Student */}
-              {isOwner && leave.status === "PENDING" && !isStaff && (
+              {isOwner && leave.status === "PENDING" && !canReview && (
                 <div className="mt-4 pt-4 border-t border-[var(--line-soft)]">
                   <button
                     disabled={loading}

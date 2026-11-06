@@ -76,7 +76,20 @@ export function AppShell({
     };
   }, [drawerOpen]);
 
-  const primary = [...studentNav.filter((i) => i.primary)].slice(0, 4);
+  const primary = (
+    studentNav.length > 0
+      ? [...studentNav.filter((i) => i.primary)]
+      : [
+          {
+            href: "/dashboard",
+            label: "Dashboard",
+            icon: "grid" as const,
+            description: "Mentor dashboard overview",
+            primary: true,
+          },
+          ...consoleNav.filter((i) => i.primary),
+        ]
+  ).slice(0, 4);
 
   return (
     <div className="min-h-dvh">
@@ -404,7 +417,7 @@ function MobileTabBar({
               ) : null}
               <span className="relative">
                 <Icon name={item.icon} className="h-[20px] w-[20px]" />
-                {badges[item.href] ? (
+                {!active && badges[item.href] ? (
                   <span
                     className="absolute -right-1.5 -top-1 h-[7px] w-[7px] rounded-full"
                     style={{ background: "var(--color-brand-red)" }}

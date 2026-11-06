@@ -9,6 +9,7 @@ export function Card({
   padded = true,
   thread = false,
   as: Tag = "section",
+  id,
 }: {
   children: ReactNode;
   className?: string;
@@ -16,9 +17,10 @@ export function Card({
   /** Caps the card with the four-colour brand rule. Reserve for hero surfaces. */
   thread?: boolean;
   as?: "section" | "div" | "article" | "aside";
+  id?: string;
 }) {
   return (
-    <Tag className={cn("surface overflow-hidden", className)}>
+    <Tag id={id} className={cn("surface overflow-hidden", className)}>
       {thread ? <span aria-hidden className="brand-thread-bar block h-[3px] w-full" /> : null}
       <div className={cn(padded && "p-4 sm:p-5")}>{children}</div>
     </Tag>

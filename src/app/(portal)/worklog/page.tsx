@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { worklogSummary } from "@/lib/queries";
 import { startOfWeek, toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { WorklogClient, type WorklogRow } from "./WorklogClient";
 
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function WorklogPage() {
   const user = await requireUser();
+  await markSectionViewed(user.id, "worklog");
   const today = toDayKey();
 
   const [summary, openTasks, reviewed, extensionRows] = await Promise.all([

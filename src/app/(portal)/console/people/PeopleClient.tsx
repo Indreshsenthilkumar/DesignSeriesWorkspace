@@ -18,14 +18,17 @@ import {
   PERMISSIONS,
   PERMISSION_HINT,
   PERMISSION_LABEL,
+  PORTAL_MODULES,
   ROLES,
   ROLE_LABEL,
   type Permission,
+  type PortalModuleKey,
   type Role,
 } from "@/lib/constants";
 import { relativeTime } from "@/lib/dates";
 import { shortYear } from "@/lib/utils";
 import { ManageRosterOptionsModal } from "@/components/features/ManageRosterOptionsModal";
+import { BulkImportUsersModal } from "@/components/features/BulkImportUsersModal";
 
 export type PersonRow = {
   id: string;
@@ -37,10 +40,13 @@ export type PersonRow = {
   mobile: string;
   domain: string;
   mentorName: string;
+  linkedin: string;
+  github: string;
   role: string;
   systemStatus: string;
   rewardPoints: number;
   lastLoginAt: string | null;
+  portalNavDisabled?: string;
   permissions: Record<Permission, boolean>;
 };
 
@@ -69,6 +75,7 @@ export function PeopleClient({
   const [suspending, setSuspending] = useState<PersonRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [managingOptions, setManagingOptions] = useState(false);
+  const [importingBulk, setImportingBulk] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const filtered = useMemo(() => {
@@ -147,6 +154,14 @@ export function PeopleClient({
                 onClick={() => setManagingOptions(true)}
               >
                 Manage Categories
+              </Button>
+              <Button
+                variant="secondary"
+                icon="upload"
+                size="sm"
+                onClick={() => setImportingBulk(true)}
+              >
+                Import Sheet / CSV
               </Button>
               <Button
                 variant="primary"
@@ -359,6 +374,12 @@ export function PeopleClient({
         onChanged={() => router.refresh()}
       />
 
+      <BulkImportUsersModal
+        open={importingBulk}
+        onClose={() => setImportingBulk(false)}
+        onSuccess={() => router.refresh()}
+      />
+
       <ConfirmDialog
         open={Boolean(suspending)}
         onClose={() => setSuspending(null)}
@@ -398,22 +419,42 @@ function ManageDialog({
     domain: person.domain,
     mentorName: person.mentorName,
     mobile: person.mobile,
+    linkedin: person.linkedin || "",
+    github: person.github || "",
     role: person.role,
     systemStatus: person.systemStatus,
   });
   const [permissions, setPermissions] = useState(person.permissions);
+  const disabledKeys = (person.portalNavDisabled || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const [portalEnabled, setPortalEnabled] = useState<Record<PortalModuleKey, boolean>>(() =>
+    Object.fromEntries(
+      PORTAL_MODULES.map((m) => {
+        const isOff = disabledKeys.includes(m.key) || disabledKeys.includes(m.href.toLowerCase());
+        return [m.key, !isOff];
+      })
+    ) as Record<PortalModuleKey, boolean>
+  );
   const [resetPassword, setResetPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
   // A super admin holds everything implicitly, so the checkboxes are inert.
   const permissionsLocked = form.role === "SUPER_ADMIN";
-  const assignableRoles = ROLES.filter((role) => actorRole === "SUPER_ADMIN" || role === "STUDENT" || role === "MENTOR");
+  const assignableRoles = ROLES;
 
   const save = async () => {
     if (resetPassword && resetPassword.length < 10) {
       toast.warning("Password too short", "Use at least 10 characters.");
       return;
     }
+
+    const disabledList = PORTAL_MODULES
+      .filter((m) => !portalEnabled[m.key])
+      .map((m) => m.href);
+    const portalNavDisabled = disabledList.join(",");
 
     setSaving(true);
     try {
@@ -424,6 +465,7 @@ function ManageDialog({
           id: person.id,
           ...form,
           ...permissions,
+          portalNavDisabled,
           ...(resetPassword ? { resetPassword } : {}),
         }),
       });
@@ -519,6 +561,22 @@ function ManageDialog({
                 ))}
               </Select>
             </Field>
+            <Field label="LinkedIn Profile" htmlFor="m-linkedin">
+              <Input
+                id="m-linkedin"
+                value={form.linkedin}
+                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </Field>
+            <Field label="GitHub Profile" htmlFor="m-github">
+              <Input
+                id="m-github"
+                value={form.github}
+                onChange={(e) => setForm({ ...form, github: e.target.value })}
+                placeholder="https://github.com/username"
+              />
+            </Field>
           </div>
         </section>
 
@@ -530,7 +588,6 @@ function ManageDialog({
             <Field
               label="Role"
               htmlFor="m-role"
-              help={actorRole === "SUPER_ADMIN" ? undefined : "You can only assign roles below your own."}
             >
               <Select id="m-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                 {assignableRoles.map((role) => (
@@ -552,15 +609,46 @@ function ManageDialog({
           </div>
         </section>
 
-        <section>
-          <h3 className="mb-1 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-            Console permissions
-          </h3>
-          <p className="mb-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
-            {permissionsLocked
-              ? "Super admins hold every permission implicitly — these switches do not apply."
-              : "Each switch unlocks one console module. Grant the minimum the person actually needs."}
-          </p>
+        {/* 1. Admin Console Navigation Section */}
+        <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--line-soft)", background: "var(--surface-raised)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b" style={{ borderColor: "var(--line-soft)" }}>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)] flex items-center gap-2">
+                <Icon name="shield" className="h-4 w-4 text-[var(--accent)]" />
+                Admin Console Navigation ({PERMISSIONS.filter((p) => permissions[p]).length}/{PERMISSIONS.length})
+              </h3>
+              <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5">
+                {permissionsLocked
+                  ? "Super admins hold every console module implicitly."
+                  : "Enable or disable individual sections in the Admin Console sidebar."}
+              </p>
+            </div>
+            {!permissionsLocked && (
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allTrue = Object.fromEntries(PERMISSIONS.map((p) => [p, true]));
+                    setPermissions(allTrue as Record<Permission, boolean>);
+                  }}
+                  className="font-semibold text-[var(--accent)] hover:underline"
+                >
+                  Select all
+                </button>
+                <span className="text-[var(--text-faint)]">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allFalse = Object.fromEntries(PERMISSIONS.map((p) => [p, false]));
+                    setPermissions(allFalse as Record<Permission, boolean>);
+                  }}
+                  className="font-semibold text-[var(--text-muted)] hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {PERMISSIONS.map((permission) => (
               <Checkbox
@@ -570,6 +658,55 @@ function ManageDialog({
                 checked={permissionsLocked ? true : permissions[permission]}
                 disabled={permissionsLocked}
                 onChange={(e) => setPermissions({ ...permissions, [permission]: e.target.checked })}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* 2. My Portal Navigation Section */}
+        <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--line-soft)", background: "var(--surface-raised)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b" style={{ borderColor: "var(--line-soft)" }}>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)] flex items-center gap-2">
+                <Icon name="grid" className="h-4 w-4 text-[var(--accent)]" />
+                My Portal Navigation ({PORTAL_MODULES.filter((m) => portalEnabled[m.key]).length}/{PORTAL_MODULES.length})
+              </h3>
+              <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5">
+                Enable or disable individual sections in &quot;My Portal&quot; navigation bar for this account.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const allTrue = Object.fromEntries(PORTAL_MODULES.map((m) => [m.key, true]));
+                  setPortalEnabled(allTrue as Record<PortalModuleKey, boolean>);
+                }}
+                className="font-semibold text-[var(--accent)] hover:underline"
+              >
+                Select all
+              </button>
+              <span className="text-[var(--text-faint)]">•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const allFalse = Object.fromEntries(PORTAL_MODULES.map((m) => [m.key, false]));
+                  setPortalEnabled(allFalse as Record<PortalModuleKey, boolean>);
+                }}
+                className="font-semibold text-[var(--text-muted)] hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PORTAL_MODULES.map((m) => (
+              <Checkbox
+                key={m.key}
+                label={m.label}
+                description={m.hint}
+                checked={portalEnabled[m.key]}
+                onChange={(e) => setPortalEnabled({ ...portalEnabled, [m.key]: e.target.checked })}
               />
             ))}
           </div>
@@ -663,6 +800,8 @@ function CreatePersonDialog({
     mobile: "",
     domain: options.domains[0] || "Data not Feeded",
     mentorName: "",
+    linkedin: "",
+    github: "",
     role: "STUDENT",
     password: "",
   });
@@ -670,10 +809,13 @@ function CreatePersonDialog({
   const [permissions, setPermissions] = useState<Record<Permission, boolean>>(
     Object.fromEntries(PERMISSIONS.map((p) => [p, false])) as Record<Permission, boolean>
   );
+  const [portalEnabled, setPortalEnabled] = useState<Record<PortalModuleKey, boolean>>(
+    Object.fromEntries(PORTAL_MODULES.map((m) => [m.key, true])) as Record<PortalModuleKey, boolean>
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const assignableRoles = ROLES.filter((r) => actorRole === "SUPER_ADMIN" || r === "STUDENT" || r === "MENTOR");
+  const assignableRoles = ROLES;
   const permissionsLocked = form.role === "SUPER_ADMIN";
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -693,6 +835,11 @@ function CreatePersonDialog({
       return;
     }
 
+    const disabledList = PORTAL_MODULES
+      .filter((m) => !portalEnabled[m.key])
+      .map((m) => m.href);
+    const portalNavDisabled = disabledList.join(",");
+
     setSaving(true);
     try {
       const response = await fetch("/api/admin/users", {
@@ -705,7 +852,10 @@ function CreatePersonDialog({
           email: form.email.trim().toLowerCase(),
           department: form.department.trim(),
           mobile: form.mobile.trim(),
-          ...(form.role !== "STUDENT" ? permissions : {}),
+          linkedin: form.linkedin.trim(),
+          github: form.github.trim(),
+          ...permissions,
+          portalNavDisabled,
         }),
       });
 
@@ -871,6 +1021,33 @@ function CreatePersonDialog({
 
         <section>
           <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+            Professional Profiles (Optional)
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="LinkedIn Profile URL" htmlFor="create-linkedin">
+              <Input
+                id="create-linkedin"
+                type="url"
+                placeholder="https://linkedin.com/in/username"
+                value={form.linkedin}
+                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
+              />
+            </Field>
+
+            <Field label="GitHub Profile URL" htmlFor="create-github">
+              <Input
+                id="create-github"
+                type="url"
+                placeholder="https://github.com/username"
+                value={form.github}
+                onChange={(e) => setForm({ ...form, github: e.target.value })}
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
             Role & Security
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -896,30 +1073,110 @@ function CreatePersonDialog({
           </div>
         </section>
 
-        {form.role !== "STUDENT" && (
-          <section>
-            <h3 className="mb-1 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-              Console Module Permissions
-            </h3>
-            <p className="mb-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
-              {permissionsLocked
-                ? "Super admins hold every permission implicitly."
-                : "Select the specific console modules this staff member can access."}
-            </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {PERMISSIONS.map((permission) => (
-                <Checkbox
-                  key={permission}
-                  label={PERMISSION_LABEL[permission]}
-                  description={PERMISSION_HINT[permission]}
-                  checked={permissionsLocked ? true : permissions[permission]}
-                  disabled={permissionsLocked}
-                  onChange={(e) => setPermissions({ ...permissions, [permission]: e.target.checked })}
-                />
-              ))}
+        {/* 1. Admin Console Navigation Section */}
+        <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--line-soft)", background: "var(--surface-raised)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b" style={{ borderColor: "var(--line-soft)" }}>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)] flex items-center gap-2">
+                <Icon name="shield" className="h-4 w-4 text-[var(--accent)]" />
+                Admin Console Navigation ({PERMISSIONS.filter((p) => permissions[p]).length}/{PERMISSIONS.length})
+              </h3>
+              <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5">
+                {permissionsLocked
+                  ? "Super admins hold every console module implicitly."
+                  : form.role === "STUDENT"
+                  ? "Students have console modules disabled by default. Check any section to grant access."
+                  : "Select the specific console modules this staff member can access."}
+              </p>
             </div>
-          </section>
-        )}
+            {!permissionsLocked && (
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allTrue = Object.fromEntries(PERMISSIONS.map((p) => [p, true]));
+                    setPermissions(allTrue as Record<Permission, boolean>);
+                  }}
+                  className="font-semibold text-[var(--accent)] hover:underline"
+                >
+                  Select all
+                </button>
+                <span className="text-[var(--text-faint)]">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allFalse = Object.fromEntries(PERMISSIONS.map((p) => [p, false]));
+                    setPermissions(allFalse as Record<Permission, boolean>);
+                  }}
+                  className="font-semibold text-[var(--text-muted)] hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PERMISSIONS.map((permission) => (
+              <Checkbox
+                key={permission}
+                label={PERMISSION_LABEL[permission]}
+                description={PERMISSION_HINT[permission]}
+                checked={permissionsLocked ? true : permissions[permission]}
+                disabled={permissionsLocked}
+                onChange={(e) => setPermissions({ ...permissions, [permission]: e.target.checked })}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* 2. My Portal Navigation Section */}
+        <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--line-soft)", background: "var(--surface-raised)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b" style={{ borderColor: "var(--line-soft)" }}>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)] flex items-center gap-2">
+                <Icon name="grid" className="h-4 w-4 text-[var(--accent)]" />
+                My Portal Navigation ({PORTAL_MODULES.filter((m) => portalEnabled[m.key]).length}/{PORTAL_MODULES.length})
+              </h3>
+              <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5">
+                All 10 My Portal sections are enabled by default for students. Uncheck any item to hide it from this account.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const allTrue = Object.fromEntries(PORTAL_MODULES.map((m) => [m.key, true]));
+                  setPortalEnabled(allTrue as Record<PortalModuleKey, boolean>);
+                }}
+                className="font-semibold text-[var(--accent)] hover:underline"
+              >
+                Select all
+              </button>
+              <span className="text-[var(--text-faint)]">•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const allFalse = Object.fromEntries(PORTAL_MODULES.map((m) => [m.key, false]));
+                  setPortalEnabled(allFalse as Record<PortalModuleKey, boolean>);
+                }}
+                className="font-semibold text-[var(--text-muted)] hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PORTAL_MODULES.map((m) => (
+              <Checkbox
+                key={m.key}
+                label={m.label}
+                description={m.hint}
+                checked={portalEnabled[m.key]}
+                onChange={(e) => setPortalEnabled({ ...portalEnabled, [m.key]: e.target.checked })}
+              />
+            ))}
+          </div>
+        </section>
       </form>
     </Modal>
   );

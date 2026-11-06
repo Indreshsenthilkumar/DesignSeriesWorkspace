@@ -49,7 +49,7 @@ function NavLink({
       />
       <Icon name={item.icon} className="h-[17px] w-[17px] shrink-0" />
       <span className="truncate">{item.label}</span>
-      {badge ? <Counter value={badge} tone={active ? "blue" : "red"} /> : null}
+      {!active && badge ? <Counter value={badge} tone="red" /> : null}
     </Link>
   );
 }
@@ -80,18 +80,38 @@ export function SidebarNav({
 
   return (
     <nav className="flex flex-col px-2.5 pb-4" aria-label="Main">
-      <SectionLabel>My portal</SectionLabel>
-      <div className="flex flex-col gap-0.5">
-        {studentNav.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            active={isActive(pathname, item.href)}
-            badge={badges[item.href]}
-            onNavigate={onNavigate}
-          />
-        ))}
-      </div>
+      {studentNav.length > 0 ? (
+        <>
+          <SectionLabel>My portal</SectionLabel>
+          <div className="flex flex-col gap-0.5">
+            {studentNav.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActive(pathname, item.href)}
+                badge={badges[item.href]}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <SectionLabel>Overview</SectionLabel>
+          <div className="flex flex-col gap-0.5">
+            <NavLink
+              item={{
+                href: "/dashboard",
+                label: "Dashboard",
+                icon: "grid",
+                description: "Mentor dashboard overview and enabled console access.",
+              }}
+              active={isActive(pathname, "/dashboard")}
+              onNavigate={onNavigate}
+            />
+          </div>
+        </>
+      )}
 
       {consoleNav.length > 0 ? (
         <>

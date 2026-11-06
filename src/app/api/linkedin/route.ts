@@ -16,9 +16,36 @@ const submitSchema = z.object({
   postedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+export const GET = handler(async () => {
+  const user = await requireApiUser();
+  const posts = await prisma.linkedinPost.findMany({
+    where: { userId: user.id },
+    orderBy: { postedOn: "desc" },
+    select: {
+      id: true,
+      url: true,
+      caption: true,
+      postedOn: true,
+      verified: true,
+      reactions: true,
+      comments: true,
+      createdAt: true,
+    },
+  });
+  return ok(posts);
+});
+
 export const POST = handler(async (request: Request) => {
   const user = await requireApiUser();
-  const data = submitSchema.parse(await request.json());
+  const raw = await request.json();
+  if (raw && typeof raw.url === "string") {
+    let clean = raw.url.trim();
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = `https://${clean}`;
+    }
+    raw.url = clean;
+  }
+  const data = submitSchema.parse(raw);
 
   if (data.postedOn > toDayKey()) return fail("The post date cannot be in the future.", 422);
 
@@ -30,7 +57,7 @@ export const POST = handler(async (request: Request) => {
 
   const post = await prisma.linkedinPost.create({
     data: { ...data, userId: user.id },
-    select: { id: true, url: true, postedOn: true, verified: true },
+    select: { id: true, url: true, caption: true, postedOn: true, verified: true, reactions: true, comments: true, createdAt: true },
   });
 
   await audit(user.id, "LINKEDIN_SUBMIT", "LinkedinPost", post.id);

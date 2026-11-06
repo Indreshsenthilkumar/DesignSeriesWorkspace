@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useServerInsertedHTML } from "next/navigation";
 
 import { Icon } from "./Icon";
 
@@ -67,6 +68,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
  * first paint so there is no white flash on a dark-mode reload.
  */
 export const themeBootScript = `(function(){try{var m=localStorage.getItem("${STORAGE_KEY}")||"system";var d=m==="dark"||(m==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";}catch(e){}})();`;
+
+export function ThemeScript() {
+  useServerInsertedHTML(() => (
+    <script
+      key="theme-boot"
+      dangerouslySetInnerHTML={{
+        __html: themeBootScript,
+      }}
+    />
+  ));
+
+  return null;
+}
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { resolved, setMode } = useTheme();

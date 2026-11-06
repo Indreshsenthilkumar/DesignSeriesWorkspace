@@ -44,6 +44,12 @@ export async function visibleNotifications(user: {
         { audience: "YEAR", audienceValue: user.year },
         { audience: "DOMAIN", audienceValue: user.domain },
         { audience: "ROLE", audienceValue: user.role },
+        ...(user.role === "STUDENT_ADMIN"
+          ? [
+              { audience: "ROLE", audienceValue: "STUDENT" },
+              { audience: "ROLE", audienceValue: "ADMIN" },
+            ]
+          : []),
       ],
     },
     select: NOTIFICATION_SELECT,
@@ -278,7 +284,7 @@ export async function studentDashboard(user: {
 
 export async function leaderboard(limit = 50) {
   return prisma.user.findMany({
-    where: { role: "STUDENT", systemStatus: "ACTIVE" },
+    where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
     orderBy: [{ rewardPoints: "desc" }, { name: "asc" }],
     take: limit,
     select: { id: true, name: true, rollNo: true, domain: true, year: true, rewardPoints: true },
@@ -287,13 +293,13 @@ export async function leaderboard(limit = 50) {
 
 export async function leaderboardRank(userId: string) {
   const me = await prisma.user.findUnique({ where: { id: userId }, select: { rewardPoints: true, role: true } });
-  if (!me || me.role !== "STUDENT") return null;
+  if (!me || (me.role !== "STUDENT" && me.role !== "STUDENT_ADMIN")) return null;
 
   const [ahead, total] = await Promise.all([
     prisma.user.count({
-      where: { role: "STUDENT", systemStatus: "ACTIVE", rewardPoints: { gt: me.rewardPoints } },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE", rewardPoints: { gt: me.rewardPoints } },
     }),
-    prisma.user.count({ where: { role: "STUDENT", systemStatus: "ACTIVE" } }),
+    prisma.user.count({ where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" } }),
   ]);
 
   return { position: ahead + 1, total, points: me.rewardPoints };
@@ -318,7 +324,7 @@ export async function consoleOverview() {
     trendRows,
     domains,
   ] = await Promise.all([
-    prisma.user.count({ where: { role: "STUDENT" } }),
+    prisma.user.count({ where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] } } }),
     prisma.user.count({ where: { systemStatus: "ACTIVE" } }),
     prisma.attendance.findMany({ where: { date: today }, select: { userId: true, hour: true } }),
     prisma.worklog.count({ where: { date: today } }),
@@ -331,7 +337,7 @@ export async function consoleOverview() {
     }),
     prisma.user.groupBy({
       by: ["domain"],
-      where: { role: "STUDENT" },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] } },
       _count: { domain: true },
       orderBy: { _count: { domain: "desc" } },
     }),
@@ -483,6 +489,7 @@ export async function filterOptions() {
     "MENTOR",
     "ADMIN",
     "SUPER_ADMIN",
+    "STUDENT_ADMIN",
     ...userRoles.map((r) => r.role),
   ])).filter(Boolean);
 

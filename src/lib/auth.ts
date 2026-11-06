@@ -121,6 +121,8 @@ export async function getCurrentUser() {
       mustChangePassword: true,
       lastLoginAt: true,
       createdAt: true,
+      permOverview: true,
+      permLeaveRequests: true,
       permUserManagement: true,
       permScanStudentQr: true,
       permMentorTasks: true,
@@ -131,6 +133,7 @@ export async function getCurrentUser() {
       permExtensionRequest: true,
       permAdminDatabase: true,
       permActivityApproval: true,
+      portalNavDisabled: true,
     },
   });
 

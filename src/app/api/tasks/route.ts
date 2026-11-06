@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { REWARD_RULES, TASK_PRIORITY, TASK_STATUS } from "@/lib/constants";
 
 const createSchema = z.object({
-  title: z.string().trim().min(4, "Give the task a clear title.").max(160),
-  description: z.string().trim().max(2000).default(""),
+  title: z.string().trim().min(4, "Give the task a clear title.").max(5000),
+  description: z.string().trim().max(10000).default(""),
   /** Empty means "broadcast" — the task is created for every matching student. */
   assigneeIds: z.array(z.string()).default([]),
   domain: z.string().trim().max(120).default(""),
@@ -31,7 +31,7 @@ export const POST = handler(async (request: Request) => {
     }
     const cohort = await prisma.user.findMany({
       where: {
-        role: "STUDENT",
+        role: { in: ["STUDENT", "STUDENT_ADMIN"] },
         systemStatus: "ACTIVE",
         ...(data.domain ? { domain: data.domain } : {}),
         ...(data.year ? { year: data.year } : {}),

@@ -417,9 +417,10 @@ function AssignDialog({
       }
     >
       <div className="flex flex-col gap-4">
-        <Field label="Title" htmlFor="t-title" required>
-          <Input
+        <Field label="Title" htmlFor="t-title" required help="Enter task title or instructions (supports 1000+ characters)">
+          <Textarea
             id="t-title"
+            rows={2}
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="e.g. Ship the domain sprint deliverable"

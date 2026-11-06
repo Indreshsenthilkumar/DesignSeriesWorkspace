@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { ATTENDANCE_CUTOFF_MINUTES } from "@/lib/constants";
 import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
 import { attendanceSummary } from "@/lib/queries";
+import { can, isStaff } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Missed OTP Attendance History" };
 export const dynamic = "force-dynamic";
@@ -92,6 +93,8 @@ export default async function AttendancePage() {
     approvedDeltaPercent: 15,
   };
 
+  const canManage = isStaff(user) || can(user, "permAttendanceLogs");
+
   return (
     <div className="py-2">
       <AttendanceHistoryView
@@ -101,6 +104,7 @@ export default async function AttendancePage() {
         todayHours={summary.todayHours}
         todayReason={summary.todayReason}
         closed={closed}
+        canManage={canManage}
       />
     </div>
   );

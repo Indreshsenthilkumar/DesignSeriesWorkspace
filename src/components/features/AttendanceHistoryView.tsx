@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatDay } from "@/lib/dates";
 import { ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/constants";
 import { Icon } from "@/components/ui/Icon";
@@ -13,7 +14,7 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { EmptyRow } from "@/components/ui/EmptyState";
 import { CheckInPanel } from "@/components/features/CheckInPanel";
-import { ExportAttendanceModal } from "@/components/features/ExportAttendanceModal";
+import { BulkImportAttendanceModal } from "@/components/features/BulkImportAttendanceModal";
 
 export interface AttendanceHistoryRecord {
   date: string;
@@ -40,6 +41,7 @@ interface AttendanceHistoryViewProps {
   todayHours: number[];
   todayReason?: string | null;
   closed: boolean;
+  canManage?: boolean;
 }
 
 export function AttendanceHistoryView({
@@ -49,14 +51,25 @@ export function AttendanceHistoryView({
   todayHours,
   todayReason,
   closed,
+  canManage = false,
 }: AttendanceHistoryViewProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [absentFilter, setAbsentFilter] = useState("all");
   const [reasonFilter, setReasonFilter] = useState("all");
 
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    router.refresh();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 700);
+  };
 
   // Extract unique non-empty reasons for the filter dropdown
   const uniqueReasons = useMemo(() => {
@@ -103,10 +116,10 @@ export function AttendanceHistoryView({
         }
       }
 
-      // 3. Status filter
-      if (statusFilter !== "all") {
-        const normStatus = (r.status || "LOGGED").toUpperCase();
-        if (normStatus !== statusFilter.toUpperCase()) return false;
+      // 3. Absent Days filter
+      if (absentFilter !== "all") {
+        const target = parseFloat(absentFilter);
+        if (r.absentDays !== target) return false;
       }
 
       // 4. Reason filter
@@ -116,25 +129,24 @@ export function AttendanceHistoryView({
 
       return true;
     });
-  }, [records, searchQuery, dateFilter, statusFilter, reasonFilter]);
+  }, [records, searchQuery, dateFilter, absentFilter, reasonFilter]);
 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     dateFilter !== "all" ||
-    statusFilter !== "all" ||
+    absentFilter !== "all" ||
     reasonFilter !== "all";
 
   const clearAllFilters = () => {
     setSearchQuery("");
     setDateFilter("all");
-    setStatusFilter("all");
+    setAbsentFilter("all");
     setReasonFilter("all");
   };
 
   // Dynamically calculate absent days based on active filter or default to current month
   const displayedAbsentDays = useMemo(() => {
     if (dateFilter === "all" || dateFilter === "this-month") {
-      // Month-scoped absent days (matches the "This Month" caption)
       const thisMonthPrefix = today.slice(0, 7);
       return records
         .filter((r) => r.date.startsWith(thisMonthPrefix))
@@ -159,12 +171,23 @@ export function AttendanceHistoryView({
         title="Missed OTP Attendance history"
         description="Track and manage attendance logs."
         actions={
-          <Button
-            onClick={() => setAddModalOpen(true)}
-            icon="plus"
-          >
-            Add attendance hour
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canManage && (
+              <Button
+                variant="secondary"
+                onClick={() => setImportModalOpen(true)}
+                icon="upload"
+              >
+                Import Sheet / CSV
+              </Button>
+            )}
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              icon="plus"
+            >
+              Add attendance hour
+            </Button>
+          </div>
         }
       />
 
@@ -209,117 +232,120 @@ export function AttendanceHistoryView({
       </div>
 
       {/* =====================================================================
-          3. Filter & Action Toolbar + Table inside website theme Card
+          3. Filter & Action Toolbar (Standalone panel)
           ===================================================================== */}
-      <Card padded={false} className="overflow-hidden">
-        {/* Filter Toolbar */}
-        <div className="flex flex-col gap-3 p-3.5 sm:p-4 border-b border-[var(--line-soft)] sm:flex-row sm:items-center sm:justify-between bg-[var(--surface-raised)]">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Search Input */}
-            <div className="relative min-w-[200px] sm:min-w-[230px]">
-              <Icon
-                name="search"
-                className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-faint)]"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search logs..."
-                className="w-full rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-8 pr-3 text-[12.5px] text-[var(--text-strong)] placeholder-[var(--text-faint)] transition-colors focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:outline-none"
-              />
-            </div>
-
-            {/* Date Filter */}
-            <div className="relative">
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-7 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-              >
-                <option value="all">All Dates</option>
-                <option value="this-month">This Month</option>
-                <option value="last-30">Last 30 Days</option>
-                <option value="last-90">Last 90 Days</option>
-              </select>
-              <Icon
-                name="calendar"
-                className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-              />
-              <Icon
-                name="chevron-down"
-                className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-              >
-                <option value="all">All Status</option>
-                <option value="LOGGED">Logged</option>
-                <option value="PRESENT">Present</option>
-              </select>
-              <Icon
-                name="chevron-down"
-                className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-              />
-            </div>
-
-            {/* Reason Filter */}
-            <div className="relative max-w-[200px]">
-              <select
-                value={reasonFilter}
-                onChange={(e) => setReasonFilter(e.target.value)}
-                className="w-full appearance-none truncate rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-              >
-                <option value="all">All Reasons</option>
-                {uniqueReasons.map((reason) => (
-                  <option key={reason} value={reason}>
-                    {reason}
-                  </option>
-                ))}
-              </select>
-              <Icon
-                name="chevron-down"
-                className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-              />
-            </div>
-
-            {/* Clear All */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearAllFilters}
-                className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-muted)] hover:text-red-600 transition-colors cursor-pointer"
-              >
-                <Icon name="close" className="h-3 w-3" />
-                Clear All
-              </button>
-            )}
+      <div className="surface p-3.5 sm:p-4 rounded-[14px] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Search Input */}
+          <div className="relative min-w-[200px] sm:min-w-[230px]">
+            <Icon
+              name="search"
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-faint)]"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search logs..."
+              className="w-full rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-8 pr-3 text-[12.5px] text-[var(--text-strong)] placeholder-[var(--text-faint)] transition-colors focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:outline-none"
+            />
           </div>
 
-          {/* Right Action: Counter & Export */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--line-soft)]">
-            <span className="text-[12px] text-[var(--text-muted)]">
-              Showing <span className="font-semibold text-[var(--text-strong)]">{filteredRecords.length}</span> {filteredRecords.length === 1 ? "record" : "records"}
-            </span>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="download"
-              onClick={() => setExportModalOpen(true)}
+          {/* Date Filter */}
+          <div className="relative">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-7 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
             >
-              Export
-            </Button>
+              <option value="all">All Dates</option>
+              <option value="this-month">This Month</option>
+              <option value="last-30">Last 30 Days</option>
+              <option value="last-90">Last 90 Days</option>
+            </select>
+            <Icon
+              name="calendar"
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
+            />
+            <Icon
+              name="chevron-down"
+              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
+            />
           </div>
+
+          {/* Absent Days Filter */}
+          <div className="relative">
+            <select
+              value={absentFilter}
+              onChange={(e) => setAbsentFilter(e.target.value)}
+              className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Absent Days</option>
+              <option value="1">1.0 Day Absent</option>
+              <option value="0.5">0.5 Day Absent</option>
+            </select>
+            <Icon
+              name="chevron-down"
+              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
+            />
+          </div>
+
+          {/* Reason Filter */}
+          <div className="relative max-w-[200px]">
+            <select
+              value={reasonFilter}
+              onChange={(e) => setReasonFilter(e.target.value)}
+              className="w-full appearance-none truncate rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Reasons</option>
+              {uniqueReasons.map((reason) => (
+                <option key={reason} value={reason}>
+                  {reason}
+                </option>
+              ))}
+            </select>
+            <Icon
+              name="chevron-down"
+              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
+            />
+          </div>
+
+          {/* Clear All */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-muted)] hover:text-red-600 transition-colors cursor-pointer"
+            >
+              <Icon name="close" className="h-3 w-3" />
+              Clear All
+            </button>
+          )}
         </div>
 
-        {/* Table Wrap */}
+        {/* Right Action: Counter & Refresh Button */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--line-soft)]">
+          <span className="text-[12px] text-[var(--text-muted)]">
+            Showing <span className="font-semibold text-[var(--text-strong)]">{filteredRecords.length}</span> {filteredRecords.length === 1 ? "record" : "records"}
+          </span>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="refresh"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className={refreshing ? "[&_svg]:animate-spin" : ""}
+          >
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </Button>
+        </div>
+      </div>
+
+      {/* =====================================================================
+          4. DESKTOP TABLE VIEW (md:block inside Card)
+          ===================================================================== */}
+      <Card padded={false} className="hidden md:block overflow-hidden shadow-xs">
         <TableWrap className="border-0 rounded-none">
           <Table>
             <THead>
@@ -327,7 +353,7 @@ export function AttendanceHistoryView({
                 <TH>Date</TH>
                 <TH>Reason / Task</TH>
                 <TH>Hours</TH>
-                <TH>Status</TH>
+                <TH>Absent Days</TH>
               </TR>
             </THead>
             <TBody>
@@ -350,60 +376,69 @@ export function AttendanceHistoryView({
                       </span>
                     </TD>
 
-                    {/* Column 3: Hours + Leave/Absent count */}
+                    {/* Column 3: Hours Only */}
                     <TD>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {record.hours.length === 0 ? (
-                            <span className="text-[12px] text-[var(--text-faint)]">—</span>
-                          ) : (
-                            record.hours
-                              .slice()
-                              .sort((a, b) => a - b)
-                              .map((hour) => (
-                                <span
-                                  key={hour}
-                                  data-accent="blue"
-                                  title={`Hour ${hour} (${HOUR_WINDOW[hour] || ""})`}
-                                  className="grid h-6 w-6 place-items-center rounded-[6px] text-[10.5px] font-bold"
-                                  style={{
-                                    background: "var(--tone-soft)",
-                                    color: "var(--tone)",
-                                    boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--tone) 25%, transparent)",
-                                  }}
-                                >
-                                  {hour}
-                                </span>
-                              ))
-                          )}
-                        </div>
-
-                        {/* Half/Full day leave indicator badge */}
-                        {record.absentDays !== undefined && record.absentDays > 0 ? (
-                          <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-                            style={{
-                              background:
-                                record.absentDays === 1
-                                  ? "var(--color-brand-red-050)"
-                                  : "var(--color-brand-amber-050)",
-                              color:
-                                record.absentDays === 1
-                                  ? "var(--color-brand-red)"
-                                  : "var(--color-brand-amber)",
-                            }}
-                          >
-                            {record.absentDays === 1 ? "1.0 day leave" : "0.5 day leave"}
-                          </span>
-                        ) : null}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {record.hours.length === 0 ? (
+                          <span className="text-[12px] text-[var(--text-faint)]">—</span>
+                        ) : (
+                          record.hours
+                            .slice()
+                            .sort((a, b) => a - b)
+                            .map((hour) => (
+                              <span
+                                key={hour}
+                                data-accent="blue"
+                                title={`Hour ${hour} (${HOUR_WINDOW[hour] || ""})`}
+                                className="grid h-6 w-6 place-items-center rounded-[6px] text-[10.5px] font-bold select-none"
+                                style={{
+                                  background: "var(--tone-soft)",
+                                  color: "var(--tone)",
+                                  boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--tone) 25%, transparent)",
+                                }}
+                              >
+                                {hour}
+                              </span>
+                            ))
+                        )}
                       </div>
                     </TD>
 
-                    {/* Column 4: Status */}
+                    {/* Column 4: Absent Day Calculation */}
                     <TD>
-                      <Badge tone="green" dot>
-                        LOGGED
-                      </Badge>
+                      {record.absentDays !== undefined && record.absentDays > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                          style={{
+                            background:
+                              record.absentDays === 1
+                                ? "var(--color-brand-red-050)"
+                                : "var(--color-brand-amber-050)",
+                            color:
+                              record.absentDays === 1
+                                ? "var(--color-brand-red)"
+                                : "var(--color-brand-amber)",
+                            boxShadow: `inset 0 0 0 1px ${
+                              record.absentDays === 1
+                                ? "color-mix(in srgb, var(--color-brand-red) 30%, transparent)"
+                                : "color-mix(in srgb, var(--color-brand-amber) 30%, transparent)"
+                            }`,
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{
+                              background:
+                                record.absentDays === 1
+                                ? "var(--color-brand-red)"
+                                : "var(--color-brand-amber)",
+                            }}
+                          />
+                          {record.absentDays === 1 ? "1.0 Day Absent" : "0.5 Day Absent"}
+                        </span>
+                      ) : (
+                        <span className="text-[12px] text-[var(--text-faint)]">0.0 Days</span>
+                      )}
                     </TD>
                   </TR>
                 ))
@@ -412,6 +447,116 @@ export function AttendanceHistoryView({
           </Table>
         </TableWrap>
       </Card>
+
+      {/* =====================================================================
+          5. MOBILE CARD VIEW (md:hidden - Cards sit directly without background card)
+          ===================================================================== */}
+      <div className="md:hidden space-y-3">
+        <div className="flex items-center justify-between px-1 pt-1">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] font-heading">
+            History ({filteredRecords.length})
+          </span>
+        </div>
+
+        {filteredRecords.length === 0 ? (
+          <div className="surface py-10 px-4 text-center text-[13px] text-[var(--text-muted)] rounded-[14px]">
+            No attendance logs found.
+          </div>
+        ) : (
+          filteredRecords.map((record) => {
+            const isOneDay = record.absentDays === 1;
+
+            return (
+              <div
+                key={record.date}
+                className="surface overflow-hidden rounded-[14px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xs"
+              >
+                {/* Card Main Body */}
+                <div className="p-4 space-y-3">
+                  {/* Top Row: Date & Badges */}
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-heading text-[16px] font-bold leading-tight text-[var(--text-strong)]">
+                        {formatDay(record.date, "medium")}
+                      </h3>
+                      <p className="mt-1 text-[13px] font-medium leading-snug text-[var(--text-muted)] line-clamp-2">
+                        {record.reason || "Missed OTP Attendance Log"}
+                      </p>
+                    </div>
+
+                    {/* Right Badges: Total Hours & Absent Days */}
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {/* Blue Hours Pill */}
+                      <span
+                        className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--color-brand-blue)] px-2.5 py-1 text-[11.5px] font-bold text-white shadow-2xs"
+                      >
+                        <Icon name="sparkle" className="h-3 w-3" />
+                        {record.hours.length} {record.hours.length === 1 ? "Hr" : "Hrs"}
+                      </span>
+
+                      {/* Absent Days calculation pill */}
+                      {record.absentDays !== undefined && record.absentDays > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold"
+                          style={{
+                            background: isOneDay ? "var(--color-brand-red-050)" : "var(--color-brand-amber-050)",
+                            color: isOneDay ? "var(--color-brand-red)" : "var(--color-brand-amber)",
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: isOneDay ? "var(--color-brand-red)" : "var(--color-brand-amber)" }}
+                          />
+                          {isOneDay ? "1.0d Leave" : "0.5d Leave"}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Hours Circles Row */}
+                  <div className="flex items-center gap-1.5 pt-0.5">
+                    {record.hours.length === 0 ? (
+                      <span className="text-[12px] text-[var(--text-faint)]">—</span>
+                    ) : (
+                      record.hours
+                        .slice()
+                        .sort((a, b) => a - b)
+                        .map((hour) => (
+                          <span
+                            key={hour}
+                            data-accent="blue"
+                            title={`Hour ${hour} (${HOUR_WINDOW[hour] || ""})`}
+                            className="grid h-7 w-7 place-items-center rounded-full text-[11.5px] font-bold select-none"
+                            style={{
+                              background: "var(--color-brand-blue-050)",
+                              color: "var(--color-brand-blue)",
+                              boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--color-brand-blue) 30%, transparent)",
+                            }}
+                          >
+                            {hour}
+                          </span>
+                        ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Footer Strip */}
+                <div
+                  className="flex items-center gap-1.5 border-t px-4 py-2 text-[11.5px] font-semibold"
+                  style={{
+                    background: "var(--color-brand-green-050)",
+                    borderColor: "color-mix(in srgb, var(--color-brand-green) 18%, transparent)",
+                    color: "var(--color-brand-green)",
+                  }}
+                >
+                  <Icon name="check-circle" className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Successfully verified with portal</span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {/* =====================================================================
           4. Modal: Add Attendance Hour (CheckInPanel with same-day date,
@@ -434,14 +579,10 @@ export function AttendanceHistoryView({
         </div>
       </Modal>
 
-      {/* =====================================================================
-          5. Modal: Export Missed OTP Attendance (Excel, PDF, CSV with column toggles)
-          ===================================================================== */}
-      <ExportAttendanceModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        defaultFrom={records.length > 0 ? records[records.length - 1].date : today}
-        defaultTo={today}
+      <BulkImportAttendanceModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );

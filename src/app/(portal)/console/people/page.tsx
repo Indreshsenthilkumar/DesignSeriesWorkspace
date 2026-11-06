@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/StatTile";
-import { requirePermission } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { PERMISSIONS, type Permission } from "@/lib/constants";
+import { isStaff, can, type PermissionSubject } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
 import { PeopleClient, type PersonRow } from "./PeopleClient";
 
@@ -14,19 +16,26 @@ export const metadata: Metadata = { title: "People" };
 export const dynamic = "force-dynamic";
 
 export default async function PeoplePage() {
-  const admin = await requirePermission("permUserManagement");
+  const admin = await requireUser();
+  const subject = admin as PermissionSubject;
+  const canManage = isStaff(subject) || admin.role === "STUDENT_ADMIN" || can(subject, "permUserManagement");
+  if (!canManage) {
+    redirect("/dashboard?denied=1");
+  }
 
   const [people, options] = await Promise.all([
     prisma.user.findMany({
       orderBy: [{ systemStatus: "asc" }, { name: "asc" }],
       select: {
         id: true, name: true, rollNo: true, email: true, department: true, year: true,
-        mobile: true, domain: true, mentorName: true, role: true, systemStatus: true,
+        mobile: true, domain: true, mentorName: true, linkedin: true, github: true, role: true, systemStatus: true,
         rewardPoints: true, lastLoginAt: true,
+        permOverview: true, permLeaveRequests: true,
         permUserManagement: true, permScanStudentQr: true, permMentorTasks: true,
         permLinkedinTracker: true, permWorklogs: true, permNotifications: true,
         permAttendanceLogs: true, permExtensionRequest: true, permAdminDatabase: true,
         permActivityApproval: true,
+        portalNavDisabled: true,
       },
     }),
     filterOptions(),
@@ -42,16 +51,19 @@ export default async function PeoplePage() {
     mobile: person.mobile,
     domain: person.domain,
     mentorName: person.mentorName,
+    linkedin: person.linkedin || "",
+    github: person.github || "",
     role: person.role,
     systemStatus: person.systemStatus,
     rewardPoints: person.rewardPoints,
     lastLoginAt: person.lastLoginAt?.toISOString() ?? null,
+    portalNavDisabled: person.portalNavDisabled || "",
     permissions: Object.fromEntries(
       PERMISSIONS.map((permission) => [permission, person[permission as keyof typeof person] === true])
     ) as Record<Permission, boolean>,
   }));
 
-  const students = rows.filter((r) => r.role === "STUDENT").length;
+  const students = rows.filter((r) => r.role === "STUDENT" || r.role === "STUDENT_ADMIN").length;
   const staff = rows.length - students;
   const suspended = rows.filter((r) => r.systemStatus === "SUSPENDED").length;
   const neverSignedIn = rows.filter((r) => !r.lastLoginAt).length;

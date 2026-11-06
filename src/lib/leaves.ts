@@ -96,3 +96,57 @@ export function formatLeaveDateTime(val?: string | null): string {
 export function isLeaveTypeOnDuty(type: string): boolean {
   return type.toLowerCase().startsWith("onduty") || type.toLowerCase().startsWith("on duty");
 }
+
+/**
+ * Normalizes a mentor name or student mentorName string into comparable tokens:
+ * - Strips employee/department tags like '- MC10412' or '( CS10963 )'
+ * - Standardizes common phonetics like 'gh' vs 'g' (e.g. 'Raghunath' vs 'Ragunath')
+ */
+export function normalizeMentorTokens(str?: string | null): string[] {
+  if (!str) return [];
+  const base = str.split(" - ")[0].split("(")[0].trim().toLowerCase();
+  return base
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((t) => t.replace(/gh/g, "g"));
+}
+
+/**
+ * Returns true if a student's assigned mentorName matches a mentor user's name.
+ * Handles variations such as:
+ * - Student assigned to 'RAGHUNATH M - MC10412' vs Mentor name 'RAGHUNATH M'
+ * - Student assigned to 'RAGHUNATH M - MC10412' vs Mentor name 'Ragunath' / 'Raghunath'
+ * - Student assigned to 'RAJESHKUMAR G ( CS10963 )' vs Mentor name 'Rajeshkumar G'
+ */
+export function matchesMentor(
+  studentMentorName?: string | null,
+  mentorName?: string | null
+): boolean {
+  if (!studentMentorName || !mentorName) return false;
+  const sTokens = normalizeMentorTokens(studentMentorName);
+  const mTokens = normalizeMentorTokens(mentorName);
+  if (sTokens.length === 0 || mTokens.length === 0) return false;
+
+  // Exact joined match
+  if (sTokens.join(" ") === mTokens.join(" ")) return true;
+
+  // Primary name token (first token with length >= 3)
+  const sPrimary = sTokens.find((t) => t.length >= 3);
+  const mPrimary = mTokens.find((t) => t.length >= 3);
+
+  if (sPrimary && mPrimary && sPrimary === mPrimary) {
+    // If both have secondary tokens (such as initials), ensure they don't contradict
+    const sSecondary = sTokens.filter((t) => t !== sPrimary);
+    const mSecondary = mTokens.filter((t) => t !== mPrimary);
+    if (sSecondary.length > 0 && mSecondary.length > 0) {
+      const hasOverlap = sSecondary.some((s) =>
+        mSecondary.some((m) => s.startsWith(m) || m.startsWith(s))
+      );
+      return hasOverlap;
+    }
+    return true;
+  }
+  return false;
+}
+

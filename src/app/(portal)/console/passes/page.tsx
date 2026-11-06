@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatTile } from "@/components/ui/StatTile";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { ApprovalsClient, type ApprovalRow } from "./ApprovalsClient";
 
@@ -18,6 +19,8 @@ export default async function ConsolePassesPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   await requirePermission("permActivityApproval");
+  const user = await requireUser();
+  await markSectionViewed(user.id, "console_passes");
   const params = await searchParams;
   const status = params.status ?? "PENDING";
 

@@ -5,6 +5,7 @@ import { StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { PassesClient, type PassRow } from "./PassesClient";
 
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PassesPage() {
   const user = await requireUser();
+  await markSectionViewed(user.id, "passes");
 
   const passes = await prisma.activityPass.findMany({
     where: { userId: user.id },

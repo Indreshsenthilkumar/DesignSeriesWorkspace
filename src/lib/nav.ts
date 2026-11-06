@@ -81,13 +81,13 @@ export const STUDENT_NAV: NavItem[] = [
   },
 ];
 
-/** The admin console. Each item needs its own permission grant. */
 export const CONSOLE_NAV: NavItem[] = [
   {
     href: "/console",
     label: "Overview",
     icon: "chart",
     primary: true,
+    permission: "permOverview",
     description: "Live programme health: today's floor, trends and what is waiting on you.",
   },
   {
@@ -95,6 +95,7 @@ export const CONSOLE_NAV: NavItem[] = [
     label: "Leave Request",
     icon: "calendar",
     primary: true,
+    permission: "permLeaveRequests",
     description: "Review, approve or reject student leave and on-duty requests.",
   },
   {
@@ -172,10 +173,28 @@ export const CONSOLE_NAV: NavItem[] = [
   },
 ];
 
+/** Filter My Portal navigation items based on portalNavDisabled string. */
+export function studentNavFor(disabledStr?: string | null): NavItem[] {
+  if (!disabledStr) return STUDENT_NAV;
+  const disabledList = disabledStr
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (disabledList.length === 0) return STUDENT_NAV;
+
+  return STUDENT_NAV.filter((item) => {
+    const itemKey = item.href.replace(/^\//, "").toLowerCase();
+    return !disabledList.includes(itemKey) && !disabledList.includes(item.href.toLowerCase());
+  });
+}
+
 /** Console items this specific user may see. */
 export function consoleNavFor(user: PermissionSubject): NavItem[] {
   if (!canOpenConsole(user)) return [];
-  return CONSOLE_NAV.filter((item) => !item.permission || can(user, item.permission));
+  return CONSOLE_NAV.filter((item) => {
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") return true;
+    return !item.permission || can(user, item.permission);
+  });
 }
 
 /** Longest-prefix match so `/console/people/abc` still highlights "People". */

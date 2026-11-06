@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdminLike, type PermissionSubject } from "@/lib/permissions";
+import { matchesMentor } from "@/lib/leaves";
 import { LeaveDetailClient } from "./LeaveDetailClient";
 
 export const metadata: Metadata = { title: "Leave Details" };
@@ -64,10 +66,15 @@ export default async function LeaveDetailPage({
     user.role === "ADMIN" ||
     user.role === "SUPER_ADMIN" ||
     user.role === "MENTOR" ||
+    user.role === "STUDENT_ADMIN" ||
+    user.permLeaveRequests ||
     user.permActivityApproval;
 
-  // Student can view their own leave, staff can view any student's leave
-  if (user.role === "STUDENT" && leave.userId !== user.id && !isStaff) {
+  const isGlobalAdmin = isAdminLike(user as PermissionSubject);
+  const isOwner = leave.userId === user.id;
+
+  // Student can view their own leave, staff can view student leaves
+  if (user.role === "STUDENT" && !isOwner && !isStaff) {
     return (
       <div className="mx-auto max-w-lg py-12 text-center">
         <div className="rounded-2xl border border-[var(--line-default)] bg-[var(--surface-raised)] p-8">
@@ -84,6 +91,28 @@ export default async function LeaveDetailPage({
         </div>
       </div>
     );
+  }
+
+  // A mentor can only view their own mentees' leaves
+  if (!isGlobalAdmin && user.role === "MENTOR" && !isOwner) {
+    if (!matchesMentor(leave.user?.mentorName, user.name)) {
+      return (
+        <div className="mx-auto max-w-lg py-12 text-center">
+          <div className="rounded-2xl border border-[var(--line-default)] bg-[var(--surface-raised)] p-8">
+            <h2 className="text-lg font-bold text-[var(--text-strong)]">Access Restricted</h2>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              This leave request belongs to a student who is not assigned to you as a mentee.
+            </p>
+            <Link
+              href="/console/leaves"
+              className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-brand-blue)] px-4 py-2 text-xs font-semibold text-white"
+            >
+              Back to Leave Requests
+            </Link>
+          </div>
+        </div>
+      );
+    }
   }
 
   const formatted = {
@@ -123,6 +152,7 @@ export default async function LeaveDetailPage({
           name: user.name,
         }}
         isStaff={isStaff}
+        canApprove={isGlobalAdmin}
       />
     </div>
   );

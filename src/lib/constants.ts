@@ -10,7 +10,7 @@
 // Roles & permissions
 // ---------------------------------------------------------------------------
 
-export const ROLES = ["STUDENT", "MENTOR", "ADMIN", "SUPER_ADMIN"] as const;
+export const ROLES = ["STUDENT", "MENTOR", "ADMIN", "SUPER_ADMIN", "STUDENT_ADMIN"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -18,6 +18,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   MENTOR: "Mentor",
   ADMIN: "Admin",
   SUPER_ADMIN: "Super Admin",
+  STUDENT_ADMIN: "Student + Admin",
 };
 
 /** Rank used for "can this user act on that user" checks. */
@@ -26,47 +27,73 @@ export const ROLE_RANK: Record<Role, number> = {
   MENTOR: 1,
   ADMIN: 2,
   SUPER_ADMIN: 3,
+  STUDENT_ADMIN: 2,
 };
 
 export const PERMISSIONS = [
+  "permOverview",
+  "permLeaveRequests",
   "permUserManagement",
-  "permScanStudentQr",
-  "permMentorTasks",
-  "permLinkedinTracker",
-  "permWorklogs",
-  "permNotifications",
   "permAttendanceLogs",
-  "permExtensionRequest",
-  "permAdminDatabase",
+  "permWorklogs",
+  "permMentorTasks",
   "permActivityApproval",
+  "permExtensionRequest",
+  "permNotifications",
+  "permLinkedinTracker",
+  "permScanStudentQr",
+  "permAdminDatabase",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 export const PERMISSION_LABEL: Record<Permission, string> = {
-  permUserManagement: "User management",
-  permScanStudentQr: "Scan student QR",
-  permMentorTasks: "Mentor tasks",
+  permOverview: "Overview",
+  permLeaveRequests: "Leave Request",
+  permUserManagement: "People",
+  permAttendanceLogs: "Missed OTP Attendance",
+  permWorklogs: "Worklogs",
+  permMentorTasks: "Tasks",
+  permActivityApproval: "Approvals",
+  permExtensionRequest: "Extensions",
+  permNotifications: "Announcements",
   permLinkedinTracker: "LinkedIn tracker",
-  permWorklogs: "Worklog review",
-  permNotifications: "Notifications",
-  permAttendanceLogs: "Attendance logs",
-  permExtensionRequest: "Extension requests",
-  permAdminDatabase: "Admin database",
-  permActivityApproval: "Activity approval",
+  permScanStudentQr: "QR check-in",
+  permAdminDatabase: "Data & audit",
 };
 
 export const PERMISSION_HINT: Record<Permission, string> = {
-  permUserManagement: "Create, edit, suspend and re-role portal accounts.",
-  permScanStudentQr: "Open the QR scanner and mark attendance on behalf of a student.",
-  permMentorTasks: "Assign and grade tasks for mentees.",
-  permLinkedinTracker: "Verify LinkedIn posts submitted by students.",
-  permWorklogs: "Read every worklog and leave mentor remarks.",
-  permNotifications: "Publish announcements to cohorts.",
-  permAttendanceLogs: "Read the full attendance matrix and add manual entries.",
-  permExtensionRequest: "Grant late-submission windows for worklogs.",
-  permAdminDatabase: "Export raw tables and view the audit trail.",
+  permOverview: "Live programme health: today's floor, trends and what is waiting on you.",
+  permLeaveRequests: "Review, approve or reject student leave and on-duty requests.",
+  permUserManagement: "The roster — roles, permissions, account status.",
+  permAttendanceLogs: "The full attendance matrix, plus manual entry.",
+  permWorklogs: "Read every submission and leave mentor remarks.",
+  permMentorTasks: "Assign sprint work and track completion.",
   permActivityApproval: "Approve or reject gate pass requests.",
+  permExtensionRequest: "Reopen a locked worklog date for a student who missed the window.",
+  permNotifications: "Publish notices to the whole programme or a single cohort.",
+  permLinkedinTracker: "Verify build-in-public posts submitted by students.",
+  permScanStudentQr: "Mark attendance on behalf of a student at the studio door.",
+  permAdminDatabase: "Export raw tables and read the audit trail.",
 };
+
+// ---------------------------------------------------------------------------
+// My Portal Modules (Student & Staff portal sections)
+// ---------------------------------------------------------------------------
+
+export const PORTAL_MODULES = [
+  { key: "dashboard", href: "/dashboard", label: "Dashboard", hint: "Your day at a glance — attendance, worklog and what needs doing." },
+  { key: "attendance", href: "/attendance", label: "Missed OTP Attendance", hint: "Check in for the day and review your hour-by-hour history." },
+  { key: "worklog", href: "/worklog", label: "Worklog", hint: "Log what you worked on in each slot and track mentor remarks." },
+  { key: "tasks", href: "/tasks", label: "Tasks", hint: "Sprint deliverables assigned to you by your mentor." },
+  { key: "leaves", href: "/leaves", label: "My Leave", hint: "Apply for leaves or OnDuty requests and track mentor approvals." },
+  { key: "passes", href: "/passes", label: "Activity passes", hint: "Request a gate pass and carry the approved slip on your phone." },
+  { key: "announcements", href: "/announcements", label: "Announcements", hint: "Programme-wide notices from the DesignSeries team." },
+  { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", hint: "Reward points across the cohort." },
+  { key: "notes", href: "/notes", label: "Notes", hint: "Your private scratchpad. Never visible to anyone else." },
+  { key: "profile", href: "/profile", label: "Profile", hint: "Your record, links and account security." },
+] as const;
+
+export type PortalModuleKey = (typeof PORTAL_MODULES)[number]["key"];
 
 // ---------------------------------------------------------------------------
 // Attendance

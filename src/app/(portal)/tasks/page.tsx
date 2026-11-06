@@ -5,6 +5,7 @@ import { StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
+import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { TasksClient, type TaskRow } from "./TasksClient";
 
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const user = await requireUser();
+  await markSectionViewed(user.id, "tasks");
   const today = toDayKey();
 
   const tasks = await prisma.task.findMany({

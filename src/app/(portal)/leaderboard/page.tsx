@@ -11,6 +11,7 @@ import { requireUser } from "@/lib/auth";
 import { REWARD_RULES } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { leaderboard, leaderboardRank } from "@/lib/queries";
+import { SubmitLinkedinButton } from "@/components/features/SubmitLinkedinModal";
 import { shortYear } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Leaderboard" };
@@ -212,13 +213,31 @@ export default async function LeaderboardPage() {
           ) : null}
 
           <Card>
-            <CardHeader icon="info" title="How points are earned" />
+            <CardHeader
+              icon="info"
+              title="How points are earned"
+              action={<SubmitLinkedinButton size="sm" variant="secondary" label="+ Submit Post" />}
+            />
             <ul className="flex flex-col gap-2">
               <RuleRow tone="green" icon="check-circle" label="Full attendance day" points={REWARD_RULES.fullDayAttendance} />
               <RuleRow tone="blue" icon="clipboard" label="Worklog submitted" points={REWARD_RULES.worklogSubmitted} />
               <RuleRow tone="amber" icon="target" label="Task completed" points={REWARD_RULES.taskCompletedBase} suffix="+" />
               <RuleRow tone="red" icon="linkedin" label="Verified LinkedIn post" points={REWARD_RULES.linkedinVerified} />
             </ul>
+            <div
+              className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-[10px] border p-2.5"
+              style={{ borderColor: "var(--line-soft)", background: "var(--surface-inset)" }}
+            >
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold" style={{ color: "var(--text-strong)" }}>
+                  Build in public on LinkedIn?
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Submit your post URL to earn +{REWARD_RULES.linkedinVerified} points upon verification.
+                </p>
+              </div>
+              <SubmitLinkedinButton size="sm" label="Submit Post" />
+            </div>
           </Card>
 
           <Card>

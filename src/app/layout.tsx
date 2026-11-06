@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import { ThemeProvider, themeBootScript } from "@/components/ui/Theme";
+import { ThemeProvider, ThemeScript } from "@/components/ui/Theme";
 import { ToastProvider } from "@/components/ui/Toast";
 
 import "./globals.css";
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Applies the stored theme before first paint — no flash on reload. */}
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <ThemeScript />
         {/* Google Sans Text & Google Sans typography */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
