@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { attendanceSummary, leaderboardRank } from "@/lib/queries";
 import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSection";
 import { matchesMentor } from "@/lib/leaves";
-import { titleCase } from "@/lib/utils";
+import { cn, titleCase } from "@/lib/utils";
 
 import { PasswordForm, ProfileLinksForm } from "./ProfileClient";
 
@@ -119,6 +119,32 @@ export default async function ProfilePage() {
     }
   }
 
+  // Data cleaning & gender inference (resolves legacy mojibake like â€“ / Â·)
+  const rawYear = user.year || "";
+  const cleanedYear = rawYear
+    .replace(/â\x80\x93|â€\s*|â€“/g, "–")
+    .replace(/Â·/g, "·")
+    .replace(/\s+/g, " ")
+    .trim();
+  const displayYear = cleanedYear.replace(/\s*·\s*(Male|Female)\b/gi, "").trim() || "—";
+
+  let displayGender = user.gender?.trim();
+  if (!displayGender && rawYear) {
+    if (/\bfemale\b/i.test(rawYear)) displayGender = "Female";
+    else if (/\bmale\b/i.test(rawYear)) displayGender = "Male";
+  }
+  if (!displayGender) displayGender = "—";
+
+  const mentorDesignation = (academicMentor?.designation || (user.mentorName ? "Faculty Mentor" : "—"))
+    .replace(/\bProff\b/i, "Professor");
+
+  const rawMentorDisplay = academicMentor?.name || (user.mentorName ? user.mentorName.split("-")[0].trim() : "Not assigned");
+  const mentorLegend = academicMentor?.legend || "";
+  const cleanedMentorName = rawMentorDisplay.replace(/^(dr|mr|mrs|ms)\.?\s+/i, "");
+  const mentorDisplayName = mentorLegend && cleanedMentorName !== "Not assigned"
+    ? `${mentorLegend}. ${titleCase(cleanedMentorName)}`
+    : titleCase(rawMentorDisplay);
+
   return (
     <div>
       <PageHeader
@@ -173,23 +199,23 @@ export default async function ProfilePage() {
           {/* If the user is STUDENT / STUDENT + ADMIN / ADMIN:
               User details will be displayed on one grid card and Academic Mentor details on one card */}
           {isStudentOrAdmin ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Card 1: User Details Card */}
+            <>
+              {/* Card 1: User Details Grid Card */}
               <Card>
                 <CardHeader
                   icon="user"
                   title="User Details"
                   subtitle="Your personal & academic programme record."
                 />
-                <dl>
-                  <DataRow label="NAME" value={titleCase(user.name)} />
-                  <DataRow label="ROLL NUMBER" value={user.rollNo} mono />
-                  <DataRow label="DEPARTMENT" value={titleCase(user.department) || "—"} />
-                  <DataRow label="EMAIL" value={user.email} mono />
-                  <DataRow label="YEAR" value={user.year || "—"} />
-                  <DataRow label="MENTOR" value={user.mentorName || "Not assigned"} />
-                  <DataRow label="GENDER" value={user.gender || "—"} />
-                  <DataRow label="DOMAIN" value={user.domain || "—"} />
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                  <ProfileInfoTile label="NAME" value={titleCase(user.name)} />
+                  <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} mono />
+                  <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
+                  <ProfileInfoTile label="EMAIL" value={user.email} mono />
+                  <ProfileInfoTile label="YEAR" value={displayYear} />
+                  <ProfileInfoTile label="MENTOR" value={mentorDisplayName} />
+                  <ProfileInfoTile label="GENDER" value={displayGender} />
+                  <ProfileInfoTile label="DOMAIN" value={user.domain || "—"} />
                 </dl>
               </Card>
 
@@ -200,28 +226,18 @@ export default async function ProfilePage() {
                   title="Academic Mentor Details"
                   subtitle="Assigned faculty mentor."
                 />
-                <dl>
-                  <DataRow
-                    label="NAME"
-                    value={
-                      academicMentor?.legend && academicMentor?.name
-                        ? `${academicMentor.legend}. ${academicMentor.name}`
-                        : academicMentor?.name || user.mentorName || "Not assigned"
-                    }
-                  />
-                  <DataRow label="ID" value={academicMentor?.rollNo || "—"} mono />
-                  <DataRow label="DEPARTMENT" value={academicMentor?.department || "—"} />
-                  <DataRow label="GENDER" value={academicMentor?.gender || "—"} />
-                  <DataRow label="LEGEND" value={academicMentor?.legend || "—"} />
-                  <DataRow label="EMAIL" value={academicMentor?.email || "—"} mono />
-                  <DataRow label="PHONE" value={academicMentor?.mobile || "—"} mono />
-                  <DataRow
-                    label="DESIGNATION"
-                    value={academicMentor?.designation || (user.mentorName ? "Faculty Mentor" : "—")}
-                  />
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                  <ProfileInfoTile label="NAME" value={mentorDisplayName} />
+                  <ProfileInfoTile label="ID" value={academicMentor?.rollNo || "—"} mono />
+                  <ProfileInfoTile label="DEPARTMENT" value={academicMentor?.department || "—"} />
+                  <ProfileInfoTile label="GENDER" value={academicMentor?.gender || "—"} />
+                  <ProfileInfoTile label="LEGEND" value={academicMentor?.legend || "—"} />
+                  <ProfileInfoTile label="EMAIL" value={academicMentor?.email || "—"} mono />
+                  <ProfileInfoTile label="PHONE" value={academicMentor?.mobile || "—"} mono />
+                  <ProfileInfoTile label="DESIGNATION" value={mentorDesignation} />
                 </dl>
               </Card>
-            </div>
+            </>
           ) : (
             /* Faculty Mentor Profile Card */
             <Card>
@@ -230,23 +246,18 @@ export default async function ProfilePage() {
                 title="Faculty Mentor Details"
                 subtitle="Official faculty record in the portal."
               />
-              <dl>
-                <DataRow
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                <ProfileInfoTile
                   label="Faculty Name"
                   value={user.legend ? `${user.legend}. ${titleCase(user.name)}` : titleCase(user.name)}
                 />
-                <DataRow label="Faculty ID" value={user.rollNo} mono />
-                <DataRow label="Faculty Designation" value={user.designation || "Faculty Mentor"} />
-                <DataRow label="Faculty Department" value={titleCase(user.department) || "—"} />
-                <DataRow label="Gender" value={user.gender || "—"} />
-                <DataRow label="Legend" value={user.legend || "—"} />
-                <DataRow label="Faculty Official Email" value={user.email} mono />
-                <DataRow label="Faculty Phone" value={user.mobile || "—"} mono />
-                <DataRow label="Joined Portal" value={formatDay(toDayKey(user.createdAt), "long")} />
-                <DataRow
-                  label="Last Sign-in"
-                  value={user.lastLoginAt ? relativeTime(user.lastLoginAt) : "This is your first session"}
-                />
+                <ProfileInfoTile label="Faculty ID" value={user.rollNo} mono />
+                <ProfileInfoTile label="Faculty Designation" value={user.designation || "Faculty Mentor"} />
+                <ProfileInfoTile label="Faculty Department" value={titleCase(user.department) || "—"} />
+                <ProfileInfoTile label="Gender" value={user.gender || "—"} />
+                <ProfileInfoTile label="Legend" value={user.legend || "—"} />
+                <ProfileInfoTile label="Faculty Official Email" value={user.email} mono />
+                <ProfileInfoTile label="Faculty Phone" value={user.mobile || "—"} mono />
               </dl>
             </Card>
           )}
@@ -438,5 +449,31 @@ function ExternalLink({
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {plain ? null : <Icon name="arrow-up-right" className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-faint)" }} />}
     </a>
+  );
+}
+
+function ProfileInfoTile({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/50 p-3 sm:p-3.5 flex flex-col justify-between transition-colors hover:border-[var(--line-strong)]">
+      <dt className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          "mt-1 text-[13px] sm:text-[13.5px] font-semibold text-[var(--text-strong)] leading-snug break-words",
+          mono && "font-mono text-[12px]"
+        )}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }
