@@ -28,7 +28,7 @@ export default async function PeoplePage() {
       orderBy: [{ systemStatus: "asc" }, { name: "asc" }],
       select: {
         id: true, name: true, rollNo: true, email: true, department: true, year: true,
-        mobile: true, domain: true, mentorName: true, linkedin: true, github: true, role: true, systemStatus: true,
+        mobile: true, domain: true, mentorName: true, gender: true, legend: true, designation: true, linkedin: true, github: true, role: true, systemStatus: true,
         rewardPoints: true, lastLoginAt: true,
         permOverview: true, permLeaveRequests: true,
         permUserManagement: true, permScanStudentQr: true, permMentorTasks: true,
@@ -51,6 +51,9 @@ export default async function PeoplePage() {
     mobile: person.mobile,
     domain: person.domain,
     mentorName: person.mentorName,
+    gender: person.gender || "",
+    legend: person.legend || "",
+    designation: person.designation || "",
     linkedin: person.linkedin || "",
     github: person.github || "",
     role: person.role,

@@ -47,7 +47,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
     where: { id },
     select: {
       id: true, name: true, rollNo: true, email: true, department: true, year: true,
-      mobile: true, domain: true, mentorName: true, linkedin: true, github: true,
+      mobile: true, domain: true, mentorName: true, gender: true, legend: true, designation: true, linkedin: true, github: true,
       role: true, systemStatus: true, rewardPoints: true, lastLoginAt: true, createdAt: true,
       mustChangePassword: true,
       permOverview: true, permLeaveRequests: true,
@@ -291,13 +291,28 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
           <Card>
             <CardHeader icon="user" title="Record" />
             <dl>
-              <DataRow label="Roll number" value={person.rollNo} mono />
-              <DataRow label="Email" value={person.email} mono />
-              <DataRow label="Mobile" value={person.mobile} mono />
-              <DataRow label="Department" value={titleCase(person.department)} />
-              <DataRow label="Year / batch" value={person.year} />
-              <DataRow label="Domain" value={person.domain} />
-              <DataRow label="Mentor" value={person.mentorName} />
+              {person.role === "MENTOR" ? (
+                <>
+                  <DataRow label="Faculty ID" value={person.rollNo} mono />
+                  <DataRow label="Faculty Official Email" value={person.email} mono />
+                  <DataRow label="Faculty Phone" value={person.mobile || "—"} mono />
+                  <DataRow label="Faculty Department" value={titleCase(person.department)} />
+                  <DataRow label="Faculty Designation" value={person.designation || "Faculty Mentor"} />
+                  <DataRow label="Gender" value={person.gender || "—"} />
+                  <DataRow label="Legend" value={person.legend || "—"} />
+                </>
+              ) : (
+                <>
+                  <DataRow label="Roll number" value={person.rollNo} mono />
+                  <DataRow label="Email" value={person.email} mono />
+                  <DataRow label="Mobile" value={person.mobile || "—"} mono />
+                  <DataRow label="Department" value={titleCase(person.department)} />
+                  <DataRow label="Year / batch" value={person.year} />
+                  <DataRow label="Domain" value={person.domain} />
+                  <DataRow label="Gender" value={person.gender || "—"} />
+                  <DataRow label="Mentor" value={person.mentorName || "—"} />
+                </>
+              )}
               <DataRow
                 label="LinkedIn"
                 value={

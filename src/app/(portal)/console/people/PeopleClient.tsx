@@ -40,6 +40,9 @@ export type PersonRow = {
   mobile: string;
   domain: string;
   mentorName: string;
+  gender?: string;
+  legend?: string;
+  designation?: string;
   linkedin: string;
   github: string;
   role: string;
@@ -418,6 +421,9 @@ function ManageDialog({
     year: person.year,
     domain: person.domain,
     mentorName: person.mentorName,
+    gender: person.gender || "",
+    legend: person.legend || "Dr",
+    designation: person.designation || "",
     mobile: person.mobile,
     linkedin: person.linkedin || "",
     github: person.github || "",
@@ -516,7 +522,27 @@ function ManageDialog({
             Record
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Full name" htmlFor="m-name">
+            {form.role === "MENTOR" ? (
+              <>
+                <Field label="Legend (Ms, Mrs, Mr, Dr)" htmlFor="m-legend">
+                  <Select id="m-legend" value={form.legend} onChange={(e) => setForm({ ...form, legend: e.target.value })}>
+                    <option value="Dr">Dr</option>
+                    <option value="Mr">Mr</option>
+                    <option value="Mrs">Mrs</option>
+                    <option value="Ms">Ms</option>
+                  </Select>
+                </Field>
+                <Field label="Faculty Designation" htmlFor="m-designation">
+                  <Input
+                    id="m-designation"
+                    placeholder="e.g. Assistant Professor / Associate Professor"
+                    value={form.designation}
+                    onChange={(e) => setForm({ ...form, designation: e.target.value })}
+                  />
+                </Field>
+              </>
+            ) : null}
+            <Field label={form.role === "MENTOR" ? "Faculty Name" : "Full name"} htmlFor="m-name">
               <Input id="m-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
             <Field label="Mobile" htmlFor="m-mobile">
@@ -559,6 +585,14 @@ function ManageDialog({
                     {m}
                   </option>
                 ))}
+              </Select>
+            </Field>
+            <Field label="Gender" htmlFor="m-gender">
+              <Select id="m-gender" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
               </Select>
             </Field>
             <Field label="LinkedIn Profile" htmlFor="m-linkedin">
@@ -792,6 +826,7 @@ function CreatePersonDialog({
   const toast = useToast();
 
   const [form, setForm] = useState({
+    role: "STUDENT",
     name: "",
     rollNo: "",
     email: "",
@@ -800,9 +835,11 @@ function CreatePersonDialog({
     mobile: "",
     domain: options.domains[0] || "Data not Feeded",
     mentorName: "",
+    gender: "",
+    legend: "Dr",
+    designation: "",
     linkedin: "",
     github: "",
-    role: "STUDENT",
     password: "",
   });
 
@@ -822,17 +859,60 @@ function CreatePersonDialog({
     e.preventDefault();
     setError(null);
 
-    if (!form.name.trim()) {
-      setError("Please enter the person's full name.");
-      return;
-    }
-    if (!form.rollNo.trim()) {
-      setError("Please enter the roll number.");
-      return;
-    }
-    if (!form.email.trim()) {
-      setError("Please enter a valid email address.");
-      return;
+    if (form.role === "MENTOR") {
+      if (!form.name.trim()) {
+        setError("Please enter the Faculty Name.");
+        return;
+      }
+      if (!form.rollNo.trim()) {
+        setError("Please enter the Faculty ID.");
+        return;
+      }
+      if (!form.designation.trim()) {
+        setError("Please enter the Faculty Designation.");
+        return;
+      }
+      if (!form.department.trim()) {
+        setError("Please select the Faculty Department.");
+        return;
+      }
+      if (!form.gender.trim()) {
+        setError("Please select the Gender.");
+        return;
+      }
+      if (!form.legend.trim()) {
+        setError("Please select the Legend (Ms, Mrs, Mr, Dr).");
+        return;
+      }
+      if (!form.email.trim()) {
+        setError("Please enter the Faculty Official Email ID.");
+        return;
+      }
+      if (!form.mobile.trim()) {
+        setError("Please enter the Faculty Phone Number.");
+        return;
+      }
+    } else {
+      if (!form.name.trim()) {
+        setError("Please enter the Name.");
+        return;
+      }
+      if (!form.rollNo.trim()) {
+        setError("Please enter the Roll Number.");
+        return;
+      }
+      if (!form.department.trim()) {
+        setError("Please select the Department.");
+        return;
+      }
+      if (!form.email.trim()) {
+        setError("Please enter the Email.");
+        return;
+      }
+      if (!form.gender.trim()) {
+        setError("Please select the Gender.");
+        return;
+      }
     }
 
     const disabledList = PORTAL_MODULES
@@ -851,7 +931,13 @@ function CreatePersonDialog({
           rollNo: form.rollNo.trim().toUpperCase(),
           email: form.email.trim().toLowerCase(),
           department: form.department.trim(),
+          designation: form.role === "MENTOR" ? form.designation.trim() : "",
+          gender: form.gender.trim(),
+          legend: form.role === "MENTOR" ? form.legend.trim() : "",
           mobile: form.mobile.trim(),
+          year: form.role === "MENTOR" ? "Staff" : form.year.trim(),
+          domain: form.role === "MENTOR" ? (form.designation.trim() || "Staff") : form.domain.trim(),
+          mentorName: form.role === "MENTOR" ? "" : form.mentorName.trim(),
           linkedin: form.linkedin.trim(),
           github: form.github.trim(),
           ...permissions,
@@ -866,7 +952,7 @@ function CreatePersonDialog({
 
       toast.success(
         "User added to database!",
-        `${form.name} (${form.rollNo.toUpperCase()}) is now active. They can log in with their email and roll number.`
+        `${form.name} (${form.rollNo.toUpperCase()}) is now active. They can log in with their email and ${form.role === "MENTOR" ? "faculty ID" : "roll number"}.`
       );
       onClose();
       router.refresh();
@@ -902,175 +988,325 @@ function CreatePersonDialog({
           </div>
         )}
 
-        <section>
-          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-            Primary Identification
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Full Name" htmlFor="create-name" required>
-              <Input
-                id="create-name"
-                placeholder="e.g. John Doe"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
-            </Field>
-
-            <Field label="Roll Number" htmlFor="create-roll" required help="Used as their default login password">
-              <Input
-                id="create-roll"
-                placeholder="e.g. 21AD001"
-                value={form.rollNo}
-                onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
-                required
-              />
-            </Field>
-
-            <Field label="College Email" htmlFor="create-email" required className="sm:col-span-2">
-              <Input
-                id="create-email"
-                type="email"
-                placeholder="e.g. user21ad@bitsathy.ac.in"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
-            </Field>
+        {/* PRIMARY OPTION: ROLE CHOOSING */}
+        <section className="rounded-xl border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 p-4 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--color-brand-blue)]/15 text-[var(--color-brand-blue)]">
+              <Icon name="user" className="h-3.5 w-3.5" />
+            </div>
+            <label htmlFor="create-role" className="text-xs font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+              Account Role (Primary Option) *
+            </label>
           </div>
+          <Select
+            id="create-role"
+            value={form.role}
+            onChange={(e) => {
+              const newRole = e.target.value;
+              setForm((prev) => ({
+                ...prev,
+                role: newRole,
+                year: newRole === "MENTOR" ? "Staff" : prev.year === "Staff" ? (options.years[0] || "1st Year") : prev.year,
+              }));
+              if (newRole === "MENTOR") {
+                setPermissions((prev) => ({
+                  ...prev,
+                  permLeaveRequests: true,
+                  permMentorTasks: true,
+                  permWorklogs: true,
+                  permAttendanceLogs: true,
+                  permOverview: true,
+                }));
+              }
+            }}
+            className="font-semibold text-sm"
+          >
+            {assignableRoles.map((role) => (
+              <option key={role} value={role}>
+                {ROLE_LABEL[role]}
+              </option>
+            ))}
+          </Select>
+          <p className="text-[11.5px] text-[var(--text-muted)]">
+            {form.role === "MENTOR"
+              ? "Faculty Mentor role selected. Please enter faculty credentials below."
+              : "Account role selected. Please enter candidate details below."}
+          </p>
         </section>
 
-        <section>
-          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-            Academic & Programme Details
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Department" htmlFor="create-dept">
-              <Select id="create-dept" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}>
-                <option value="">Select Department</option>
-                {options.departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+        {form.role === "MENTOR" ? (
+          /* MENTOR INPUT FIELDS:
+             Faculty name, Faculty Id, Faculty Designation, Faculty Department, Gender, Legend (Ms, Mrs, Mr, Dr), Faculty official Email Id, Faculty Phone number */
+          <section>
+            <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+              Faculty Mentor Details
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Legend (Ms, Mrs, Mr, Dr)" htmlFor="create-legend" required>
+                <Select
+                  id="create-legend"
+                  value={form.legend}
+                  onChange={(e) => setForm({ ...form, legend: e.target.value })}
+                  required
+                >
+                  <option value="Dr">Dr</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                </Select>
+              </Field>
 
-            <Field label="Year / Batch" htmlFor="create-year">
-              <Select id="create-year" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
-                {options.years.length > 0 ? (
-                  options.years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                    <option value="Staff">Staff</option>
-                  </>
-                )}
-              </Select>
-            </Field>
+              <Field label="Faculty Name" htmlFor="create-name" required>
+                <Input
+                  id="create-name"
+                  placeholder="e.g. Raghunath M"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </Field>
 
-            <Field label="Domain Track" htmlFor="create-domain">
-              <Select id="create-domain" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })}>
-                {options.domains.length > 0 ? (
-                  options.domains.map((d) => (
+              <Field label="Faculty ID" htmlFor="create-roll" required help="Used as faculty login ID and default password">
+                <Input
+                  id="create-roll"
+                  placeholder="e.g. MC10412"
+                  value={form.rollNo}
+                  onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="Faculty Designation" htmlFor="create-designation" required>
+                <Input
+                  id="create-designation"
+                  placeholder="e.g. Assistant Professor / Associate Professor"
+                  value={form.designation}
+                  onChange={(e) => setForm({ ...form, designation: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="Faculty Department" htmlFor="create-dept" required>
+                <Select
+                  id="create-dept"
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  required
+                >
+                  <option value="">Select Faculty Department</option>
+                  {options.departments.map((d) => (
                     <option key={d} value={d}>
                       {d}
                     </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="UI/UX Design">UI/UX Design</option>
-                    <option value="Full Stack Development">Full Stack Development</option>
-                    <option value="AI & Machine Learning">AI & Machine Learning</option>
-                    <option value="Mobile App Development">Mobile App Development</option>
-                    <option value="Cloud & DevOps">Cloud & DevOps</option>
-                    <option value="Data not Feeded">Data not Feeded</option>
-                  </>
-                )}
-              </Select>
-            </Field>
+                  ))}
+                </Select>
+              </Field>
 
-            <Field label="Assigned Mentor" htmlFor="create-mentor">
-              <Select id="create-mentor" value={form.mentorName} onChange={(e) => setForm({ ...form, mentorName: e.target.value })}>
-                <option value="">Not assigned</option>
-                {options.mentors.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+              <Field label="Gender" htmlFor="create-gender" required>
+                <Select
+                  id="create-gender"
+                  value={form.gender}
+                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </Select>
+              </Field>
 
-            <Field label="Mobile Number" htmlFor="create-mobile" className="sm:col-span-2">
-              <Input
-                id="create-mobile"
-                placeholder="e.g. 9876543210"
-                value={form.mobile}
-                onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-              />
-            </Field>
-          </div>
-        </section>
+              <Field label="Faculty Official Email ID" htmlFor="create-email" required className="sm:col-span-2">
+                <Input
+                  id="create-email"
+                  type="email"
+                  placeholder="e.g. faculty@bitsathy.ac.in"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="Faculty Phone Number" htmlFor="create-mobile" required className="sm:col-span-2">
+                <Input
+                  id="create-mobile"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={form.mobile}
+                  onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                  required
+                />
+              </Field>
+            </div>
+          </section>
+        ) : (
+          /* OTHER ROLES INPUT FIELDS:
+             NAME, ROLL NUMBER, DEPARTMENT, EMAIL, YEAR, MENTOR (SELECT), GENDER, DOMAIN (SELECT) */
+          <section>
+            <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
+              Student / User Details
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="NAME" htmlFor="create-name" required>
+                <Input
+                  id="create-name"
+                  placeholder="e.g. John Doe"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="ROLL NUMBER" htmlFor="create-roll" required help="Used as default login password">
+                <Input
+                  id="create-roll"
+                  placeholder="e.g. 21AD001"
+                  value={form.rollNo}
+                  onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="DEPARTMENT" htmlFor="create-dept" required>
+                <Select
+                  id="create-dept"
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  required
+                >
+                  <option value="">Select Department</option>
+                  {options.departments.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="EMAIL" htmlFor="create-email" required>
+                <Input
+                  id="create-email"
+                  type="email"
+                  placeholder="e.g. user21ad@bitsathy.ac.in"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <Field label="YEAR" htmlFor="create-year" required>
+                <Select
+                  id="create-year"
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value })}
+                  required
+                >
+                  {options.years.length > 0 ? (
+                    options.years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </>
+                  )}
+                </Select>
+              </Field>
+
+              <Field label="MENTOR (SELECT)" htmlFor="create-mentor">
+                <Select
+                  id="create-mentor"
+                  value={form.mentorName}
+                  onChange={(e) => setForm({ ...form, mentorName: e.target.value })}
+                >
+                  <option value="">Select Mentor</option>
+                  {options.mentors.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="GENDER" htmlFor="create-gender" required>
+                <Select
+                  id="create-gender"
+                  value={form.gender}
+                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </Select>
+              </Field>
+
+              <Field label="DOMAIN (SELECT)" htmlFor="create-domain" required>
+                <Select
+                  id="create-domain"
+                  value={form.domain}
+                  onChange={(e) => setForm({ ...form, domain: e.target.value })}
+                  required
+                >
+                  {options.domains.length > 0 ? (
+                    options.domains.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="UI/UX Design">UI/UX Design</option>
+                      <option value="Full Stack Development">Full Stack Development</option>
+                      <option value="AI & Machine Learning">AI & Machine Learning</option>
+                      <option value="Mobile App Development">Mobile App Development</option>
+                      <option value="Cloud & DevOps">Cloud & DevOps</option>
+                      <option value="Data not Feeded">Data not Feeded</option>
+                    </>
+                  )}
+                </Select>
+              </Field>
+
+              <Field label="Phone / Mobile Number (Optional)" htmlFor="create-mobile" className="sm:col-span-2">
+                <Input
+                  id="create-mobile"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={form.mobile}
+                  onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                />
+              </Field>
+            </div>
+          </section>
+        )}
 
         <section>
           <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-            Professional Profiles (Optional)
+            Security & Login
           </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="LinkedIn Profile URL" htmlFor="create-linkedin">
-              <Input
-                id="create-linkedin"
-                type="url"
-                placeholder="https://linkedin.com/in/username"
-                value={form.linkedin}
-                onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-              />
-            </Field>
-
-            <Field label="GitHub Profile URL" htmlFor="create-github">
-              <Input
-                id="create-github"
-                type="url"
-                placeholder="https://github.com/username"
-                value={form.github}
-                onChange={(e) => setForm({ ...form, github: e.target.value })}
-              />
-            </Field>
-          </div>
-        </section>
-
-        <section>
-          <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.11em]" style={{ color: "var(--text-faint)" }}>
-            Role & Security
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Account Role" htmlFor="create-role">
-              <Select id="create-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                {assignableRoles.map((role) => (
-                  <option key={role} value={role}>
-                    {ROLE_LABEL[role]}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="Custom Password (Optional)" htmlFor="create-pass" help="Leave empty to use Roll Number as password">
-              <Input
-                id="create-pass"
-                type="text"
-                placeholder="Defaults to roll number"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-            </Field>
-          </div>
+          <Field
+            label="Custom Password (Optional)"
+            htmlFor="create-pass"
+            help={
+              form.role === "MENTOR"
+                ? "Leave empty to use Faculty ID as the default password"
+                : "Leave empty to use Roll Number as the default password"
+            }
+          >
+            <Input
+              id="create-pass"
+              type="text"
+              placeholder={form.role === "MENTOR" ? "Defaults to Faculty ID" : "Defaults to Roll Number"}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </Field>
         </section>
 
         {/* 1. Admin Console Navigation Section */}

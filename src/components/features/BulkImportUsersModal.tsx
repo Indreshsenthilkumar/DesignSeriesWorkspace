@@ -17,6 +17,9 @@ export type ParsedUserRow = {
   mobile: string;
   domain: string;
   mentorName: string;
+  gender?: string;
+  legend?: string;
+  designation?: string;
   linkedin: string;
   github: string;
   role: string;
@@ -51,6 +54,9 @@ export function BulkImportUsersModal({
     if (clean === "year" || clean === "batch" || clean === "yearbatch") return "year";
     if (clean === "mobilenumber" || clean === "mobile" || clean === "phone" || clean === "phonenumber") return "mobile";
     if (clean === "domain" || clean === "domaintrack") return "domain";
+    if (clean === "gender" || clean === "sex") return "gender";
+    if (clean === "legend" || clean === "title" || clean === "salutation") return "legend";
+    if (clean === "designation" || clean === "facultydesignation") return "designation";
     if (clean === "mentorname" || clean === "mentor" || clean === "assignedmentor") return "mentorName";
     if (clean === "linkedin" || clean === "linkedinprofile" || clean === "linkedinurl") return "linkedin";
     if (clean === "github" || clean === "githubprofile" || clean === "githuburl") return "github";
@@ -71,6 +77,9 @@ export function BulkImportUsersModal({
         mobile: "",
         domain: "Data not Feeded",
         mentorName: "",
+        gender: "",
+        legend: "",
+        designation: "",
         linkedin: "",
         github: "",
         role: "Student",

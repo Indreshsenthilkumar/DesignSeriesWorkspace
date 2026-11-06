@@ -13,6 +13,7 @@ import { grantedPermissions, type PermissionSubject } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, leaderboardRank } from "@/lib/queries";
 import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSection";
+import { matchesMentor } from "@/lib/leaves";
 import { titleCase } from "@/lib/utils";
 
 import { PasswordForm, ProfileLinksForm } from "./ProfileClient";
@@ -47,6 +48,76 @@ export default async function ProfilePage() {
   ]);
 
   const permissions = grantedPermissions(user as PermissionSubject);
+
+  let academicMentor: {
+    name: string;
+    rollNo: string;
+    department: string;
+    gender: string;
+    legend: string;
+    email: string;
+    mobile: string;
+    designation: string;
+  } | null = null;
+
+  const isStudentOrAdmin =
+    user.role === "STUDENT" ||
+    user.role === "STUDENT_ADMIN" ||
+    user.role === "ADMIN" ||
+    user.role === "SUPER_ADMIN";
+
+  if (isStudentOrAdmin && user.mentorName && user.mentorName.trim()) {
+    const rawMentorName = user.mentorName.trim();
+    const potentialMentors = await prisma.user.findMany({
+      where: {
+        role: { in: ["MENTOR", "ADMIN", "SUPER_ADMIN"] },
+      },
+      select: {
+        id: true,
+        name: true,
+        rollNo: true,
+        department: true,
+        gender: true,
+        legend: true,
+        email: true,
+        mobile: true,
+        designation: true,
+      },
+    });
+
+    const found = potentialMentors.find(
+      (m) =>
+        m.name.toLowerCase() === rawMentorName.toLowerCase() ||
+        m.rollNo.toLowerCase() === rawMentorName.toLowerCase() ||
+        matchesMentor(rawMentorName, m.name) ||
+        rawMentorName.toLowerCase().includes(m.name.toLowerCase()) ||
+        m.name.toLowerCase().includes(rawMentorName.toLowerCase())
+    );
+
+    if (found) {
+      academicMentor = {
+        name: found.name,
+        rollNo: found.rollNo,
+        department: found.department,
+        gender: found.gender,
+        legend: found.legend,
+        email: found.email,
+        mobile: found.mobile,
+        designation: found.designation,
+      };
+    } else {
+      academicMentor = {
+        name: rawMentorName,
+        rollNo: "—",
+        department: user.department || "—",
+        gender: "—",
+        legend: "—",
+        email: "—",
+        mobile: "—",
+        designation: "Faculty Mentor",
+      };
+    }
+  }
 
   return (
     <div>
@@ -99,27 +170,86 @@ export default async function ProfilePage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] sm:gap-5">
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-          <Card>
-            <CardHeader
-              icon="user"
-              title="Academic record"
-              subtitle="Sourced from the programme roster. Read-only."
-            />
-            <dl>
-              <DataRow label="Full name" value={titleCase(user.name)} />
-              <DataRow label="Roll number" value={user.rollNo} mono />
-              <DataRow label="College email" value={user.email} mono />
-              <DataRow label="Department" value={titleCase(user.department)} />
-              <DataRow label="Year / batch" value={user.year} />
-              <DataRow label="Domain" value={user.domain} />
-              <DataRow label="Mentor" value={user.mentorName} />
-              <DataRow label="Joined the portal" value={formatDay(toDayKey(user.createdAt), "long")} />
-              <DataRow
-                label="Last sign-in"
-                value={user.lastLoginAt ? relativeTime(user.lastLoginAt) : "This is your first session"}
+          {/* If the user is STUDENT / STUDENT + ADMIN / ADMIN:
+              User details will be displayed on one grid card and Academic Mentor details on one card */}
+          {isStudentOrAdmin ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Card 1: User Details Card */}
+              <Card>
+                <CardHeader
+                  icon="user"
+                  title="User Details"
+                  subtitle="Your personal & academic programme record."
+                />
+                <dl>
+                  <DataRow label="NAME" value={titleCase(user.name)} />
+                  <DataRow label="ROLL NUMBER" value={user.rollNo} mono />
+                  <DataRow label="DEPARTMENT" value={titleCase(user.department) || "—"} />
+                  <DataRow label="EMAIL" value={user.email} mono />
+                  <DataRow label="YEAR" value={user.year || "—"} />
+                  <DataRow label="MENTOR" value={user.mentorName || "Not assigned"} />
+                  <DataRow label="GENDER" value={user.gender || "—"} />
+                  <DataRow label="DOMAIN" value={user.domain || "—"} />
+                </dl>
+              </Card>
+
+              {/* Card 2: Academic Mentor Details Card */}
+              <Card>
+                <CardHeader
+                  icon="shield"
+                  title="Academic Mentor Details"
+                  subtitle="Assigned faculty mentor."
+                />
+                <dl>
+                  <DataRow
+                    label="NAME"
+                    value={
+                      academicMentor?.legend && academicMentor?.name
+                        ? `${academicMentor.legend}. ${academicMentor.name}`
+                        : academicMentor?.name || user.mentorName || "Not assigned"
+                    }
+                  />
+                  <DataRow label="ID" value={academicMentor?.rollNo || "—"} mono />
+                  <DataRow label="DEPARTMENT" value={academicMentor?.department || "—"} />
+                  <DataRow label="GENDER" value={academicMentor?.gender || "—"} />
+                  <DataRow label="LEGEND" value={academicMentor?.legend || "—"} />
+                  <DataRow label="EMAIL" value={academicMentor?.email || "—"} mono />
+                  <DataRow label="PHONE" value={academicMentor?.mobile || "—"} mono />
+                  <DataRow
+                    label="DESIGNATION"
+                    value={academicMentor?.designation || (user.mentorName ? "Faculty Mentor" : "—")}
+                  />
+                </dl>
+              </Card>
+            </div>
+          ) : (
+            /* Faculty Mentor Profile Card */
+            <Card>
+              <CardHeader
+                icon="shield"
+                title="Faculty Mentor Details"
+                subtitle="Official faculty record in the portal."
               />
-            </dl>
-          </Card>
+              <dl>
+                <DataRow
+                  label="Faculty Name"
+                  value={user.legend ? `${user.legend}. ${titleCase(user.name)}` : titleCase(user.name)}
+                />
+                <DataRow label="Faculty ID" value={user.rollNo} mono />
+                <DataRow label="Faculty Designation" value={user.designation || "Faculty Mentor"} />
+                <DataRow label="Faculty Department" value={titleCase(user.department) || "—"} />
+                <DataRow label="Gender" value={user.gender || "—"} />
+                <DataRow label="Legend" value={user.legend || "—"} />
+                <DataRow label="Faculty Official Email" value={user.email} mono />
+                <DataRow label="Faculty Phone" value={user.mobile || "—"} mono />
+                <DataRow label="Joined Portal" value={formatDay(toDayKey(user.createdAt), "long")} />
+                <DataRow
+                  label="Last Sign-in"
+                  value={user.lastLoginAt ? relativeTime(user.lastLoginAt) : "This is your first session"}
+                />
+              </dl>
+            </Card>
+          )}
 
           <ProfileLinksForm
             initial={{ mobile: user.mobile, linkedin: user.linkedin, github: user.github }}
