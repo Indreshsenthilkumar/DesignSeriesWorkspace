@@ -599,7 +599,7 @@ export function AttendanceHistoryView({
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         title="Log Missed OTP Attendance"
-        description="Select hours attended for today. Each hour is stored as a separate database record with locked single submission."
+        description="Select hours attended for today. Each hour is stored as a separate database record."
         size="lg"
       >
         <div className="pt-2">
@@ -835,13 +835,51 @@ function EditAttendanceDialog({
 
         {/* Reason / Task */}
         <div>
-          <Field label="Reason / Task Description" htmlFor="edit-attendance-reason" required>
+          {/* Quick Reason Suggestions */}
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11.5px] font-medium text-[var(--text-faint)]">
+              Suggestions:
+            </span>
+            <button
+              type="button"
+              onClick={() => setReason("Activity mapped with another venue")}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors cursor-pointer",
+                reason === "Activity mapped with another venue"
+                  ? "bg-[var(--color-brand-blue-050)] border-[var(--color-brand-blue)] text-[var(--color-brand-blue)] font-semibold"
+                  : "bg-[var(--surface-sunken)] border-[var(--line-default)] text-[var(--text-muted)] hover:border-[var(--line-strong)]"
+              )}
+            >
+              Activity mapped with another venue
+            </button>
+            <button
+              type="button"
+              onClick={() => setReason("OTP not received")}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors cursor-pointer",
+                reason === "OTP not received"
+                  ? "bg-[var(--color-brand-blue-050)] border-[var(--color-brand-blue)] text-[var(--color-brand-blue)] font-semibold"
+                  : "bg-[var(--surface-sunken)] border-[var(--line-default)] text-[var(--text-muted)] hover:border-[var(--line-strong)]"
+              )}
+            >
+              OTP not received
+            </button>
+          </div>
+
+          <Field
+            label="Reason"
+            hint={`${reason.length}/65`}
+            htmlFor="edit-attendance-reason"
+            required
+            help="Enter reason (4 to 65 characters)."
+          >
             <Textarea
               id="edit-attendance-reason"
-              rows={3}
+              rows={2}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Describe what you worked on during these hours..."
+              onChange={(e) => setReason(e.target.value.slice(0, 65))}
+              placeholder="e.g. Activity mapped with another venue / OTP not received"
+              maxLength={65}
               required
             />
           </Field>

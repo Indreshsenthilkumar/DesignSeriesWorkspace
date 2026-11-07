@@ -125,7 +125,7 @@ export function CheckInPanel({
       const count = payload.data?.recorded?.length || selected.size;
       toast.success(
         "Missed OTP Attendance Recorded",
-        `${count} ${count === 1 ? "hour" : "hours"} saved successfully. This submission is now permanently locked for today.`
+        `${count} ${count === 1 ? "hour" : "hours"} saved successfully.`
       );
 
       setSelected(new Set());
@@ -185,12 +185,11 @@ export function CheckInPanel({
                     Missed OTP Attendance Logged
                   </h4>
                   <span className="text-[11px] font-medium text-[var(--text-faint)]">
-                    Only 1 submission allowed / day
+                    Logged for today
                   </span>
                 </div>
                 <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
                   Your attendance for today has been submitted and stored as individual hour records.
-                  Once entered, logs cannot be edited or deleted.
                 </p>
               </div>
             </div>
@@ -277,10 +276,6 @@ export function CheckInPanel({
             </div>
           </div>
 
-          <p className="mb-3 text-[11px] text-[var(--text-faint)]">
-            💡 <span className="font-semibold">Single tap:</span> Toggle individual hour • <span className="font-semibold">Double tap:</span> Select/Deselect all hours up to that hour (e.g. double tap 4 to batch select 1–4).
-          </p>
-
           {/* Hour grid */}
           <div
             className={cn(
@@ -297,7 +292,7 @@ export function CheckInPanel({
                   type="button"
                   onClick={() => handleHourClick(hour)}
                   aria-pressed={isSelected}
-                  title={`Hour ${hour} (${HOUR_WINDOW[hour]}) - Tap to toggle, double-tap for batch`}
+                  title={`Hour ${hour} (${HOUR_WINDOW[hour]}) - Tap to toggle`}
                   className={cn(
                     "group relative flex flex-col items-center justify-center gap-0.5 rounded-[12px] border py-2.5 px-1 select-none",
                     "transition-all duration-150 active:scale-95",
@@ -334,19 +329,51 @@ export function CheckInPanel({
 
           {/* Reason Input & Submission */}
           <div className="mt-4">
+            {/* Quick Reason Suggestions */}
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11.5px] font-medium text-[var(--text-faint)]">
+                Suggestions:
+              </span>
+              <button
+                type="button"
+                onClick={() => setReason("Activity mapped with another venue")}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors cursor-pointer",
+                  reason === "Activity mapped with another venue"
+                    ? "bg-[var(--color-brand-blue-050)] border-[var(--color-brand-blue)] text-[var(--color-brand-blue)] font-semibold"
+                    : "bg-[var(--surface-sunken)] border-[var(--line-default)] text-[var(--text-muted)] hover:border-[var(--line-strong)]"
+                )}
+              >
+                Activity mapped with another venue
+              </button>
+              <button
+                type="button"
+                onClick={() => setReason("OTP not received")}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors cursor-pointer",
+                  reason === "OTP not received"
+                    ? "bg-[var(--color-brand-blue-050)] border-[var(--color-brand-blue)] text-[var(--color-brand-blue)] font-semibold"
+                    : "bg-[var(--surface-sunken)] border-[var(--line-default)] text-[var(--text-muted)] hover:border-[var(--line-strong)]"
+                )}
+              >
+                OTP not received
+              </button>
+            </div>
+
             <Field
-              label="Reason / What did you work on?"
+              label="Reason"
+              hint={`${reason.length}/65`}
               htmlFor="missed-otp-reason"
               required
-              help="Enter a brief description of tasks completed during these hours (minimum 4 characters)."
+              help="Enter reason (4 to 65 characters)."
             >
               <Textarea
                 id="missed-otp-reason"
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Worked on UI components and completed unit testing for project modules."
-                maxLength={400}
-                rows={compact ? 2 : 3}
+                onChange={(e) => setReason(e.target.value.slice(0, 65))}
+                placeholder="e.g. Activity mapped with another venue / OTP not received"
+                maxLength={65}
+                rows={compact ? 2 : 2}
               />
             </Field>
 
@@ -355,7 +382,7 @@ export function CheckInPanel({
                 {selected.size > 0
                   ? `Selected ${selected.size} ${selected.size === 1 ? "hour" : "hours"}: ${[...selected]
                       .sort((a, b) => a - b)
-                      .join(", ")} (1 submission per day, locked upon submit)`
+                      .join(", ")}`
                   : "Select the hours you attended above."}
               </p>
               <Button

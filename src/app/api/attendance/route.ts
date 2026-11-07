@@ -10,7 +10,7 @@ import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
 const checkInSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format."),
   hours: z.array(z.number().int().min(1).max(7)).min(1, "Select at least one hour."),
-  reason: z.string().trim().min(4, "Please describe what you worked on (at least 4 characters).").max(400),
+  reason: z.string().trim().min(4, "Please provide a reason (at least 4 characters).").max(65, "Reason cannot exceed 65 characters."),
 });
 
 /**
@@ -47,7 +47,7 @@ export const POST = handler(async (request: Request) => {
 
   if (existingSubmissions.length > 0) {
     return fail(
-      "You have already submitted Missed OTP Attendance for today. Only one submission is allowed per day, and records cannot be edited or deleted.",
+      "You have already submitted Missed OTP Attendance for today. You can edit your logged hours in the attendance history section below.",
       409
     );
   }
@@ -122,7 +122,7 @@ const manualSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   hours: z.array(z.number().int().min(1).max(7)).min(1),
   status: z.enum(["PRESENT", "LATE", "EXCUSED", "ABSENT"]).default("PRESENT"),
-  reason: z.string().trim().max(400).default("Added by admin"),
+  reason: z.string().trim().max(65).default("Added by admin"),
 });
 
 /** Manual or Self Edit entry — can edit or log hours. Students can edit their own logs. */
