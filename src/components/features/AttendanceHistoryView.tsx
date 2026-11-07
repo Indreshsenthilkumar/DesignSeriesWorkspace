@@ -4,12 +4,15 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDay } from "@/lib/dates";
 import { ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/StatTile";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
+import { Field, Textarea } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { EmptyRow } from "@/components/ui/EmptyState";
@@ -42,6 +45,7 @@ interface AttendanceHistoryViewProps {
   todayReason?: string | null;
   closed: boolean;
   canManage?: boolean;
+  userId?: string;
 }
 
 export function AttendanceHistoryView({
@@ -52,6 +56,7 @@ export function AttendanceHistoryView({
   todayReason,
   closed,
   canManage = false,
+  userId,
 }: AttendanceHistoryViewProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +66,7 @@ export function AttendanceHistoryView({
 
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<AttendanceHistoryRecord | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = () => {
@@ -146,21 +152,23 @@ export function AttendanceHistoryView({
 
   // Dynamically calculate absent days based on active filter or default to current month
   const displayedAbsentDays = useMemo(() => {
-    if (dateFilter === "all" || dateFilter === "this-month") {
+    if (dateFilter === "this-month") {
       const thisMonthPrefix = today.slice(0, 7);
-      return records
+      return filteredRecords
         .filter((r) => r.date.startsWith(thisMonthPrefix))
         .reduce((sum, r) => sum + (r.absentDays ?? 0), 0);
     }
     return filteredRecords.reduce((sum, r) => sum + (r.absentDays ?? 0), 0);
-  }, [records, filteredRecords, dateFilter, today]);
+  }, [filteredRecords, dateFilter, today]);
 
   const absentDaysCaption =
-    dateFilter === "last-30"
+    dateFilter === "this-month"
+      ? "This Month"
+      : dateFilter === "last-30"
       ? "Last 30 Days"
       : dateFilter === "last-90"
       ? "Last 90 Days"
-      : "This Month";
+      : "Total";
 
   return (
     <div className="space-y-5">
@@ -354,11 +362,12 @@ export function AttendanceHistoryView({
                 <TH>Reason / Task</TH>
                 <TH>Hours</TH>
                 <TH>Absent Days</TH>
+                <TH className="text-right">Action</TH>
               </TR>
             </THead>
             <TBody>
               {filteredRecords.length === 0 ? (
-                <EmptyRow colSpan={4} message="No attendance logs found." />
+                <EmptyRow colSpan={5} message="No attendance logs found." />
               ) : (
                 filteredRecords.map((record) => (
                   <TR key={record.date} interactive>
@@ -439,6 +448,18 @@ export function AttendanceHistoryView({
                       ) : (
                         <span className="text-[12px] text-[var(--text-faint)]">0.0 Days</span>
                       )}
+                    </TD>
+
+                    {/* Column 5: Action */}
+                    <TD className="text-right">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon="edit"
+                        onClick={() => setEditingRecord(record)}
+                      >
+                        Edit
+                      </Button>
                     </TD>
                   </TR>
                 ))
@@ -542,15 +563,27 @@ export function AttendanceHistoryView({
 
                 {/* Bottom Footer Strip */}
                 <div
-                  className="flex items-center gap-1.5 border-t px-4 py-2 text-[11.5px] font-semibold"
+                  className="flex items-center justify-between border-t px-4 py-2.5 text-[11.5px] font-semibold"
                   style={{
-                    background: "var(--color-brand-green-050)",
-                    borderColor: "color-mix(in srgb, var(--color-brand-green) 18%, transparent)",
-                    color: "var(--color-brand-green)",
+                    background: "var(--surface-sunken)",
+                    borderColor: "var(--line-soft)",
                   }}
                 >
-                  <Icon name="check-circle" className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">Successfully verified with portal</span>
+                  <div
+                    className="flex items-center gap-1.5"
+                    style={{ color: "var(--color-brand-green)" }}
+                  >
+                    <Icon name="check-circle" className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Verified log</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon="edit"
+                    onClick={() => setEditingRecord(record)}
+                  >
+                    Edit Hours
+                  </Button>
                 </div>
               </div>
             );
@@ -584,6 +617,236 @@ export function AttendanceHistoryView({
         onClose={() => setImportModalOpen(false)}
         onSuccess={() => router.refresh()}
       />
+
+      {editingRecord && userId && (
+        <EditAttendanceDialog
+          record={editingRecord}
+          userId={userId}
+          onClose={() => setEditingRecord(null)}
+          onSaved={() => {
+            setEditingRecord(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Edit Attendance Dialog for Users
+// ---------------------------------------------------------------------------
+
+function EditAttendanceDialog({
+  record,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  record: AttendanceHistoryRecord;
+  userId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const toast = useToast();
+  const [hours, setHours] = useState<Set<number>>(() => new Set(record.hours));
+  const [reason, setReason] = useState(record.reason || "");
+  const [saving, setSaving] = useState(false);
+
+  const toggle = (hour: number) => {
+    setHours((current) => {
+      const next = new Set(current);
+      if (next.has(hour)) next.delete(hour);
+      else next.add(hour);
+      return next;
+    });
+  };
+
+  const selectAll = () => setHours(new Set(ATTENDANCE_HOURS));
+  const clearAll = () => setHours(new Set());
+
+  // Dynamic absent days calculation
+  const hasFirstHalf = [1, 2, 3, 4].some((h) => hours.has(h));
+  const hasSecondHalf = [5, 6, 7].some((h) => hours.has(h));
+  let calculatedAbsentDays = 0;
+  if (hasFirstHalf) calculatedAbsentDays += 0.5;
+  if (hasSecondHalf) calculatedAbsentDays += 0.5;
+
+  const handleSave = async () => {
+    if (hours.size === 0) {
+      toast.warning("Select at least one hour", "Please select at least one hour to log.");
+      return;
+    }
+    if (!reason.trim()) {
+      toast.warning("Reason required", "Please provide a reason or describe what you worked on.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch("/api/attendance", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          date: record.date,
+          hours: Array.from(hours).sort((a, b) => a - b),
+          reason: reason.trim(),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Failed to update attendance.");
+      }
+      toast.success(
+        "Attendance updated!",
+        `Your logged hours for ${formatDay(record.date, "medium")} have been updated successfully.`
+      );
+      onSaved();
+    } catch (err: any) {
+      toast.error("Update failed", err.message || "Failed to save attendance changes.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Edit Missed OTP Attendance — ${formatDay(record.date, "medium")}`}
+      description="Adjust your logged hours or update your task description. Changes will immediately recalculate your absent days."
+      size="md"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <span className="text-[12px] font-semibold text-[var(--text-muted)]">
+            {hours.size} {hours.size === 1 ? "hour" : "hours"} selected
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={onClose} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} loading={saving} disabled={hours.size === 0}>
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        {/* Date and dynamic status preview */}
+        <div className="flex items-center justify-between gap-3 p-3 rounded-[10px] bg-[var(--surface-sunken)] border border-[var(--line-soft)]">
+          <div>
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Date
+            </span>
+            <span className="text-[14px] font-bold text-[var(--text-strong)] font-heading">
+              {formatDay(record.date, "long")}
+            </span>
+          </div>
+
+          <div className="text-right">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Calculated Absent Days
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold",
+                calculatedAbsentDays === 1
+                  ? "bg-[var(--color-brand-red-050)] text-[var(--color-brand-red)]"
+                  : calculatedAbsentDays === 0.5
+                  ? "bg-[var(--color-brand-amber-050)] text-[var(--color-brand-amber)]"
+                  : "bg-[var(--surface-inset)] text-[var(--text-muted)]"
+              )}
+            >
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  calculatedAbsentDays === 1
+                    ? "bg-[var(--color-brand-red)]"
+                    : calculatedAbsentDays === 0.5
+                    ? "bg-[var(--color-brand-amber)]"
+                    : "bg-[var(--text-muted)]"
+                )}
+              />
+              {calculatedAbsentDays === 1 ? "1.0 Day Absent" : calculatedAbsentDays === 0.5 ? "0.5 Day Absent" : "0.0 Days"}
+            </span>
+          </div>
+        </div>
+
+        {/* Hour Selector */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)] font-heading">
+              Select Logged Hours (1–7)
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAll}
+                className="text-[11.5px] font-semibold text-[var(--color-brand-blue)] hover:underline cursor-pointer"
+              >
+                Select All (7)
+              </button>
+              <span className="text-[var(--text-faint)]">·</span>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-[11.5px] font-semibold text-[var(--text-muted)] hover:text-red-500 cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+            {ATTENDANCE_HOURS.map((hour) => {
+              const selected = hours.has(hour);
+              return (
+                <button
+                  key={hour}
+                  type="button"
+                  onClick={() => toggle(hour)}
+                  title={`Hour ${hour} (${HOUR_WINDOW[hour] || ""})`}
+                  className={cn(
+                    "flex flex-col items-center justify-center rounded-[10px] py-2.5 transition-all cursor-pointer border select-none",
+                    selected
+                      ? "border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)] text-white shadow-xs"
+                      : "border-[var(--line-default)] bg-[var(--surface-raised)] text-[var(--text-strong)] hover:border-[var(--line-strong)]"
+                  )}
+                >
+                  <span className="text-[14px] font-bold leading-none">{hour}</span>
+                  <span
+                    className={cn(
+                      "mt-1 text-[9.5px] font-medium leading-none",
+                      selected ? "text-blue-100" : "text-[var(--text-faint)]"
+                    )}
+                  >
+                    {hour <= 4 ? "H1" : "H2"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] text-[var(--text-faint)]">
+            H1: Hours 1–4 (First Half, 0.5d) · H2: Hours 5–7 (Second Half, 0.5d)
+          </p>
+        </div>
+
+        {/* Reason / Task */}
+        <div>
+          <Field label="Reason / Task Description" htmlFor="edit-attendance-reason" required>
+            <Textarea
+              id="edit-attendance-reason"
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Describe what you worked on during these hours..."
+              required
+            />
+          </Field>
+        </div>
+      </div>
+    </Modal>
   );
 }

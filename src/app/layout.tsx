@@ -42,12 +42,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Applies the stored theme before first paint — no flash on reload. */}
         <ThemeScript />
-        {/* Google Sans Text & Google Sans typography */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preload critical local Google Sans Text fonts */}
         <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Google+Sans+Text:wght@400;500;600;700&family=Google+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
+          rel="preload"
+          href="/fonts/GoogleSansText-Regular.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/GoogleSansText-Medium.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/GoogleSansText-Bold.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
         />
       </head>
       <body>

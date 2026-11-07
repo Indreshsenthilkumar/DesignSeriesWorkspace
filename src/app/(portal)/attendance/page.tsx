@@ -78,17 +78,21 @@ export default async function AttendancePage() {
   const daysPresentThisMonth = recordsThisMonth.filter((r) => r.hours.length > 0).length;
   const hoursThisMonth = recordsThisMonth.reduce((sum, r) => sum + r.hours.length, 0);
 
-  // Total Absent Days this month
+  // Total Absent Days calculation
   const totalAbsentDaysThisMonth = recordsThisMonth.reduce(
+    (sum, r) => sum + (r.absentDays ?? 0),
+    0
+  );
+  const totalAbsentDaysAll = records.reduce(
     (sum, r) => sum + (r.absentDays ?? 0),
     0
   );
 
   const stats: AttendanceHistoryStats = {
-    absentDays: totalAbsentDaysThisMonth,
-    totalHours: hoursThisMonth > 0 ? hoursThisMonth : summary.hoursLogged,
+    absentDays: totalAbsentDaysThisMonth > 0 ? totalAbsentDaysThisMonth : totalAbsentDaysAll,
+    totalHours: hoursThisMonth > 0 ? hoursThisMonth : (records.reduce((sum, r) => sum + r.hours.length, 0) || summary.hoursLogged),
     hoursToday: summary.todayHours.length,
-    approvedDays: daysPresentThisMonth > 0 ? daysPresentThisMonth : summary.daysPresent,
+    approvedDays: daysPresentThisMonth > 0 ? daysPresentThisMonth : (records.length || summary.daysPresent),
     hoursDeltaPercent: summary.previousRate > 0 ? Math.round(((summary.rate - summary.previousRate) / summary.previousRate) * 100) : 8,
     approvedDeltaPercent: 15,
   };
@@ -105,6 +109,7 @@ export default async function AttendancePage() {
         todayReason={summary.todayReason}
         closed={closed}
         canManage={canManage}
+        userId={user.id}
       />
     </div>
   );

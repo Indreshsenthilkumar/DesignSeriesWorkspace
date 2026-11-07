@@ -66,6 +66,7 @@ export function AttendanceMatrix({
   const [manualEntry, setManualEntry] = useState<{ student: MatrixStudent; date?: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [deleteRangeOpen, setDeleteRangeOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -193,6 +194,16 @@ export function AttendanceMatrix({
               onClick={() => setExportOpen(true)}
             >
               Export
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="trash"
+              onClick={() => setDeleteRangeOpen(true)}
+              className="text-red-600 hover:text-red-700 hover:border-red-300 dark:text-red-400"
+            >
+              Delete Logs
             </Button>
 
             <div className="flex items-center gap-1 rounded-[10px] border p-0.5" style={{ borderColor: "var(--line-default)" }}>
@@ -387,6 +398,15 @@ export function AttendanceMatrix({
         onClose={() => setImportOpen(false)}
         onSuccess={() => router.refresh()}
       />
+
+      <DeleteAttendanceRangeModal
+        open={deleteRangeOpen}
+        onClose={() => setDeleteRangeOpen(false)}
+        onSuccess={() => router.refresh()}
+        defaultFrom={from}
+        defaultTo={to}
+        students={students}
+      />
     </>
   );
 }
@@ -430,6 +450,7 @@ function ManualEntryDialog({
   const [reason, setReason] = useState(() => existingForDate?.reason || "");
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   // Sync state when date is changed
   useEffect(() => {
@@ -526,7 +547,7 @@ function ManualEntryDialog({
             {hasExistingLogs ? (
               <Button
                 variant="ghost"
-                onClick={clearDayAttendance}
+                onClick={() => setConfirmClearOpen(true)}
                 loading={clearing}
                 disabled={saving}
                 className="text-red-600 hover:text-red-700 dark:text-red-400"
@@ -651,6 +672,246 @@ function ManualEntryDialog({
           Entries are marked as admin-sourced and recorded in the audit log against your account.
         </p>
       </div>
+
+      {confirmClearOpen && (
+        <Modal
+          open
+          onClose={() => setConfirmClearOpen(false)}
+          title="Confirm Deletion"
+          description={`Are you sure you want to delete the attendance log for ${student.name} on ${formatDay(date, "medium")}? This action cannot be undone.`}
+          size="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmClearOpen(false)}
+                disabled={clearing}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={async () => {
+                  setConfirmClearOpen(false);
+                  await clearDayAttendance();
+                }}
+                loading={clearing}
+              >
+                Yes, Delete Log
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-[13px] text-[var(--text-muted)]">
+            This will permanently remove the logged attendance records for {student.name} ({student.rollNo}) on {formatDay(date, "long")}.
+          </p>
+        </Modal>
+      )}
     </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Delete Attendance Range Modal (Allows Admin to pick From & To date with confirmation)
+// ---------------------------------------------------------------------------
+
+function DeleteAttendanceRangeModal({
+  open,
+  onClose,
+  onSuccess,
+  defaultFrom,
+  defaultTo,
+  students,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  defaultFrom: string;
+  defaultTo: string;
+  students: MatrixStudent[];
+}) {
+  const toast = useToast();
+  const [fromDate, setFromDate] = useState(defaultFrom);
+  const [toDate, setToDate] = useState(defaultTo);
+  const [selectedUserId, setSelectedUserId] = useState<string>("ALL");
+  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const selectedStudent = students.find((s) => s.id === selectedUserId);
+  const targetLabel =
+    selectedUserId === "ALL"
+      ? "All Cohort Members"
+      : selectedStudent
+      ? `${selectedStudent.name} (${selectedStudent.rollNo})`
+      : selectedUserId;
+
+  const handleDelete = async () => {
+    if (!fromDate || !toDate) {
+      toast.warning("Select date range", "Please select both from and to dates.");
+      return;
+    }
+    if (fromDate > toDate) {
+      toast.warning("Invalid range", "From date must be earlier than or equal to To date.");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch("/api/attendance", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: selectedUserId === "ALL" ? undefined : selectedUserId,
+          fromDate,
+          toDate,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Failed to delete attendance logs.");
+      }
+
+      toast.success(
+        "Attendance logs deleted",
+        `Successfully deleted ${payload.removed ?? 0} attendance record(s) from ${formatDay(fromDate, "medium")} to ${formatDay(toDate, "medium")}.`
+      );
+      setConfirmPopupOpen(false);
+      onClose();
+      onSuccess();
+    } catch (err: any) {
+      toast.error("Deletion failed", err.message || "Failed to delete attendance records.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <>
+      <Modal
+        open={open && !confirmPopupOpen}
+        onClose={onClose}
+        title="Delete Missed OTP Attendance Logs"
+        description="Select from date and to date to remove attendance logs from the database."
+        size="md"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <Button variant="secondary" onClick={onClose} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (!fromDate || !toDate) {
+                  toast.warning("Select dates", "Please enter both from and to dates.");
+                  return;
+                }
+                if (fromDate > toDate) {
+                  toast.warning("Invalid range", "From date cannot be after To date.");
+                  return;
+                }
+                setConfirmPopupOpen(true);
+              }}
+            >
+              Proceed to Delete…
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Field label="Target Member" htmlFor="del-user">
+            <Select
+              id="del-user"
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+            >
+              <option value="ALL">All Cohort Members ({students.length})</option>
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.rollNo || "No Roll"} · {s.role || "STUDENT"})
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="From Date" htmlFor="del-from" required>
+              <Input
+                id="del-from"
+                type="date"
+                value={fromDate}
+                max={toDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label="To Date" htmlFor="del-to" required>
+              <Input
+                id="del-to"
+                type="date"
+                value={toDate}
+                min={fromDate}
+                onChange={(e) => setToDate(e.target.value)}
+                required
+              />
+            </Field>
+          </div>
+
+          <div className="rounded-[10px] border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold">
+              <Icon name="alert" className="h-4 w-4" />
+              <span>Confirmation Required</span>
+            </div>
+            <p>
+              Deleting attendance records will permanently remove them from the database and recalculate attendance stats. A confirmation popup will ask you to confirm before any records are deleted.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Popup Modal */}
+      {confirmPopupOpen && (
+        <Modal
+          open
+          onClose={() => setConfirmPopupOpen(false)}
+          title="Confirm Deletion of Attendance Logs"
+          description="Please confirm that you want to delete these attendance records."
+          size="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmPopupOpen(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDelete}
+                loading={deleting}
+              >
+                Yes, Permanently Delete
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <p className="text-[13px] text-[var(--text-strong)] leading-relaxed">
+              Are you sure you want to permanently delete missed OTP attendance logs for{" "}
+              <strong>{targetLabel}</strong> from{" "}
+              <strong>{formatDay(fromDate, "medium")}</strong> to{" "}
+              <strong>{formatDay(toDate, "medium")}</strong>?
+            </p>
+            <p className="text-[12px] text-red-500 font-semibold">
+              Warning: This action cannot be undone. All matching attendance logs will be removed immediately from the database.
+            </p>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

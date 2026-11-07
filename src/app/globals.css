@@ -1,6 +1,58 @@
 @import "tailwindcss";
 
 /* ===========================================================================
+   Local Typography: Google Sans Text, Google Sans & Roboto Mono
+   =========================================================================== */
+
+@font-face {
+  font-family: 'Google Sans Text';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/GoogleSansText-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Google Sans Text';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/GoogleSansText-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Google Sans Text';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/GoogleSansText-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Google Sans Text';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/GoogleSansText-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/GoogleSans-Variable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/RobotoMono-Regular.woff2') format('woff2');
+}
+
+/* ===========================================================================
    KreateUp DesignSeries Portal — design system
    =========================================================================== */
 
@@ -29,7 +81,7 @@
   /* Google Sans Text for UI body, labels, buttons and forms; Google Sans for brand headings */
   --font-sans: "Google Sans Text", "Google Sans", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-heading: "Google Sans", "Google Sans Text", -apple-system, BlinkMacSystemFont,
+  --font-heading: "Google Sans Text", "Google Sans", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
   --font-mono: "Roboto Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
     monospace;
@@ -44,6 +96,13 @@
 
 :root {
   color-scheme: light;
+
+  --font-sans: "Google Sans Text", "Google Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: "Google Sans Text", "Google Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
+    monospace;
 
   --surface-page: #f8fafd;
   --surface-raised: #ffffff;

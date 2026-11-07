@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { audit, fail, handler, ok } from "@/lib/api";
 import { requireApiPermission, requireApiUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS, REWARD_RULES } from "@/lib/constants";
 import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
@@ -124,23 +125,40 @@ const manualSchema = z.object({
   reason: z.string().trim().max(400).default("Added by admin"),
 });
 
-/** Admin manual entry — can back-date, and overwrites whatever is there. */
+/** Manual or Self Edit entry — can edit or log hours. Students can edit their own logs. */
 export const PUT = handler(async (request: Request) => {
-  const admin = await requireApiPermission("permAttendanceLogs");
+  const caller = await requireApiUser();
   const { userId, date, hours, status, reason } = manualSchema.parse(await request.json());
+
+  // Check authorization: A user can edit their own attendance.
+  // Editing other members requires permAttendanceLogs.
+  const isSelf = caller.id === userId;
+  if (!isSelf && !can(caller, "permAttendanceLogs")) {
+    return fail("You are not authorized to edit attendance for other users.", 403);
+  }
 
   if (date > toDayKey()) return fail("You cannot record attendance for a future date.", 422);
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, rollNo: true, email: true, department: true, year: true }
+    select: { id: true, name: true, rollNo: true, email: true, department: true, year: true, rewardPoints: true },
   });
   if (!target) return fail("User is not on the roster.", 404);
 
-  await prisma.$transaction([
-    prisma.attendance.deleteMany({ where: { userId, date } }),
-    prisma.attendance.createMany({
-      data: hours.map((hour) => ({
+  // Check previous hours to handle reward points adjustment
+  const existingRows = await prisma.attendance.findMany({
+    where: { userId, date },
+    select: { id: true, hour: true },
+  });
+  const hadFullDay = existingRows.length >= ATTENDANCE_HOURS.length;
+  const uniqueHours = Array.from(new Set(hours)).sort((a, b) => a - b);
+  const nowHasFullDay = uniqueHours.length >= ATTENDANCE_HOURS.length;
+  const editTimestamp = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.attendance.deleteMany({ where: { userId, date } });
+    await tx.attendance.createMany({
+      data: uniqueHours.map((hour) => ({
         userId,
         rollNo: target.rollNo || "",
         email: target.email || target.id,
@@ -149,32 +167,88 @@ export const PUT = handler(async (request: Request) => {
         year: target.year || "",
         date,
         hour,
-        reason,
-        status,
-        source: "ADMIN",
-        markedBy: admin.id,
+        reason: reason.trim() || (isSelf ? "Missed OTP Attendance Log" : "Added by admin"),
+        status: isSelf ? "PRESENT" : status,
+        source: isSelf ? "SELF" : "ADMIN",
+        markedBy: isSelf ? undefined : caller.id,
+        createdAt: editTimestamp,
       })),
-    }),
-  ]);
+    });
 
-  await audit(admin.id, "ATTENDANCE_MANUAL", "Attendance", `${userId}:${date}`, { hours, status });
+    // Reward points adjustment if changed to/from full day
+    if (!hadFullDay && nowHasFullDay) {
+      await tx.rewardEntry.create({
+        data: {
+          userId,
+          points: REWARD_RULES.fullDayAttendance,
+          reason: `Full Missed OTP Attendance on ${date}`,
+          source: "ATTENDANCE",
+          createdAt: editTimestamp,
+        },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: { rewardPoints: { increment: REWARD_RULES.fullDayAttendance } },
+      });
+    } else if (hadFullDay && !nowHasFullDay) {
+      await tx.rewardEntry.create({
+        data: {
+          userId,
+          points: -REWARD_RULES.fullDayAttendance,
+          reason: `Adjusted Missed OTP Attendance on ${date}`,
+          source: "ATTENDANCE",
+          createdAt: editTimestamp,
+        },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: { rewardPoints: { decrement: REWARD_RULES.fullDayAttendance } },
+      });
+    }
+  });
 
-  return ok({ userId, date, hours, status });
+  await audit(caller.id, isSelf ? "ATTENDANCE_USER_EDIT" : "ATTENDANCE_MANUAL", "Attendance", `${userId}:${date}`, {
+    hours: uniqueHours,
+    status: isSelf ? "PRESENT" : status,
+    isSelf,
+  });
+
+  return ok({ userId, date, hours: uniqueHours, status });
 });
 
 // ---------------------------------------------------------------------------
 
 const deleteSchema = z.object({
-  userId: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  userId: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const DELETE = handler(async (request: Request) => {
   const admin = await requireApiPermission("permAttendanceLogs");
-  const { userId, date } = deleteSchema.parse(await request.json());
+  const { userId, date, fromDate, toDate } = deleteSchema.parse(await request.json());
 
-  const { count } = await prisma.attendance.deleteMany({ where: { userId, date } });
-  await audit(admin.id, "ATTENDANCE_CLEAR", "Attendance", `${userId}:${date}`, { removed: count });
+  const where: any = {};
+  if (userId && userId !== "ALL") {
+    where.userId = userId;
+  }
+
+  if (fromDate && toDate) {
+    if (fromDate > toDate) {
+      return fail("From date must be earlier than or equal to To date.", 422);
+    }
+    where.date = { gte: fromDate, lte: toDate };
+  } else if (date) {
+    where.date = date;
+  } else {
+    return fail("Please specify a date or from/to date range to delete.", 422);
+  }
+
+  const { count } = await prisma.attendance.deleteMany({ where });
+  await audit(admin.id, "ATTENDANCE_DELETE", "Attendance", `${userId || "ALL"}:${fromDate || date}..${toDate || date}`, {
+    removed: count,
+  });
 
   return ok({ removed: count });
 });
