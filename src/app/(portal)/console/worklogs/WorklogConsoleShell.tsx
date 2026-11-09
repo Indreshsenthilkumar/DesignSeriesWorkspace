@@ -48,7 +48,12 @@ export function WorklogConsoleShell({
       </div>
 
       {view === "grid" ? (
-        <WorklogMonthlyGrid rows={gridRows} month={month} onMonthChange={setMonth} />
+        <WorklogMonthlyGrid
+          rows={gridRows}
+          month={month}
+          onMonthChange={setMonth}
+          options={options}
+        />
       ) : (
         <WorklogReview logs={reviewLogs} options={options} filters={filters} />
       )}
@@ -84,3 +89,4 @@ function ToggleBtn({
     </button>
   );
 }
+

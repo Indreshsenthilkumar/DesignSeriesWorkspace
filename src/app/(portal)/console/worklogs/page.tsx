@@ -100,18 +100,18 @@ export default async function ConsoleWorklogsPage({
     prisma.worklog.findMany({
       where: {
         date: { gte: monthFrom, lte: monthTo },
-        user: { role: { in: ["STUDENT", "STUDENT_ADMIN"] } },
+        user: { role: { in: ["STUDENT", "STUDENT_ADMIN", "ADMIN"] } },
       },
       select: {
         id: true, date: true, s1: true, s2: true, s3: true, s4: true, s5: true,
         status: true, mentorRemark: true,
-        user: { select: { id: true, name: true, rollNo: true } },
+        user: { select: { id: true, name: true, rollNo: true, role: true, domain: true, year: true } },
       },
       orderBy: { date: "asc" },
     }),
     prisma.user.findMany({
-      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
-      select: { id: true, name: true, rollNo: true },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN", "ADMIN"] }, systemStatus: "ACTIVE" },
+      select: { id: true, name: true, rollNo: true, role: true, domain: true, year: true, department: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -136,6 +136,10 @@ export default async function ConsoleWorklogsPage({
       studentId: student.id,
       name: student.name,
       rollNo: student.rollNo ?? "",
+      role: student.role,
+      domain: student.domain ?? "",
+      year: student.year ?? "",
+      department: student.department ?? "",
       logs: logsMap,
     };
   });
