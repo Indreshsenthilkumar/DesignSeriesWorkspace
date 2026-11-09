@@ -52,6 +52,11 @@ export function WorklogClient({
   const [expanded, setExpanded] = useState<string | null>(null);
   const [extensionFor, setExtensionFor] = useState<string | null>(null);
 
+  // ── Search + Filter state ─────────────────────────────────────────────
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [monthFilter, setMonthFilter] = useState("ALL");
+
   const today = toDayKey();
 
   const openFor = (log: WorklogRow | null, date = today) => {
@@ -62,6 +67,22 @@ export function WorklogClient({
     );
     setEditorOpen(true);
   };
+
+  // Unique months from logs for the month dropdown (YYYY-MM)
+  const months = Array.from(new Set(logs.map((l) => l.date.slice(0, 7)))).sort().reverse();
+
+  const filteredLogs = logs.filter((log) => {
+    if (statusFilter !== "ALL" && log.status !== statusFilter) return false;
+    if (monthFilter !== "ALL" && !log.date.startsWith(monthFilter)) return false;
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      const haystack = [log.date, log.s1, log.s2, log.s3, log.s4, log.s5, log.task?.title ?? ""]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -100,22 +121,114 @@ export function WorklogClient({
         <CardHeader
           icon="clipboard"
           title="Your worklog history"
-          subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"} — newest first. Tap a row to read it back.`}
+          subtitle={`${filteredLogs.length} of ${logs.length} ${logs.length === 1 ? "entry" : "entries"} — newest first. Tap a row to read it back.`}
         />
 
-        {logs.length === 0 ? (
-          <EmptyState
-            title="No worklogs yet"
-            description="Your worklog is the record of what you actually built each day. It is what your mentor reads before a review."
-            action={
-              <Button onClick={() => openFor(null)} icon="plus">
-                Write your first log
-              </Button>
-            }
-          />
+        {/* Search + filter bar */}
+        {logs.length > 0 && (
+          <div className="mb-4 grid gap-2 sm:grid-cols-3">
+            {/* Search */}
+            <div className="relative">
+              <span
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-faint)" }}
+              >
+                <Icon name="search" className="h-3.5 w-3.5" />
+              </span>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search logs…"
+                className="h-9 w-full rounded-[8px] border pl-8 pr-3 text-[12.5px] transition-colors focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: "var(--line-default)",
+                  background: "var(--surface-raised)",
+                  color: "var(--text-default)",
+                }}
+                aria-label="Search worklog history"
+              />
+            </div>
+
+            {/* Status filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none focus:ring-2"
+              style={{
+                borderColor: "var(--line-default)",
+                background: "var(--surface-raised)",
+                color: "var(--text-default)",
+              }}
+              aria-label="Filter by status"
+            >
+              <option value="ALL">All statuses</option>
+              <option value="SUBMITTED">Awaiting review</option>
+              <option value="REVIEWED">Reviewed</option>
+              <option value="FLAGGED">Flagged</option>
+            </select>
+
+            {/* Month filter */}
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none focus:ring-2"
+              style={{
+                borderColor: "var(--line-default)",
+                background: "var(--surface-raised)",
+                color: "var(--text-default)",
+              }}
+              aria-label="Filter by month"
+            >
+              <option value="ALL">All months</option>
+              {months.map((m) => {
+                const [y, mo] = m.split("-");
+                const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                });
+                return (
+                  <option key={m} value={m}>
+                    {label}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+
+        {filteredLogs.length === 0 ? (
+          logs.length === 0 ? (
+            <EmptyState
+              title="No worklogs yet"
+              description="Your worklog is the record of what you actually built each day. It is what your mentor reads before a review."
+              action={
+                <Button onClick={() => openFor(null)} icon="plus">
+                  Write your first log
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              title="No matching logs"
+              description="Try adjusting the search query, status filter, or month."
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setQuery("");
+                    setStatusFilter("ALL");
+                    setMonthFilter("ALL");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              }
+            />
+          )
         ) : (
           <ul className="flex flex-col gap-2">
-            {logs.map((log) => {
+            {filteredLogs.map((log) => {
               const isOpen = expanded === log.id;
               const editable = log.date >= yesterdayKey();
 
@@ -175,7 +288,7 @@ export function WorklogClient({
                     <div className="animate-fade border-t px-3 pb-3.5 pt-3" style={{ borderColor: "var(--line-soft)" }}>
                       <dl className="flex flex-col gap-2.5">
                         {WORKLOG_SLOTS.map((slot) => {
-                          const value = log[slot.key];
+                          const value = log[slot.key as keyof WorklogRow] as string;
                           if (!value) return null;
                           return (
                             <div key={slot.key} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
@@ -260,6 +373,8 @@ export function WorklogClient({
     </>
   );
 }
+
+// ---------------------------------------------------------------------------
 
 /** Ask for one locked date to be reopened. */
 function ExtensionDialog({ date, onClose }: { date: string; onClose: () => void }) {

@@ -172,15 +172,15 @@ export function WorklogEditor({
     >
       <div className="flex flex-col gap-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Date" htmlFor="wl-date" help="Yesterday stays open until 11:30 PM today.">
+          {/* Date is locked to today — no switching allowed for students */}
+          <Field label="Date" htmlFor="wl-date" help="Worklogs can only be submitted for today.">
             <Select
               id="wl-date"
               value={draft.date}
-              onChange={(e) => set("date", e.target.value)}
-              disabled={!editable}
+              onChange={() => {}}
+              disabled
             >
               <option value={toDayKey()}>Today — {formatDay(toDayKey(), "medium")}</option>
-              <option value={yesterday()}>Yesterday — {formatDay(yesterday(), "medium")}</option>
             </Select>
           </Field>
 
@@ -237,12 +237,6 @@ export function WorklogEditor({
       </div>
     </Modal>
   );
-}
-
-function yesterday(): string {
-  const date = new Date();
-  date.setDate(date.getDate() - 1);
-  return toDayKey(date);
 }
 
 const PLACEHOLDERS: Record<WorklogSlotKey, string> = {

@@ -6,10 +6,12 @@ import { StatTile } from "@/components/ui/StatTile";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
-import { toDayKey } from "@/lib/dates";
+import { toDayKey, startOfMonth, endOfMonth } from "@/lib/dates";
 import { markSectionViewed } from "@/lib/badge-tracking";
 
 import { WorklogReview, type ReviewRow } from "./WorklogReview";
+import { WorklogConsoleShell } from "./WorklogConsoleShell";
+import type { GridRow } from "./WorklogMonthlyGrid";
 
 export const metadata: Metadata = { title: "Worklog review" };
 export const dynamic = "force-dynamic";
@@ -17,7 +19,14 @@ export const dynamic = "force-dynamic";
 export default async function ConsoleWorklogsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; domain?: string; year?: string; date?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    domain?: string;
+    year?: string;
+    date?: string;
+    view?: string;
+    month?: string;
+  }>;
 }) {
   await requirePermission("permWorklogs");
   const user = await requireUser();
@@ -28,7 +37,11 @@ export default async function ConsoleWorklogsPage({
   const domain = params.domain ?? "ALL";
   const year = params.year ?? "ALL";
   const date = params.date ?? "";
+  const view = params.view ?? "list";
+  const today = toDayKey();
+  const month = params.month ?? today.slice(0, 7);
 
+  // ── List view data ──────────────────────────────────────────────────────
   const where = {
     ...(status !== "ALL" ? { status } : {}),
     ...(date ? { date } : {}),
@@ -59,7 +72,7 @@ export default async function ConsoleWorklogsPage({
       prisma.worklog.count({ where: { status: "SUBMITTED" } }),
       prisma.worklog.count({ where: { status: "FLAGGED" } }),
       prisma.worklog.count({ where: { status: "REVIEWED" } }),
-      prisma.worklog.count({ where: { date: toDayKey() } }),
+      prisma.worklog.count({ where: { date: today } }),
     ]),
   ]);
 
@@ -78,6 +91,54 @@ export default async function ConsoleWorklogsPage({
     taskTitle: log.task?.title ?? null,
     student: log.user,
   }));
+
+  // ── Monthly grid data ───────────────────────────────────────────────────
+  const monthFrom = `${month}-01`;
+  const monthTo = endOfMonth(monthFrom);
+
+  const [monthlyLogs, allStudents] = await Promise.all([
+    prisma.worklog.findMany({
+      where: {
+        date: { gte: monthFrom, lte: monthTo },
+        user: { role: { in: ["STUDENT", "STUDENT_ADMIN"] } },
+      },
+      select: {
+        id: true, date: true, s1: true, s2: true, s3: true, s4: true, s5: true,
+        status: true, mentorRemark: true,
+        user: { select: { id: true, name: true, rollNo: true } },
+      },
+      orderBy: { date: "asc" },
+    }),
+    prisma.user.findMany({
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
+      select: { id: true, name: true, rollNo: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  // Build grid rows — one per student
+  const gridRows: GridRow[] = allStudents.map((student) => {
+    const studentLogs = monthlyLogs.filter((l) => l.user.id === student.id);
+    const logsMap: GridRow["logs"] = {};
+    for (const l of studentLogs) {
+      logsMap[l.date] = {
+        id: l.id,
+        status: l.status,
+        s1: l.s1,
+        s2: l.s2,
+        s3: l.s3,
+        s4: l.s4,
+        s5: l.s5,
+        mentorRemark: l.mentorRemark,
+      };
+    }
+    return {
+      studentId: student.id,
+      name: student.name,
+      rollNo: student.rollNo ?? "",
+      logs: logsMap,
+    };
+  });
 
   return (
     <div>
@@ -110,8 +171,11 @@ export default async function ConsoleWorklogsPage({
         <StatTile label="Submitted today" value={todayCount} icon="calendar" tone="blue" />
       </div>
 
-      <WorklogReview
-        logs={rows}
+      <WorklogConsoleShell
+        view={view as "list" | "grid"}
+        month={month}
+        reviewLogs={rows}
+        gridRows={gridRows}
         options={{ domains: options.domains, years: options.years }}
         filters={{ status, domain, year, date }}
       />

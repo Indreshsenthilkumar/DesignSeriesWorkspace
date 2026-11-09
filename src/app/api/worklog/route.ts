@@ -30,8 +30,8 @@ export const POST = handler(async (request: Request) => {
   const today = toDayKey();
   if (data.date > today) return fail("You cannot log work for a future date.", 422);
 
-  // Same-day logs close at 23:30; yesterday's stays open until the same time
-  // the next day so a late-evening session can still be written up.
+  // Students can only log for TODAY. Yesterday is no longer allowed unless
+  // an extension has been approved for that specific date.
   if (data.date === today && minutesSinceMidnight() > ATTENDANCE_CUTOFF_MINUTES) {
     return fail("Worklog submission for today closed at 11:30 PM.", 422);
   }
@@ -39,7 +39,8 @@ export const POST = handler(async (request: Request) => {
   const daysOld = Math.round(
     (new Date(today).getTime() - new Date(data.date).getTime()) / 86_400_000
   );
-  if (daysOld > 1) {
+  // Lock ANY past date (even yesterday) unless an approved extension exists.
+  if (daysOld > 0) {
     // A locked date is still writable if a mentor approved an extension for
     // exactly that day — that is the whole point of the extension flow.
     const extension = await prisma.extensionRequest.findUnique({
