@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -62,6 +61,10 @@ model User {
   tasksCreated         Task[]             @relation("TaskAuthor")
   worklogs             Worklog[]
   sectionViews         UserSectionView[]
+  supportTickets       SupportTicket[]    @relation("TicketOwner")
+  assignedTickets      SupportTicket[]    @relation("TicketAssignee")
+  ticketMessages       TicketMessage[]    @relation("MessageSender")
+  ticketActivities     TicketActivity[]   @relation("ActivityActor")
 
   @@index([role])
   @@index([year])
@@ -327,4 +330,95 @@ model UserSectionView {
 
   @@unique([userId, section])
   @@index([userId])
+}
+
+model SupportTicket {
+  id              String           @id @default(cuid())
+  ticketNumber    String           @unique
+  userId          String
+  name            String
+  rollNo          String           @default("")
+  email           String           @default("")
+  department      String           @default("")
+  year            String           @default("")
+  category        String
+  subcategory     String           @default("")
+  subject         String
+  description     String           @db.Text
+  module          String           @default("GENERAL")
+  priority        String           @default("MEDIUM")
+  status          String           @default("NEW")
+  assignedToId    String?
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  reopenedAt      DateTime?
+  slaDueAt        DateTime?
+  isEscalated     Boolean          @default(false)
+  rating          Int?
+  feedback        String?          @db.Text
+  feedbackAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation("TicketOwner", fields: [userId], references: [id], onDelete: Cascade)
+  assignedTo      User?            @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  messages        TicketMessage[]
+  activities      TicketActivity[]
+
+  @@index([status])
+  @@index([userId, status])
+  @@index([category])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id             String        @id @default(cuid())
+  ticketId       String
+  senderId       String
+  senderName     String
+  senderRole     String
+  message        String        @db.Text
+  isInternalNote Boolean       @default(false)
+  isEdited       Boolean       @default(false)
+  editedAt       DateTime?
+  readAt         DateTime?
+  createdAt      DateTime      @default(now())
+  ticket         SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender         User          @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@index([senderId])
+}
+
+model TicketActivity {
+  id         String        @id @default(cuid())
+  ticketId   String
+  actorId    String
+  actorName  String
+  action     String
+  fromStatus String?
+  toStatus   String?
+  meta       String        @default("")
+  createdAt  DateTime      @default(now())
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actor      User          @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+model FaqArticle {
+  id           String   @id @default(cuid())
+  title        String
+  category     String
+  module       String
+  question     String
+  answer       String   @db.Text
+  helpfulCount Int      @default(0)
+  tags         String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([module])
 }

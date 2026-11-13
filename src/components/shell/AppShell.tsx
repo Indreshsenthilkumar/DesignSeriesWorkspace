@@ -17,6 +17,7 @@ import { formatDay } from "@/lib/dates";
 
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar, SidebarNav, type NavBadges } from "./Sidebar";
+import { FlipkartMobileNavBar } from "./FlipkartMobileNavBar";
 
 export type ShellUser = {
   id: string;
@@ -112,13 +113,17 @@ export function AppShell({
 
         <main
           id="main"
-          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+84px)] pt-4 sm:px-6 sm:pt-6 lg:pb-10"
+          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-4 sm:px-6 sm:pt-6 md:pb-[calc(env(safe-area-inset-bottom)+32px)] lg:pb-10"
         >
           {children}
         </main>
       </div>
 
-      <MobileTabBar items={primary} badges={badges} onMore={() => setDrawerOpen(true)} />
+      <FlipkartMobileNavBar
+        badges={badges}
+        onMore={() => setDrawerOpen(true)}
+        drawerOpen={drawerOpen}
+      />
 
       {drawerOpen ? (
         <MobileDrawer

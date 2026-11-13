@@ -48,6 +48,8 @@ export default async function PortalLayout({ children }: { children: React.React
     pendingConsoleTasks,
     pendingConsoleWorklogs,
     pendingConsolePasses,
+    unreadSupportMessages,
+    unassignedSupportTickets,
   ] = await Promise.all([
     // Announcements: Unread visible notifications
     unreadNotificationCount(user),
@@ -137,6 +139,26 @@ export default async function PortalLayout({ children }: { children: React.React
           },
         })
       : Promise.resolve(0),
+
+    // Student Support: Unread messages sent by staff on student's tickets
+    prisma.ticketMessage.count({
+      where: {
+        ticket: { userId: user.id },
+        senderId: { not: user.id },
+        isInternalNote: false,
+        readAt: null,
+      },
+    }),
+
+    // Console Support: New / unassigned tickets waiting for staff
+    isGlobalAdmin || can(subject, "permUserManagement")
+      ? prisma.supportTicket.count({
+          where: {
+            assignedToId: null,
+            status: { in: ["NEW", "OPEN"] },
+          },
+        })
+      : Promise.resolve(0),
   ]);
 
   const badges: Record<string, number> = {
@@ -145,10 +167,12 @@ export default async function PortalLayout({ children }: { children: React.React
     "/leaves": unreadMyLeaves,
     "/worklog": flaggedWorklogs,
     "/passes": unreadMyPasses,
+    "/support": unreadSupportMessages,
     "/console/leaves": pendingLeaves,
     "/console/tasks": pendingConsoleTasks,
     "/console/worklogs": pendingConsoleWorklogs,
     "/console/passes": pendingConsolePasses,
+    "/console/support": unassignedSupportTickets,
   };
 
   return (

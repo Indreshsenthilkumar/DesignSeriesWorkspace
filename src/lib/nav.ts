@@ -74,6 +74,12 @@ export const STUDENT_NAV: NavItem[] = [
     description: "Your private scratchpad. Never visible to anyone else.",
   },
   {
+    href: "/support",
+    label: "Help & Support",
+    icon: "book",
+    description: "Raise support requests for portal modules and chat with mentors.",
+  },
+  {
     href: "/profile",
     label: "Profile",
     icon: "user",
@@ -170,6 +176,13 @@ export const CONSOLE_NAV: NavItem[] = [
     icon: "layers",
     permission: "permAdminDatabase",
     description: "Export raw tables and read the audit trail.",
+  },
+  {
+    href: "/console/support",
+    label: "Support Tickets",
+    icon: "mail",
+    permission: "permUserManagement",
+    description: "Manage student helpdesk requests, async messages, and SLA resolution.",
   },
 ];
 

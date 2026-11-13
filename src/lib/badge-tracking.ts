@@ -9,7 +9,9 @@ export type TrackedSection =
   | "console_tasks"
   | "console_worklogs"
   | "console_passes"
-  | "announcements";
+  | "announcements"
+  | "support"
+  | "console_support";
 
 /**
  * Marks that a user has opened/read a specific section right now.
