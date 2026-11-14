@@ -199,21 +199,21 @@ export function CheckInPanel({
               <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
                 Logged Hours for Today
               </span>
-              <div className="mt-2 grid grid-cols-4 sm:grid-cols-7 gap-2">
+              <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
                 {ATTENDANCE_HOURS.map((hour) => {
                   const isPresent = logged.has(hour);
                   return (
                     <div
                       key={hour}
                       className={cn(
-                        "flex flex-col items-center justify-center py-2 px-1 rounded-[10px] border text-center transition-colors",
+                        "flex flex-col items-center justify-center py-1.5 px-0.5 sm:py-2 sm:px-1 rounded-[8px] sm:rounded-[10px] border text-center transition-colors",
                         isPresent
                           ? "border-[var(--color-brand-green)] bg-[var(--color-brand-green-100)] dark:bg-[var(--color-brand-green-900)]/40 text-[var(--color-brand-green-800)] dark:text-[var(--color-brand-green-200)]"
                           : "border-[var(--line-subtle)] bg-[var(--surface-raised)]/50 opacity-40 text-[var(--text-faint)]"
                       )}
                     >
-                      <span className="text-[15px] font-bold leading-none">Hr {hour}</span>
-                      <span className="mt-1 text-[9.5px] font-semibold uppercase">
+                      <span className="text-[13px] sm:text-[15px] font-bold leading-none">Hr {hour}</span>
+                      <span className="mt-1 text-[8px] sm:text-[9.5px] font-semibold uppercase">
                         {isPresent ? "Present" : "Absent"}
                       </span>
                     </div>
@@ -276,13 +276,8 @@ export function CheckInPanel({
             </div>
           </div>
 
-          {/* Hour grid */}
-          <div
-            className={cn(
-              "grid gap-2",
-              compact ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-4 sm:grid-cols-7"
-            )}
-          >
+          {/* Hour grid - full width 7-col layout on mobile & desktop */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {ATTENDANCE_HOURS.map((hour) => {
               const isSelected = selected.has(hour);
 
@@ -294,7 +289,7 @@ export function CheckInPanel({
                   aria-pressed={isSelected}
                   title={`Hour ${hour} (${HOUR_WINDOW[hour]}) - Tap to toggle`}
                   className={cn(
-                    "group relative flex flex-col items-center justify-center gap-0.5 rounded-[12px] border py-2.5 px-1 select-none",
+                    "group relative flex flex-col items-center justify-center gap-0.5 rounded-[10px] sm:rounded-[12px] border py-2 px-0.5 sm:py-2.5 sm:px-1 select-none",
                     "transition-all duration-150 active:scale-95",
                     isSelected
                       ? "border-[var(--accent)] bg-[var(--accent-soft)] shadow-sm"
@@ -303,7 +298,7 @@ export function CheckInPanel({
                 >
                   <span
                     className={cn(
-                      "text-[17px] font-bold leading-none tabular-nums",
+                      "text-[15px] sm:text-[17px] font-bold leading-none tabular-nums",
                       isSelected ? "text-[var(--accent)]" : "text-[var(--text-strong)]"
                     )}
                   >
@@ -311,7 +306,7 @@ export function CheckInPanel({
                   </span>
                   <span
                     className={cn(
-                      "text-[9.5px] font-semibold uppercase tracking-[0.06em]",
+                      "text-[8px] sm:text-[9.5px] font-semibold uppercase tracking-[0.04em] sm:tracking-[0.06em]",
                       isSelected ? "text-[var(--accent)] font-bold" : "text-[var(--text-faint)]"
                     )}
                   >
@@ -377,7 +372,7 @@ export function CheckInPanel({
               />
             </Field>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <p className="text-[11.5px] text-[var(--text-faint)]">
                 {selected.size > 0
                   ? `Selected ${selected.size} ${selected.size === 1 ? "hour" : "hours"}: ${[...selected]
@@ -390,6 +385,7 @@ export function CheckInPanel({
                 loading={saving}
                 disabled={selected.size === 0 || reason.trim().length < 4}
                 icon={saving ? undefined : "check-circle"}
+                className="w-full sm:w-auto"
               >
                 {saving ? "Submitting…" : "Submit Missed OTP Attendance"}
               </Button>

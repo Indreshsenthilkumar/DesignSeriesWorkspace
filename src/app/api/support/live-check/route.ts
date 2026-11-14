@@ -73,3 +73,4 @@ export const GET = handler(async (request: Request) => {
 
   return ok({ unreadCount, newReplies });
 });
+

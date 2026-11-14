@@ -807,7 +807,7 @@ async function StudentDashboard({
           </div>
 
           {/* Today's two obligations, at a glance. */}
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="grid grid-cols-2 sm:flex shrink-0 items-center gap-2.5 sm:gap-3">
             <TodayChip
               done={attendanceDone}
               label="Check-in"
@@ -917,14 +917,16 @@ async function StudentDashboard({
               title="Last 30 days"
               subtitle={`${data.attendance.daysPresent} days present · ${data.attendance.fullDays} full days · ${data.attendance.streak}-day streak`}
             />
-            <div className="flex items-center gap-5">
-              <ProgressRing
-                value={data.attendance.rate}
-                size={104}
-                tone={data.attendance.rate >= 85 ? "green" : data.attendance.rate >= 70 ? "amber" : "red"}
-                sublabel="attended"
-              />
-              <div className="min-w-0 flex-1">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
+              <div className="shrink-0 flex items-center justify-center">
+                <ProgressRing
+                  value={data.attendance.rate}
+                  size={104}
+                  tone={data.attendance.rate >= 85 ? "green" : data.attendance.rate >= 70 ? "amber" : "red"}
+                  sublabel="attended"
+                />
+              </div>
+              <div className="min-w-0 w-full flex-1">
                 <AnalyticsChart
                   data={data.attendance.byDay}
                   tone="blue"

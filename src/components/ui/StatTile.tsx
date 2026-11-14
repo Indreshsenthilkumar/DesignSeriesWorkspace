@@ -76,11 +76,11 @@ export function StatTile({
       </div>
 
       {(caption || delta !== undefined) && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0">
           {delta !== undefined && delta !== null ? (
             <span
               data-accent={delta >= 0 ? "green" : "red"}
-              className="inline-flex items-center gap-1 rounded-full px-1.5 py-[2px] text-[11px] font-bold tabular-nums"
+              className="inline-flex items-center gap-1 rounded-full px-1.5 py-[2px] text-[10.5px] sm:text-[11px] font-bold tabular-nums shrink-0"
               style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
             >
               <Icon
@@ -92,7 +92,7 @@ export function StatTile({
             </span>
           ) : null}
           {caption ? (
-            <span className="truncate text-[11.5px]" style={{ color: "var(--text-muted)" }}>
+            <span className="truncate text-[10.5px] sm:text-[11.5px] min-w-0" style={{ color: "var(--text-muted)" }}>
               {caption}
             </span>
           ) : null}

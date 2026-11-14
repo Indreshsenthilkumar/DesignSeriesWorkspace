@@ -179,12 +179,13 @@ export function AttendanceHistoryView({
         title="Missed OTP Attendance history"
         description="Track and manage attendance logs."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {canManage && (
               <Button
                 variant="secondary"
                 onClick={() => setImportModalOpen(true)}
                 icon="upload"
+                className="flex-1 sm:flex-initial"
               >
                 Import Sheet / CSV
               </Button>
@@ -192,6 +193,7 @@ export function AttendanceHistoryView({
             <Button
               onClick={() => setAddModalOpen(true)}
               icon="plus"
+              className="flex-1 sm:flex-initial"
             >
               Add attendance hour
             </Button>
@@ -245,7 +247,7 @@ export function AttendanceHistoryView({
       <div className="surface p-3.5 sm:p-4 rounded-[14px] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Input */}
-          <div className="relative min-w-[200px] sm:min-w-[230px]">
+          <div className="relative w-full sm:w-auto min-w-[180px] sm:min-w-[230px] flex-1">
             <Icon
               name="search"
               className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-faint)]"

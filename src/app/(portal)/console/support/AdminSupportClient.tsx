@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
 import { formatDay, relativeTime } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 import {
   CATEGORIES_CONFIG,
   MODULES_CONFIG,
@@ -177,9 +178,9 @@ export function AdminSupportClient({
   return (
     <>
       <div className="flex flex-col gap-4">
-        {/* Status Queue Tabs */}
+        {/* Status Queue Tabs - horizontally scrollable on mobile */}
         <div
-          className="flex flex-wrap items-center gap-1 rounded-[12px] p-1.5"
+          className="flex items-center gap-1.5 overflow-x-auto scrollbar-none rounded-[12px] p-1.5"
           style={{ background: "var(--surface-sunken)", border: "1px solid var(--line-soft)" }}
         >
           <TabButton
@@ -383,119 +384,186 @@ export function AdminSupportClient({
               description="No support requests match your selected tab and search criteria."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-[12.5px]">
-                <thead>
-                  <tr
-                    className="border-b text-[10.5px] font-bold uppercase tracking-[0.08em]"
-                    style={{ borderColor: "var(--line-soft)", color: "var(--text-faint)" }}
-                  >
-                    <th className="py-2.5 pl-2 pr-3 w-8">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.length > 0 && selectedIds.length === filteredTickets.length}
-                        onChange={toggleSelectAll}
-                        className="rounded"
-                      />
-                    </th>
-                    <th className="py-2.5 px-3">Ticket ID</th>
-                    <th className="py-2.5 px-3">Student</th>
-                    <th className="py-2.5 px-3">Category & Subject</th>
-                    <th className="py-2.5 px-3">Priority</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3">Assignee</th>
-                    <th className="py-2.5 px-3 text-right">Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTickets.map((t, idx) => {
-                    const isSelected = selectedIds.includes(t.id);
-                    const priConfig = PRIORITY_CONFIG[t.priority as TicketPriority];
-                    const catConfig = CATEGORIES_CONFIG[t.category as TicketCategory];
-                    const isOverdue = t.slaDueAt && new Date(t.slaDueAt) < new Date() && t.status !== "RESOLVED" && t.status !== "CLOSED";
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse text-left text-[12.5px]">
+                  <thead>
+                    <tr
+                      className="border-b text-[10.5px] font-bold uppercase tracking-[0.08em]"
+                      style={{ borderColor: "var(--line-soft)", color: "var(--text-faint)" }}
+                    >
+                      <th className="py-2.5 pl-2 pr-3 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.length > 0 && selectedIds.length === filteredTickets.length}
+                          onChange={toggleSelectAll}
+                          className="rounded"
+                        />
+                      </th>
+                      <th className="py-2.5 px-3">Ticket ID</th>
+                      <th className="py-2.5 px-3">Student</th>
+                      <th className="py-2.5 px-3">Category & Subject</th>
+                      <th className="py-2.5 px-3">Priority</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Assignee</th>
+                      <th className="py-2.5 px-3 text-right">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTickets.map((t, idx) => {
+                      const isSelected = selectedIds.includes(t.id);
+                      const priConfig = PRIORITY_CONFIG[t.priority as TicketPriority];
+                      const catConfig = CATEGORIES_CONFIG[t.category as TicketCategory];
+                      const isOverdue = t.slaDueAt && new Date(t.slaDueAt) < new Date() && t.status !== "RESOLVED" && t.status !== "CLOSED";
 
-                    return (
-                      <tr
-                        key={t.id}
-                        className="group border-b transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
-                        style={{
-                          borderColor: "var(--line-soft)",
-                          background: isSelected ? "#F0F7FF" : idx % 2 === 0 ? "var(--surface-raised)" : "var(--surface-sunken)",
-                        }}
-                        onClick={() => setActiveTicketId(t.id)}
-                      >
-                        <td
-                          className="py-3 pl-2 pr-3"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSelect(t.id);
+                      return (
+                        <tr
+                          key={t.id}
+                          className="group border-b transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+                          style={{
+                            borderColor: "var(--line-soft)",
+                            background: isSelected ? "#F0F7FF" : idx % 2 === 0 ? "var(--surface-raised)" : "var(--surface-sunken)",
                           }}
+                          onClick={() => setActiveTicketId(t.id)}
                         >
+                          <td
+                            className="py-3 pl-2 pr-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSelect(t.id);
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(t.id)}
+                              className="rounded"
+                            />
+                          </td>
+
+                          <td className="py-3 px-3 font-mono font-bold text-[var(--accent)]">
+                            {t.ticketNumber}
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-[var(--text-strong)]">{t.name}</span>
+                              <span className="font-mono text-[10.5px] text-[var(--text-faint)]">{t.rollNo}</span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3 max-w-[280px]">
+                            <div className="flex flex-col">
+                              <span className="truncate font-medium text-[var(--text-strong)]">{t.subject}</span>
+                              <span className="truncate text-[10.5px] text-[var(--text-faint)]">
+                                {catConfig?.label || t.category} · {t.module}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <Badge tone={priConfig?.tone || "slate"}>
+                              {priConfig?.label || t.priority}
+                            </Badge>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1.5">
+                              <StatusBadge status={t.status} />
+                              {isOverdue ? (
+                                <span
+                                  className="rounded px-1.5 py-0.2 text-[9px] font-bold text-red-700 bg-red-100"
+                                  title="SLA Overdue"
+                                >
+                                  OVERDUE
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3 text-[12px]">
+                            {t.assignedTo ? (
+                              <span className="font-medium text-emerald-700">{t.assignedTo.name}</span>
+                            ) : (
+                              <span className="text-amber-600 font-medium">Unassigned</span>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-3 text-right text-[11px] text-[var(--text-faint)]">
+                            {relativeTime(t.updatedAt)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Native Card View */}
+              <div className="md:hidden space-y-2.5">
+                {filteredTickets.map((t) => {
+                  const isSelected = selectedIds.includes(t.id);
+                  const priConfig = PRIORITY_CONFIG[t.priority as TicketPriority];
+                  const catConfig = CATEGORIES_CONFIG[t.category as TicketCategory];
+                  const isOverdue = t.slaDueAt && new Date(t.slaDueAt) < new Date() && t.status !== "RESOLVED" && t.status !== "CLOSED";
+
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setActiveTicketId(t.id)}
+                      className={cn(
+                        "rounded-[12px] border p-3.5 transition-all cursor-pointer active:scale-[0.99]",
+                        isSelected ? "border-[var(--accent)] bg-blue-50/40" : "border-[var(--line-soft)] bg-[var(--surface-raised)]"
+                      )}
+                      style={{ boxShadow: "var(--shadow-card)" }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={isSelected}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={() => toggleSelect(t.id)}
-                            className="rounded"
+                            className="rounded h-4 w-4"
                           />
-                        </td>
-
-                        <td className="py-3 px-3 font-mono font-bold text-[var(--accent)]">
-                          {t.ticketNumber}
-                        </td>
-
-                        <td className="py-3 px-3">
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-[var(--text-strong)]">{t.name}</span>
-                            <span className="font-mono text-[10.5px] text-[var(--text-faint)]">{t.rollNo}</span>
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-3 max-w-[280px]">
-                          <div className="flex flex-col">
-                            <span className="truncate font-medium text-[var(--text-strong)]">{t.subject}</span>
-                            <span className="truncate text-[10.5px] text-[var(--text-faint)]">
-                              {catConfig?.label || t.category} · {t.module}
+                          <span className="font-mono text-[12px] font-bold text-[var(--accent)]">
+                            {t.ticketNumber}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <StatusBadge status={t.status} />
+                          {isOverdue && (
+                            <span className="rounded px-1.5 py-0.5 text-[9px] font-bold text-red-700 bg-red-100">
+                              OVERDUE
                             </span>
-                          </div>
-                        </td>
+                          )}
+                        </div>
+                      </div>
 
-                        <td className="py-3 px-3">
+                      <div className="mt-2">
+                        <h4 className="text-[13.5px] font-semibold text-[var(--text-strong)] leading-snug line-clamp-2">
+                          {t.subject}
+                        </h4>
+                        <p className="mt-1 text-[11.5px] text-[var(--text-muted)]">
+                          {catConfig?.label || t.category} · {t.name} ({t.rollNo})
+                        </p>
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-[var(--line-soft)] flex items-center justify-between text-[11px] text-[var(--text-faint)]">
+                        <div className="flex items-center gap-1.5">
                           <Badge tone={priConfig?.tone || "slate"}>
                             {priConfig?.label || t.priority}
                           </Badge>
-                        </td>
-
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            <StatusBadge status={t.status} />
-                            {isOverdue ? (
-                              <span
-                                className="rounded px-1.5 py-0.2 text-[9px] font-bold text-red-700 bg-red-100"
-                                title="SLA Overdue"
-                              >
-                                OVERDUE
-                              </span>
-                            ) : null}
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-3 text-[12px]">
-                          {t.assignedTo ? (
-                            <span className="font-medium text-emerald-700">{t.assignedTo.name}</span>
-                          ) : (
-                            <span className="text-amber-600 font-medium">Unassigned</span>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-3 text-right text-[11px] text-[var(--text-faint)]">
-                          {relativeTime(t.updatedAt)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <span>{t.assignedTo ? t.assignedTo.name : "Unassigned"}</span>
+                        </div>
+                        <span>{relativeTime(t.updatedAt)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </Card>
       </div>
@@ -531,7 +599,7 @@ function TabButton({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all"
+      className="flex shrink-0 items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all select-none cursor-pointer"
       style={{
         background: active ? "var(--surface-raised)" : "transparent",
         color: active ? "var(--text-strong)" : "var(--text-muted)",

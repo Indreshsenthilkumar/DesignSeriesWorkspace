@@ -79,7 +79,7 @@ export function LeavesClient({
       {/* Top Action Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-lg bg-[var(--surface-sunken)] p-1 border border-[var(--line-soft)]">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none rounded-lg bg-[var(--surface-sunken)] p-1 border border-[var(--line-soft)]">
           {[
             { id: "ALL", label: "All Leaves" },
             { id: "PENDING", label: "Pending" },
@@ -89,7 +89,7 @@ export function LeavesClient({
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id)}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold shrink-0 transition-all select-none cursor-pointer ${
                 filter === tab.id
                   ? "bg-[var(--surface-raised)] text-[var(--text-strong)] shadow-sm"
                   : "text-[var(--text-muted)] hover:text-[var(--text-strong)]"
@@ -103,7 +103,7 @@ export function LeavesClient({
         {/* Apply Leave Button */}
         <button
           onClick={() => setIsApplyOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all select-none cursor-pointer"
         >
           <Icon name="plus" className="h-4 w-4" />
           Apply Leave

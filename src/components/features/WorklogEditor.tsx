@@ -156,17 +156,19 @@ export function WorklogEditor({
       }
       footer={
         editable ? (
-          <>
-            <span className="mr-auto text-[11.5px] font-medium" style={{ color: "var(--text-faint)" }}>
+          <div className="flex w-full flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-[11.5px] font-medium text-center sm:text-left" style={{ color: "var(--text-faint)" }}>
               {filled} of {requiredCount} required slots complete
             </span>
-            <Button variant="secondary" onClick={onClose} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={submit} loading={saving} icon={saving ? undefined : "check"}>
-              {saving ? "Saving…" : "Submit worklog"}
-            </Button>
-          </>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button variant="secondary" onClick={onClose} disabled={saving} className="flex-1 sm:flex-initial">
+                Cancel
+              </Button>
+              <Button onClick={submit} loading={saving} icon={saving ? undefined : "check"} className="flex-1 sm:flex-initial">
+                {saving ? "Saving…" : "Submit worklog"}
+              </Button>
+            </div>
+          </div>
         ) : undefined
       }
     >

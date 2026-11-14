@@ -174,14 +174,14 @@ export function PassesClient({ passes, holder }: { passes: PassRow[]; holder: Pa
         title="Request an activity pass"
         description="One live request per day. Your mentor sees it immediately."
         footer={
-          <>
-            <Button variant="secondary" onClick={() => setRequestOpen(false)} disabled={busy}>
+          <div className="flex w-full items-center justify-end gap-2">
+            <Button variant="secondary" onClick={() => setRequestOpen(false)} disabled={busy} className="flex-1 sm:flex-initial">
               Cancel
             </Button>
-            <Button onClick={submit} loading={busy} icon={busy ? undefined : "check"}>
+            <Button onClick={submit} loading={busy} icon={busy ? undefined : "check"} className="flex-1 sm:flex-initial">
               Submit request
             </Button>
-          </>
+          </div>
         }
       >
         <div className="flex flex-col gap-4">

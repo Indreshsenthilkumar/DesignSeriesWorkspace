@@ -171,8 +171,8 @@ export function TicketConversationModal({
       title={`${ticket.ticketNumber} · ${ticket.subject}`}
       description={categoryConfig?.label || ticket.category}
       footer={
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={ticket.status} />
             {ticket.assignedTo ? (
               <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400">
@@ -184,7 +184,7 @@ export function TicketConversationModal({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             {isResolvedOrClosed && !reopening ? (
               <Button
                 size="sm"

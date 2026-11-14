@@ -368,17 +368,13 @@ export function WorklogMonthlyGrid({
         className="overflow-x-auto rounded-[12px] border"
         style={{ borderColor: "var(--line-soft)", background: "var(--surface-raised)" }}
       >
-        <table className="border-collapse text-[11.5px]" style={{ minWidth: `${280 + days.length * 36}px` }}>
+        <table className="border-collapse text-[11.5px]" style={{ minWidth: `max(100%, ${171 + days.length * 36}px)` }}>
           <thead>
             <tr>
               {/* Sticky S.No Column */}
               <th
-                className="sticky z-20 border-b border-r px-2 py-2 text-center text-[10px] font-bold uppercase tracking-[0.08em]"
+                className="sticky z-20 border-b border-r px-1.5 sm:px-2 py-2 text-center text-[10px] font-bold uppercase tracking-[0.08em] left-0 w-[36px] min-w-[36px] max-w-[36px] sm:w-[44px] sm:min-w-[44px] sm:max-w-[44px]"
                 style={{
-                  left: 0,
-                  width: 44,
-                  minWidth: 44,
-                  maxWidth: 44,
                   borderColor: "var(--line-soft)",
                   background: "var(--surface-raised)",
                   color: "var(--text-faint)",
@@ -389,12 +385,8 @@ export function WorklogMonthlyGrid({
 
               {/* Sticky Name Column */}
               <th
-                className="sticky z-20 border-b border-r px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.08em]"
+                className="sticky z-20 border-b border-r px-2 sm:px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.08em] left-[36px] sm:left-[44px] w-[135px] min-w-[135px] max-w-[135px] sm:w-[236px] sm:min-w-[236px] sm:max-w-[236px]"
                 style={{
-                  left: 44,
-                  width: 236,
-                  minWidth: 236,
-                  maxWidth: 236,
                   borderColor: "var(--line-soft)",
                   background: "var(--surface-raised)",
                   color: "var(--text-faint)",
@@ -461,12 +453,8 @@ export function WorklogMonthlyGrid({
                   >
                     {/* Sticky S.No Cell */}
                     <td
-                      className="sticky z-10 border-b border-r px-2 py-2 text-center tabular-nums text-[11px]"
+                      className="sticky z-10 border-b border-r px-1.5 sm:px-2 py-2 text-center tabular-nums text-[11px] left-0 w-[36px] min-w-[36px] max-w-[36px] sm:w-[44px] sm:min-w-[44px] sm:max-w-[44px]"
                       style={{
-                        left: 0,
-                        width: 44,
-                        minWidth: 44,
-                        maxWidth: 44,
                         borderColor: "var(--line-soft)",
                         background: rowBg,
                         color: "var(--text-faint)",
@@ -477,12 +465,8 @@ export function WorklogMonthlyGrid({
 
                     {/* Sticky Name Cell with Student + Admin Role Badge */}
                     <td
-                      className="sticky z-10 border-b border-r px-3 py-2"
+                      className="sticky z-10 border-b border-r px-2 sm:px-3 py-2 left-[36px] sm:left-[44px] w-[135px] min-w-[135px] max-w-[135px] sm:w-[236px] sm:min-w-[236px] sm:max-w-[236px]"
                       style={{
-                        left: 44,
-                        width: 236,
-                        minWidth: 236,
-                        maxWidth: 236,
                         borderColor: "var(--line-soft)",
                         background: rowBg,
                         boxShadow: "2px 0 4px -2px rgba(0,0,0,0.08)",
@@ -491,7 +475,7 @@ export function WorklogMonthlyGrid({
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span
-                            className="font-semibold text-[12px] leading-snug truncate"
+                            className="font-semibold text-[11.5px] sm:text-[12px] leading-snug truncate max-w-[115px] sm:max-w-[210px] block"
                             style={{ color: "var(--text-strong)" }}
                             title={row.name}
                           >
@@ -499,7 +483,7 @@ export function WorklogMonthlyGrid({
                           </span>
                           {isStudentAdmin ? (
                             <span
-                              className="inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
+                              className="inline-flex shrink-0 items-center rounded px-1 py-0.2 sm:px-1.5 sm:py-0.5 text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider"
                               style={{
                                 background: "#dcfce7",
                                 color: "#166534",
@@ -511,11 +495,11 @@ export function WorklogMonthlyGrid({
                           ) : null}
                         </div>
                         <div
-                          className="flex items-center gap-1.5 text-[10px]"
+                          className="flex items-center gap-1 text-[9.5px] sm:text-[10px]"
                           style={{ color: "var(--text-faint)" }}
                         >
                           <span className="font-mono">{row.rollNo || "—"}</span>
-                          {row.domain ? <span className="truncate">· {row.domain}</span> : null}
+                          {row.domain ? <span className="truncate max-w-[70px] sm:max-w-[120px]">· {row.domain}</span> : null}
                         </div>
                       </div>
                     </td>

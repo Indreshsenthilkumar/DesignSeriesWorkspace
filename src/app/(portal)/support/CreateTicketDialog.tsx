@@ -120,8 +120,8 @@ export function CreateTicketDialog({
       title="Create Support Request"
       description="Tell us what you need help with. A mentor will review and respond directly."
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
+        <div className="flex w-full items-center justify-end gap-2">
+          <Button variant="secondary" onClick={onClose} disabled={submitting} className="flex-1 sm:flex-initial">
             Cancel
           </Button>
           <Button
@@ -130,10 +130,11 @@ export function CreateTicketDialog({
             loading={submitting}
             disabled={subject.trim().length < 4 || description.trim().length < 10}
             onClick={handleSubmit}
+            className="flex-1 sm:flex-initial"
           >
             Submit Request
           </Button>
-        </>
+        </div>
       }
     >
       <div className="flex flex-col gap-4">

@@ -122,15 +122,15 @@ export function SupportClient({
     <>
       <div className="flex flex-col gap-4">
         {/* Navigation Tabs & Primary Action */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div
-            className="flex items-center gap-1 rounded-[10px] p-1"
+            className="grid grid-cols-2 sm:flex items-center gap-1 rounded-[10px] p-1 w-full sm:w-auto"
             style={{ background: "var(--surface-sunken)", border: "1px solid var(--line-soft)" }}
           >
             <button
               onClick={() => setActiveTab("requests")}
               aria-pressed={activeTab === "requests"}
-              className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all"
               style={{
                 background: activeTab === "requests" ? "var(--surface-raised)" : "transparent",
                 color: activeTab === "requests" ? "var(--text-strong)" : "var(--text-muted)",
@@ -147,7 +147,7 @@ export function SupportClient({
             <button
               onClick={() => setActiveTab("faq")}
               aria-pressed={activeTab === "faq"}
-              className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12.5px] font-medium transition-all"
               style={{
                 background: activeTab === "faq" ? "var(--surface-raised)" : "transparent",
                 color: activeTab === "faq" ? "var(--text-strong)" : "var(--text-muted)",
@@ -155,23 +155,23 @@ export function SupportClient({
               }}
             >
               <Icon name="book" className="h-4 w-4" />
-              <span>Knowledge Base & FAQs</span>
+              <span>FAQs</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             {notifPerm !== "granted" ? (
               <button
                 type="button"
                 onClick={handleEnableNotifications}
-                className="flex items-center gap-1.5 rounded-[8px] border border-[#25D366]/40 bg-[#25D366]/10 px-2.5 py-1.5 text-[12px] font-semibold text-[#128C7E] transition-all hover:bg-[#25D366]/20 dark:text-[#25D366]"
+                className="flex items-center gap-1.5 rounded-[8px] border border-[#25D366]/40 bg-[#25D366]/10 px-2.5 py-1.5 text-[12px] font-semibold text-[#128C7E] transition-all hover:bg-[#25D366]/20 dark:text-[#25D366] shrink-0 cursor-pointer"
                 title="Enable browser notifications for mentor replies"
               >
                 <Icon name="bell" className="h-3.5 w-3.5 text-[#25D366]" />
                 <span>Turn On Live Alerts</span>
               </button>
             ) : (
-              <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-1.5 text-[11.5px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
                 <span className="h-2 w-2 rounded-full bg-[#25D366] animate-pulse"></span>
                 <span>Live Alerts Active</span>
               </div>
@@ -181,8 +181,9 @@ export function SupportClient({
               variant="primary"
               icon="plus"
               onClick={() => setCreateOpen(true)}
+              className="flex-1 sm:flex-initial"
             >
-              Raise Support Request
+              Raise Request
             </Button>
           </div>
         </div>

@@ -38,6 +38,7 @@ export function TasksClient({ tasks }: { tasks: TaskRow[] }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [filter, setFilter] = useState<"all" | "open" | "overdue">("open");
+  const [mobileColumn, setMobileColumn] = useState<string>("ALL");
 
   const today = toDayKey();
 
@@ -104,48 +105,91 @@ export function TasksClient({ tasks }: { tasks: TaskRow[] }) {
           }
         />
       ) : view === "board" ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {COLUMNS.map((column) => {
-            const items = filtered.filter((t) => t.status === column.status);
-            const blocked = column.status === "TODO" ? filtered.filter((t) => t.status === "BLOCKED") : [];
-            const all = [...items, ...blocked];
-
-            return (
-              <div key={column.status} data-accent={column.tone} className="min-w-0">
-                <div className="mb-2 flex items-center gap-2 px-1">
-                  <span className="h-2 w-2 rounded-full" style={{ background: "var(--tone)" }} />
-                  <h2 className="text-[12.5px] font-bold uppercase tracking-[0.07em]" style={{ color: "var(--text-muted)" }}>
-                    {TASK_STATUS_LABEL[column.status]}
-                  </h2>
-                  <span className="ml-auto text-[11.5px] font-bold tabular-nums" style={{ color: "var(--text-faint)" }}>
-                    {all.length}
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {all.length === 0 ? (
-                    <div
-                      className="rounded-[11px] border border-dashed py-6 text-center text-[11.5px]"
-                      style={{ borderColor: "var(--line-default)", color: "var(--text-faint)" }}
-                    >
-                      Empty
-                    </div>
-                  ) : (
-                    all.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        busy={busy === task.id}
-                        onMove={move}
-                        today={today}
-                      />
-                    ))
+        <>
+          {/* Mobile column switcher tab bar */}
+          <div className="md:hidden mb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-none rounded-[10px] bg-[var(--surface-sunken)] p-1 border border-[var(--line-soft)]">
+            <button
+              type="button"
+              onClick={() => setMobileColumn("ALL")}
+              className={cn(
+                "shrink-0 rounded-[8px] px-2.5 py-1.5 text-[11.5px] font-semibold transition-all cursor-pointer",
+                mobileColumn === "ALL"
+                  ? "bg-[var(--surface-raised)] text-[var(--text-strong)] shadow-xs"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-strong)]"
+              )}
+            >
+              All Stages ({filtered.length})
+            </button>
+            {COLUMNS.map((col) => {
+              const colCount = filtered.filter(
+                (t) => t.status === col.status || (col.status === "TODO" && t.status === "BLOCKED")
+              ).length;
+              return (
+                <button
+                  key={col.status}
+                  type="button"
+                  onClick={() => setMobileColumn(col.status)}
+                  className={cn(
+                    "shrink-0 rounded-[8px] px-2.5 py-1.5 text-[11.5px] font-semibold transition-all cursor-pointer",
+                    mobileColumn === col.status
+                      ? "bg-[var(--surface-raised)] text-[var(--text-strong)] shadow-xs"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-strong)]"
                   )}
+                >
+                  {TASK_STATUS_LABEL[col.status]} ({colCount})
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {COLUMNS.map((column) => {
+              const isHiddenOnMobile = mobileColumn !== "ALL" && mobileColumn !== column.status;
+              const items = filtered.filter((t) => t.status === column.status);
+              const blocked = column.status === "TODO" ? filtered.filter((t) => t.status === "BLOCKED") : [];
+              const all = [...items, ...blocked];
+
+              return (
+                <div
+                  key={column.status}
+                  data-accent={column.tone}
+                  className={cn("min-w-0", isHiddenOnMobile && "hidden md:block")}
+                >
+                  <div className="mb-2 flex items-center gap-2 px-1">
+                    <span className="h-2 w-2 rounded-full" style={{ background: "var(--tone)" }} />
+                    <h2 className="text-[12.5px] font-bold uppercase tracking-[0.07em]" style={{ color: "var(--text-muted)" }}>
+                      {TASK_STATUS_LABEL[column.status]}
+                    </h2>
+                    <span className="ml-auto text-[11.5px] font-bold tabular-nums" style={{ color: "var(--text-faint)" }}>
+                      {all.length}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {all.length === 0 ? (
+                      <div
+                        className="rounded-[11px] border border-dashed py-6 text-center text-[11.5px]"
+                        style={{ borderColor: "var(--line-default)", color: "var(--text-faint)" }}
+                      >
+                        Empty
+                      </div>
+                    ) : (
+                      all.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          busy={busy === task.id}
+                          onMove={move}
+                          today={today}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <Card padded={false}>
           <ul>

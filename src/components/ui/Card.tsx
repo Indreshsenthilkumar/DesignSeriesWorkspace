@@ -51,10 +51,10 @@ export function CardHeader({
             <Icon name={icon} className="h-4 w-4" />
           </span>
         ) : null}
-        <div className="min-w-0">
-          <h2 className="truncate text-[15px] font-semibold leading-tight">{title}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[15px] font-semibold leading-tight break-words">{title}</h2>
           {subtitle ? (
-            <p className="mt-0.5 text-[12.5px] leading-snug" style={{ color: "var(--text-muted)" }}>
+            <p className="mt-0.5 text-[12.5px] leading-snug break-words" style={{ color: "var(--text-muted)" }}>
               {subtitle}
             </p>
           ) : null}
