@@ -141,17 +141,19 @@ export default async function PortalLayout({ children }: { children: React.React
       : Promise.resolve(0),
 
     // Student Support: Unread messages sent by staff on student's tickets
-    prisma.ticketMessage.count({
-      where: {
-        ticket: { userId: user.id },
-        senderId: { not: user.id },
-        isInternalNote: false,
-        readAt: null,
-      },
-    }),
+    prisma.ticketMessage
+      ? prisma.ticketMessage.count({
+          where: {
+            ticket: { userId: user.id },
+            senderId: { not: user.id },
+            isInternalNote: false,
+            readAt: null,
+          },
+        })
+      : Promise.resolve(0),
 
     // Console Support: New / unassigned tickets waiting for staff
-    isGlobalAdmin || can(subject, "permUserManagement")
+    (isGlobalAdmin || can(subject, "permUserManagement")) && prisma.supportTicket
       ? prisma.supportTicket.count({
           where: {
             assignedToId: null,
