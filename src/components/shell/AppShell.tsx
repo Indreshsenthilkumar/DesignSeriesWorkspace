@@ -18,6 +18,7 @@ import { formatDay } from "@/lib/dates";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar, SidebarNav, type NavBadges } from "./Sidebar";
 import { FlipkartMobileNavBar } from "./FlipkartMobileNavBar";
+import { SupportNotificationListener } from "@/components/features/SupportNotificationListener";
 
 export type ShellUser = {
   id: string;
@@ -118,6 +119,8 @@ export function AppShell({
           {children}
         </main>
       </div>
+
+      <SupportNotificationListener userRole={user.role} />
 
       <FlipkartMobileNavBar
         badges={badges}

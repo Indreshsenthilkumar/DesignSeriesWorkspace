@@ -26,30 +26,7 @@ export const POST = handler(async (request: Request) => {
     if (!data.status) return fail("Status is required for status update", 400);
 
     const updateData: any = { status: data.status };
-    if (data.status === "RESOLVED") {
-      updateData.resolvedAt = new Date();
-      try {
-        const resolvedTickets = await prisma.supportTicket.findMany({
-          where: { id: { in: data.ticketIds } },
-          select: { id: true, ticketNumber: true, subject: true, userId: true },
-        });
-        for (const t of resolvedTickets) {
-          await prisma.notification.create({
-            data: {
-              title: `Ticket Resolved: ${t.ticketNumber}`,
-              body: `Your ticket "${t.subject}" has been marked as resolved by ${user.name}.`,
-              category: "GENERAL",
-              audience: "USER",
-              audienceValue: t.userId,
-              authorId: user.id,
-              link: `/support?ticket=${t.id}`,
-            },
-          });
-        }
-      } catch {
-        // Non-blocking
-      }
-    }
+    if (data.status === "RESOLVED") updateData.resolvedAt = new Date();
     if (data.status === "CLOSED") updateData.closedAt = new Date();
 
     await prisma.supportTicket.updateMany({

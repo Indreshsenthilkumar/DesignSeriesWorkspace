@@ -201,9 +201,9 @@ export function AdminTicketDrawer({
         </div>
       }
     >
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3 min-w-0">
         {/* Left Column (2 spans): Conversation & Messages */}
-        <div className="flex flex-col gap-3 lg:col-span-2">
+        <div className="flex flex-col gap-3 lg:col-span-2 min-w-0">
           {/* SLA and Status Banner */}
           <div
             className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border p-2.5 text-[12px]"
@@ -237,7 +237,7 @@ export function AdminTicketDrawer({
 
           {/* Conversation Messages */}
           <div
-            className="flex max-h-[400px] flex-col gap-3 overflow-y-auto rounded-[12px] border p-3.5"
+            className="flex max-h-[400px] flex-col gap-3 overflow-y-auto overflow-x-hidden min-w-0 rounded-[12px] border p-3.5"
             style={{ background: "var(--surface-sunken)", borderColor: "var(--line-soft)" }}
           >
             {ticket.messages.map((msg) => {
@@ -247,7 +247,7 @@ export function AdminTicketDrawer({
               return (
                 <div
                   key={msg.id}
-                  className={`flex flex-col ${
+                  className={`flex flex-col w-full min-w-0 ${
                     isInternal
                       ? "items-center"
                       : isStaffMsg
@@ -274,7 +274,7 @@ export function AdminTicketDrawer({
                   </div>
 
                   <div
-                    className={`max-w-[90%] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
+                    className={`max-w-[85%] min-w-0 overflow-hidden break-words [overflow-wrap:anywhere] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
                       isInternal
                         ? "w-full border border-amber-300 bg-amber-50 text-amber-950"
                         : isStaffMsg
@@ -282,7 +282,7 @@ export function AdminTicketDrawer({
                         : "rounded-tl-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#202C33] text-[#111827] dark:text-[#E9EDEF]"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap font-normal">{msg.message}</p>
+                    <p className="whitespace-pre-wrap font-normal break-words [overflow-wrap:anywhere] min-w-0">{msg.message}</p>
                   </div>
                 </div>
               );

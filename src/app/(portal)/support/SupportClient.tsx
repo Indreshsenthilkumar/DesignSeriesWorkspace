@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -41,6 +41,32 @@ export function SupportClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  // Notification permission state
+  const [notifPerm, setNotifPerm] = useState<string>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPerm(Notification.permission);
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const res = await Notification.requestPermission();
+        setNotifPerm(res);
+        if (res === "granted") {
+          new Notification("WhatsApp Alerts Activated", {
+            body: "You will receive instant alerts on this device when mentors reply.",
+            icon: "/favicon.ico",
+          });
+        }
+      } catch {
+        // Ignored
+      }
+    }
+  };
 
   // Filters for FAQ
   const [faqSearch, setFaqSearch] = useState("");
@@ -133,13 +159,32 @@ export function SupportClient({
             </button>
           </div>
 
-          <Button
-            variant="primary"
-            icon="plus"
-            onClick={() => setCreateOpen(true)}
-          >
-            Raise Support Request
-          </Button>
+          <div className="flex items-center gap-2">
+            {notifPerm !== "granted" ? (
+              <button
+                type="button"
+                onClick={handleEnableNotifications}
+                className="flex items-center gap-1.5 rounded-[8px] border border-[#25D366]/40 bg-[#25D366]/10 px-2.5 py-1.5 text-[12px] font-semibold text-[#128C7E] transition-all hover:bg-[#25D366]/20 dark:text-[#25D366]"
+                title="Enable browser notifications for mentor replies"
+              >
+                <Icon name="bell" className="h-3.5 w-3.5 text-[#25D366]" />
+                <span>Turn On Live Alerts</span>
+              </button>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-[#25D366] animate-pulse"></span>
+                <span>Live Alerts Active</span>
+              </div>
+            )}
+
+            <Button
+              variant="primary"
+              icon="plus"
+              onClick={() => setCreateOpen(true)}
+            >
+              Raise Support Request
+            </Button>
+          </div>
         </div>
 
         {/* Tab 1: My Requests */}
@@ -264,6 +309,11 @@ export function SupportClient({
                             </span>
                             <StatusBadge status={t.status} />
                             <Badge tone="slate">{catConfig?.label || t.category}</Badge>
+                            {t.messages && t.messages.some((m: any) => m.senderId !== user.id && !m.readAt && !m.isInternalNote) ? (
+                              <Badge tone="green" dot>
+                                New Reply
+                              </Badge>
+                            ) : null}
                           </div>
 
                           <h3 className="mt-0.5 text-[14px] font-semibold text-[var(--text-strong)]">

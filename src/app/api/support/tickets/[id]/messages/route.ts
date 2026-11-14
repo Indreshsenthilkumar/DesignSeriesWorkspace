@@ -60,23 +60,6 @@ export const POST = handler(async (request: Request, { params }: { params: Promi
       if (ticket.status === "NEW" || ticket.status === "OPEN" || ticket.status === "ASSIGNED") {
         ticketUpdates.status = "IN_PROGRESS";
       }
-
-      // Notify only the specific student who created the ticket
-      try {
-        await prisma.notification.create({
-          data: {
-            title: `Reply on ${ticket.ticketNumber}`,
-            body: `${user.name} responded to your ticket "${ticket.subject}": ${data.message.slice(0, 120)}`,
-            category: "GENERAL",
-            audience: "USER",
-            audienceValue: ticket.userId,
-            authorId: user.id,
-            link: `/support?ticket=${ticket.id}`,
-          },
-        });
-      } catch {
-        // Non-blocking
-      }
     }
   } else {
     // Student replied: if it was WAITING_STUDENT, move back to IN_PROGRESS
