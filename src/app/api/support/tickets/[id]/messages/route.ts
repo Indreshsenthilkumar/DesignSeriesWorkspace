@@ -61,14 +61,15 @@ export const POST = handler(async (request: Request, { params }: { params: Promi
         ticketUpdates.status = "IN_PROGRESS";
       }
 
-      // Notify the student
+      // Notify only the specific student who created the ticket
       try {
         await prisma.notification.create({
           data: {
             title: `Reply on ${ticket.ticketNumber}`,
-            body: `${user.name} responded to your ticket "${ticket.subject}": ${data.message.slice(0, 100)}...`,
+            body: `${user.name} responded to your ticket "${ticket.subject}": ${data.message.slice(0, 120)}`,
             category: "GENERAL",
-            audience: "ALL",
+            audience: "USER",
+            audienceValue: ticket.userId,
             authorId: user.id,
             link: `/support?ticket=${ticket.id}`,
           },

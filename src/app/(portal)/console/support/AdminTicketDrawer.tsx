@@ -274,16 +274,15 @@ export function AdminTicketDrawer({
                   </div>
 
                   <div
-                    className={`max-w-[90%] rounded-[14px] px-3.5 py-2.5 text-[12.8px] leading-relaxed shadow-sm ${
+                    className={`max-w-[90%] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
                       isInternal
                         ? "w-full border border-amber-300 bg-amber-50 text-amber-950"
                         : isStaffMsg
-                        ? "rounded-tr-xs bg-[var(--accent)] text-white"
-                        : "rounded-tl-xs border bg-[var(--surface-raised)] text-[var(--text-default)]"
+                        ? "rounded-tr-xs bg-[#DCF8C6] dark:bg-[#005C4B] border border-[#BDE5A7] dark:border-transparent text-[#111827] dark:text-[#E9EDEF]"
+                        : "rounded-tl-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#202C33] text-[#111827] dark:text-[#E9EDEF]"
                     }`}
-                    style={!isStaffMsg && !isInternal ? { borderColor: "var(--line-default)" } : {}}
                   >
-                    <p className="whitespace-pre-wrap">{msg.message}</p>
+                    <p className="whitespace-pre-wrap font-normal">{msg.message}</p>
                   </div>
                 </div>
               );

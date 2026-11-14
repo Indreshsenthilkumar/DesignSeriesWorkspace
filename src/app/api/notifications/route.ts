@@ -54,6 +54,7 @@ export const PATCH = handler(async (request: Request) => {
           { audience: "YEAR", audienceValue: user.year },
           { audience: "DOMAIN", audienceValue: user.domain },
           { audience: "ROLE", audienceValue: user.role },
+          { audience: "USER", audienceValue: user.id },
         ],
       },
       select: { id: true },

@@ -44,6 +44,7 @@ export async function visibleNotifications(user: {
         { audience: "YEAR", audienceValue: user.year },
         { audience: "DOMAIN", audienceValue: user.domain },
         { audience: "ROLE", audienceValue: user.role },
+        { audience: "USER", audienceValue: user.id },
         ...(user.role === "STUDENT_ADMIN"
           ? [
               { audience: "ROLE", audienceValue: "STUDENT" },

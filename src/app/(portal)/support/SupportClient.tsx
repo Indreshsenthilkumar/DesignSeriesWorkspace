@@ -263,9 +263,6 @@ export function SupportClient({
                               {t.ticketNumber}
                             </span>
                             <StatusBadge status={t.status} />
-                            <Badge tone={priConfig?.tone || "slate"}>
-                              {priConfig?.label || t.priority}
-                            </Badge>
                             <Badge tone="slate">{catConfig?.label || t.category}</Badge>
                           </div>
 

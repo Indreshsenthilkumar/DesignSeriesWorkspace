@@ -191,6 +191,22 @@ export const PATCH = handler(async (request: Request, { params }: { params: Prom
     updateData.status = data.status;
     if (data.status === "RESOLVED") {
       updateData.resolvedAt = new Date();
+      // Notify only the specific student that their ticket has been resolved
+      try {
+        await prisma.notification.create({
+          data: {
+            title: `Ticket Resolved: ${ticket.ticketNumber}`,
+            body: `Your ticket regarding "${ticket.subject}" has been marked as resolved by ${user.name}.`,
+            category: "GENERAL",
+            audience: "USER",
+            audienceValue: ticket.userId,
+            authorId: user.id,
+            link: `/support?ticket=${ticket.id}`,
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
     } else if (data.status === "CLOSED") {
       updateData.closedAt = new Date();
     }

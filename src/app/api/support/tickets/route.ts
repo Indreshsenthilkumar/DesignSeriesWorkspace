@@ -183,21 +183,5 @@ export const POST = handler(async (request: Request) => {
     },
   });
 
-  // Automated notification for student
-  try {
-    await prisma.notification.create({
-      data: {
-        title: `Support Request Received: ${ticket.ticketNumber}`,
-        body: `Your ticket regarding "${ticket.subject}" has been submitted to institutional support. Estimated response within ${priorityConfig.responseHours} hours.`,
-        category: "GENERAL",
-        audience: "ALL",
-        authorId: user.id,
-        link: `/support?ticket=${ticket.id}`,
-      },
-    });
-  } catch {
-    // Non-blocking notification creation
-  }
-
   return ok({ ticket });
 });
