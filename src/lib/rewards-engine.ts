@@ -1,163 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { toDayKey, isWeekend } from "@/lib/dates";
 
-export type RewardCategory = "ATTENDANCE" | "LEAVE" | "ON_DUTY" | "WORKLOG" | "TASK" | "OTHER" | "MANUAL";
-
-export const DEFAULT_RULES = [
-  {
-    code: "ATT_FULL_DAY",
-    name: "Full Day Attendance (7 Hours)",
-    category: "ATTENDANCE" as RewardCategory,
-    type: "REWARD",
-    points: 2,
-    isPercentage: true,
-    isEnabled: false,
-    description: "Reward credit bonus for checking in for all 7 slots in a day.",
-  },
-  {
-    code: "ATT_INCOMPLETE",
-    name: "Incomplete Attendance (< 7 Hours)",
-    category: "ATTENDANCE" as RewardCategory,
-    type: "DEDUCTION",
-    points: 2,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when fewer than 7 hours are marked without approved leave or OD.",
-  },
-  {
-    code: "ATT_MISSED",
-    name: "Unaccounted Absence (0 Hours)",
-    category: "ATTENDANCE" as RewardCategory,
-    type: "DEDUCTION",
-    points: 5,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when no check-in is logged on a weekday without approved leave or pass.",
-  },
-  {
-    code: "LEAVE_UNAPPROVED",
-    name: "Rejected / Unapproved Leave",
-    category: "LEAVE" as RewardCategory,
-    type: "DEDUCTION",
-    points: 4,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction applied when a student leave request is rejected by staff.",
-  },
-  {
-    code: "LEAVE_EXCESSIVE",
-    name: "Excessive Leaves (> 3 Days in Period)",
-    category: "LEAVE" as RewardCategory,
-    type: "DEDUCTION",
-    points: 3,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction for each approved leave day exceeding the 3-day policy allowance.",
-  },
-  {
-    code: "OD_APPROVED",
-    name: "Approved On-Duty Bonus",
-    category: "ON_DUTY" as RewardCategory,
-    type: "REWARD",
-    points: 1,
-    isPercentage: true,
-    isEnabled: false,
-    description: "Optional incentive credit for completing approved on-duty activities.",
-  },
-  {
-    code: "OD_REJECTED",
-    name: "Rejected On-Duty Request",
-    category: "ON_DUTY" as RewardCategory,
-    type: "DEDUCTION",
-    points: 2,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when an on-duty gate pass request is rejected.",
-  },
-  {
-    code: "WL_ON_TIME",
-    name: "Worklog Submitted On Time",
-    category: "WORKLOG" as RewardCategory,
-    type: "REWARD",
-    points: 2,
-    isPercentage: true,
-    isEnabled: false,
-    description: "Optional credit for submitting all worklog slots within the same calendar day.",
-  },
-  {
-    code: "WL_LATE",
-    name: "Late Worklog Submission",
-    category: "WORKLOG" as RewardCategory,
-    type: "DEDUCTION",
-    points: 2,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when a worklog is submitted past the midnight cutoff or via extension.",
-  },
-  {
-    code: "WL_INCOMPLETE",
-    name: "Incomplete Worklog (< 5 slots)",
-    category: "WORKLOG" as RewardCategory,
-    type: "DEDUCTION",
-    points: 2,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when fewer than 5 work slots are documented in a daily submission.",
-  },
-  {
-    code: "WL_MISSED",
-    name: "Missed Worklog Submission",
-    category: "WORKLOG" as RewardCategory,
-    type: "DEDUCTION",
-    points: 5,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when no worklog was submitted for an active working day.",
-  },
-  {
-    code: "WL_FLAGGED",
-    name: "Worklog Flagged by Mentor",
-    category: "WORKLOG" as RewardCategory,
-    type: "DEDUCTION",
-    points: 3,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when a mentor flags a submitted worklog for revision or substandard content.",
-  },
-  {
-    code: "TASK_ON_TIME",
-    name: "Task Completed On Time",
-    category: "TASK" as RewardCategory,
-    type: "REWARD",
-    points: 5,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Reward credit for completing sprint tasks on or before the specified due date.",
-  },
-  {
-    code: "TASK_OVERDUE",
-    name: "Overdue / Incomplete Task",
-    category: "TASK" as RewardCategory,
-    type: "DEDUCTION",
-    points: 4,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Deduction when an assigned task passes its deadline without completion.",
-  },
-  {
-    code: "LINKEDIN_VERIFIED",
-    name: "Verified LinkedIn Post",
-    category: "OTHER" as RewardCategory,
-    type: "REWARD",
-    points: 10,
-    isPercentage: true,
-    isEnabled: true,
-    description: "Reward credit when a student build-in-public LinkedIn post is verified by mentor.",
-  },
-];
+export type RewardCategory =
+  | "ATTENDANCE"
+  | "LEAVE"
+  | "ON_DUTY"
+  | "WORKLOG"
+  | "TASK"
+  | "LINKEDIN"
+  | "OTHER"
+  | "MANUAL";
 
 /**
- * Ensures an active RewardPolicy exists and populates default configurable rules.
+ * Ensures an active RewardPolicy exists.
+ * Does NOT populate any predefined/hardcoded rules — all rules are custom-configured by administrators.
  */
 export async function ensureDefaultPolicyAndRules() {
   let policy = await prisma.rewardPolicy.findFirst({
@@ -175,40 +31,18 @@ export async function ensureDefaultPolicyAndRules() {
         isActive: true,
         periodType: "SEMESTER",
         description:
-          "Dynamic performance scoring based on daily attendance, worklog compliance, task velocity and institutional discipline.",
+          "Dynamic performance scoring based on custom administrator-defined rules across attendance, worklogs, leaves, tasks, and LinkedIn activities.",
       },
       include: { rules: true },
     });
   }
 
-  // Populate any missing rules
-  const existingCodes = new Set(policy.rules.map((r) => r.code));
-  for (const def of DEFAULT_RULES) {
-    if (!existingCodes.has(def.code)) {
-      await prisma.rewardRule.create({
-        data: {
-          policyId: policy.id,
-          code: def.code,
-          name: def.name,
-          category: def.category,
-          type: def.type,
-          points: def.points,
-          isPercentage: def.isPercentage,
-          isEnabled: def.isEnabled,
-          description: def.description,
-        },
-      });
-    }
-  }
-
-  return prisma.rewardPolicy.findUniqueOrThrow({
-    where: { id: policy.id },
-    include: { rules: true },
-  });
+  return policy;
 }
 
 /**
  * Evaluates real-time activity for a user and calculates dynamic reward points.
+ * All calculations strictly adhere to administrator custom rules and skip scheduled holidays.
  */
 export async function calculateUserRewardScore(
   userId: string,
@@ -219,22 +53,26 @@ export async function calculateUserRewardScore(
   } = { persist: true }
 ) {
   const policy = options.policy ?? (await ensureDefaultPolicyAndRules());
-  const ruleMap = new Map(policy.rules.map((r) => [r.code, r]));
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      attendance: true,
-      leaveRequests: true,
-      passes: true,
-      worklogs: true,
-      tasksAssigned: true,
-      linkedinPosts: true,
-      rewardTransactions: {
-        where: { isManual: true },
+  const [user, scheduledHolidays] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        attendance: true,
+        leaveRequests: true,
+        passes: true,
+        worklogs: true,
+        tasksAssigned: true,
+        linkedinPosts: true,
+        rewardTransactions: {
+          where: { isManual: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.scheduledHoliday.findMany({
+      select: { date: true, title: true },
+    }),
+  ]);
 
   if (!user) {
     throw new Error(`User not found: ${userId}`);
@@ -248,18 +86,23 @@ export async function calculateUserRewardScore(
       maxScore: policy.maxScore,
       minScore: policy.minScore,
       enabled: false,
-      breakdown: {},
+      breakdown: {} as Record<RewardCategory, { additions: number; deductions: number; net: number; count: number }>,
       transactions: [],
     };
   }
 
   const today = toDayKey();
 
+  // Set of scheduled holiday dates where NO deductions are allowed
+  const holidayDateSet = new Set(scheduledHolidays.map((h) => h.date));
+  const holidayTitleMap = new Map(scheduledHolidays.map((h) => [h.date, h.title]));
+
   type CandidateTx = {
+    ruleId?: string;
     ruleCode: string;
     category: RewardCategory;
     type: "DEDUCTION" | "REWARD" | "ADJUSTMENT";
-    points: number; // signed: negative for deduction, positive for reward
+    points: number; // signed delta: negative for deduction, positive for reward
     entityType: string;
     entityId: string;
     reason: string;
@@ -272,25 +115,25 @@ export async function calculateUserRewardScore(
   const candidates: CandidateTx[] = [];
   const seenCandidateKeys = new Set<string>();
 
-  // Helper to add candidate if rule is enabled
-  const addIfEnabled = (
-    ruleCode: string,
+  const addCandidate = (
+    rule: typeof policy.rules[number],
     entityType: string,
     entityId: string,
     reason: string,
     overridePoints?: number,
     meta?: Record<string, unknown>
   ) => {
-    const key = `${ruleCode}:${entityId}`;
+    if (!rule.isEnabled) return;
+    const key = `${rule.code}:${entityId}`;
     if (seenCandidateKeys.has(key)) return;
     seenCandidateKeys.add(key);
 
-    const rule = ruleMap.get(ruleCode);
-    if (!rule || !rule.isEnabled) return;
     const basePts = overridePoints ?? rule.points;
     const signedPts = rule.type === "DEDUCTION" ? -Math.abs(basePts) : Math.abs(basePts);
+
     candidates.push({
-      ruleCode,
+      ruleId: rule.id,
+      ruleCode: rule.code,
       category: rule.category as RewardCategory,
       type: rule.type as "DEDUCTION" | "REWARD",
       points: signedPts,
@@ -301,16 +144,12 @@ export async function calculateUserRewardScore(
     });
   };
 
-  // 1. Attendance Evaluation
-  const attendanceByDate = new Map<string, typeof user.attendance>();
-  for (const att of user.attendance) {
-    if (!attendanceByDate.has(att.date)) {
-      attendanceByDate.set(att.date, []);
-    }
-    attendanceByDate.get(att.date)!.push(att);
-  }
+  // Helper to determine if a date is exempt (Holiday or Sunday)
+  const isDateExempt = (dateStr: string) => {
+    return isWeekend(dateStr) || holidayDateSet.has(dateStr);
+  };
 
-  // Set of dates with approved leave or on-duty
+  // Pre-index user records
   const approvedLeaveDates = new Set<string>();
   for (const leave of user.leaveRequests) {
     if (leave.status === "APPROVED") {
@@ -328,300 +167,502 @@ export async function calculateUserRewardScore(
     }
   }
 
-  // Iterate over checked-in dates
-  for (const [date, records] of attendanceByDate.entries()) {
-    const presentHours = records.filter((r) => r.status === "PRESENT").length;
-    if (presentHours >= 7) {
-      addIfEnabled(
-        "ATT_FULL_DAY",
-        "Attendance",
-        date,
-        `Full attendance completed on ${date} (7/7 hours marked).`,
-        undefined,
-        { date, hours: presentHours }
-      );
-    } else if (presentHours > 0 && presentHours < 7) {
-      if (!approvedLeaveDates.has(date) && !approvedPassDates.has(date)) {
-        addIfEnabled(
-          "ATT_INCOMPLETE",
-          "Attendance",
-          date,
-          `Incomplete attendance on ${date}: ${presentHours}/7 hours marked without approved leave or OD.`,
-          undefined,
-          { date, hours: presentHours }
-        );
+  // ──────────────────────────────────────────────────────────────────────────
+  // EVALUATE CUSTOM RULES PER CATEGORY
+  // ──────────────────────────────────────────────────────────────────────────
+
+  for (const rule of policy.rules) {
+    if (!rule.isEnabled) continue;
+
+    const effectiveFrom = rule.effectiveFrom || null;
+    const effectiveTo = rule.effectiveTo || null;
+
+    const isDateWithinRuleWindow = (dateStr: string) => {
+      if (effectiveFrom && dateStr < effectiveFrom) return false;
+      if (effectiveTo && dateStr > effectiveTo) return false;
+      return true;
+    };
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 1. LEAVE MANAGEMENT RULES
+    // ────────────────────────────────────────────────────────────────────────
+    if (rule.category === "LEAVE") {
+      const sub = (rule.subCategory || "ALL_LEAVES").toUpperCase();
+      const freeAllowance = rule.gracePeriodDays || 0; // Number of free leaves allowed before penalty kicks in
+
+      // Filter user's leave requests matching rule window and subcategory
+      const eligibleLeaves = user.leaveRequests.filter((leave) => {
+        if (!isDateWithinRuleWindow(leave.fromDate)) return false;
+
+        if (sub === "UNAPPROVED" || sub === "REJECTED") {
+          return leave.status === "REJECTED";
+        }
+        if (sub === "CASUAL") {
+          return leave.status === "APPROVED" && (leave.leaveType?.toUpperCase().includes("CASUAL") || leave.reason?.toUpperCase().includes("CASUAL"));
+        }
+        if (sub === "SICK" || sub === "MEDICAL") {
+          return leave.status === "APPROVED" && (leave.leaveType?.toUpperCase().includes("SICK") || leave.leaveType?.toUpperCase().includes("MEDICAL"));
+        }
+        if (sub === "ON_DUTY") {
+          return leave.status === "APPROVED" && (leave.leaveType?.toUpperCase().includes("ON_DUTY") || leave.leaveType?.toUpperCase().includes("OD"));
+        }
+        if (sub === "PERSONAL") {
+          return leave.status === "APPROVED" && (leave.leaveType?.toUpperCase().includes("PERSONAL") || leave.leaveType?.toUpperCase().includes("FAMILY"));
+        }
+
+        // Default ALL_LEAVES: applies to approved leaves
+        return leave.status === "APPROVED";
+      });
+
+      // Sort leaves by date ascending
+      eligibleLeaves.sort((a, b) => a.fromDate.localeCompare(b.fromDate));
+
+      let leaveCount = 0;
+      for (const leave of eligibleLeaves) {
+        leaveCount++;
+        // If leave falls within free allowance, skip without deduction!
+        if (leaveCount <= freeAllowance) {
+          continue;
+        }
+
+        const reasonText =
+          freeAllowance > 0
+            ? `${rule.name}: Leave on ${leave.fromDate} exceeded ${freeAllowance}-day free leave allowance.`
+            : `${rule.name}: Leave taken on ${leave.fromDate} (${leave.leaveType || "Leave"}).`;
+
+        addCandidate(rule, "LeaveRequest", leave.id, reasonText, undefined, {
+          leaveId: leave.id,
+          fromDate: leave.fromDate,
+          leaveType: leave.leaveType,
+          leaveCount,
+          freeAllowance,
+        });
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 2. WORKLOG MANAGEMENT RULES
+    // ────────────────────────────────────────────────────────────────────────
+    else if (rule.category === "WORKLOG") {
+      const sub = (rule.subCategory || "MISSED_WORKLOG").toUpperCase();
+      const freeSubmissions = rule.gracePeriodDays || 0;
+
+      if (sub === "MISSED_WORKLOG") {
+        // Evaluate missed worklog for past working days
+        const startDate = effectiveFrom || toDayKey(new Date(Date.now() - 30 * 86_400_000));
+        const endDate = effectiveTo && effectiveTo < today ? effectiveTo : today;
+
+        const worklogDates = new Set(user.worklogs.map((w) => w.date));
+        let missedCount = 0;
+
+        // Iterate through all days in range
+        const startTimestamp = new Date(startDate).getTime();
+        const endTimestamp = new Date(endDate).getTime();
+
+        for (let t = startTimestamp; t < endTimestamp; t += 86_400_000) {
+          const dayKey = toDayKey(new Date(t));
+
+          // Rule: Never penalize on scheduled holidays or Sundays
+          if (isDateExempt(dayKey)) continue;
+
+          // Never penalize if student had approved leave or approved pass
+          if (approvedLeaveDates.has(dayKey) || approvedPassDates.has(dayKey)) continue;
+
+          // Check if worklog was missing
+          if (!worklogDates.has(dayKey)) {
+            missedCount++;
+            if (missedCount <= freeSubmissions) {
+              continue; // within free grace submissions
+            }
+
+            addCandidate(
+              rule,
+              "Worklog",
+              `missed_${dayKey}`,
+              `${rule.name}: Worklog not submitted for working day ${dayKey}.`,
+              undefined,
+              { date: dayKey, missedCount, freeSubmissions }
+            );
+          }
+        }
+      } else if (sub === "LATE_WORKLOG") {
+        let lateCount = 0;
+        for (const wl of user.worklogs) {
+          if (!isDateWithinRuleWindow(wl.date)) continue;
+          const createdDate = toDayKey(new Date(wl.createdAt));
+          if (createdDate > wl.date) {
+            lateCount++;
+            if (lateCount <= freeSubmissions) continue;
+
+            addCandidate(
+              rule,
+              "Worklog",
+              wl.id,
+              `${rule.name}: Late worklog for ${wl.date} (submitted on ${createdDate}).`,
+              undefined,
+              { worklogId: wl.id, date: wl.date, submittedOn: createdDate }
+            );
+          }
+        }
+      } else if (sub === "INCOMPLETE_WORKLOG") {
+        for (const wl of user.worklogs) {
+          if (!isDateWithinRuleWindow(wl.date)) continue;
+          const slots = [wl.s1, wl.s2, wl.s3, wl.s4, wl.s5].filter((s) => Boolean(s && s.trim().length > 0)).length;
+          if (slots < 5) {
+            addCandidate(
+              rule,
+              "Worklog",
+              wl.id,
+              `${rule.name}: Incomplete worklog for ${wl.date} (${slots}/5 slots documented).`,
+              undefined,
+              { worklogId: wl.id, date: wl.date, slots }
+            );
+          }
+        }
+      } else if (sub === "FLAGGED_WORKLOG") {
+        for (const wl of user.worklogs) {
+          if (!isDateWithinRuleWindow(wl.date)) continue;
+          if (wl.status === "FLAGGED") {
+            addCandidate(
+              rule,
+              "Worklog",
+              wl.id,
+              `${rule.name}: Worklog for ${wl.date} flagged by mentor: ${wl.mentorRemark || "Substandard entries"}.`,
+              undefined,
+              { worklogId: wl.id, date: wl.date, remark: wl.mentorRemark }
+            );
+          }
+        }
+      } else if (sub === "ON_TIME_WORKLOG") {
+        for (const wl of user.worklogs) {
+          if (!isDateWithinRuleWindow(wl.date)) continue;
+          const createdDate = toDayKey(new Date(wl.createdAt));
+          if (createdDate <= wl.date && wl.status !== "FLAGGED") {
+            addCandidate(
+              rule,
+              "Worklog",
+              wl.id,
+              `${rule.name}: Worklog submitted on time for ${wl.date}.`,
+              undefined,
+              { worklogId: wl.id, date: wl.date }
+            );
+          }
+        }
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 3. ATTENDANCE MANAGEMENT RULES
+    // ────────────────────────────────────────────────────────────────────────
+    else if (rule.category === "ATTENDANCE") {
+      const sub = (rule.subCategory || "MISSED_ATTENDANCE").toUpperCase();
+      const freeAbsences = rule.gracePeriodDays || 0;
+
+      const attendanceByDate = new Map<string, typeof user.attendance>();
+      for (const att of user.attendance) {
+        if (!attendanceByDate.has(att.date)) {
+          attendanceByDate.set(att.date, []);
+        }
+        attendanceByDate.get(att.date)!.push(att);
+      }
+
+      if (sub === "MISSED_ATTENDANCE") {
+        const startDate = effectiveFrom || toDayKey(new Date(Date.now() - 30 * 86_400_000));
+        const endDate = effectiveTo && effectiveTo < today ? effectiveTo : today;
+
+        let absentCount = 0;
+        const startTimestamp = new Date(startDate).getTime();
+        const endTimestamp = new Date(endDate).getTime();
+
+        for (let t = startTimestamp; t < endTimestamp; t += 86_400_000) {
+          const dayKey = toDayKey(new Date(t));
+
+          // Rule: Never deduct on scheduled holidays or Sundays
+          if (isDateExempt(dayKey)) continue;
+
+          // Never deduct if user had approved leave or approved pass
+          if (approvedLeaveDates.has(dayKey) || approvedPassDates.has(dayKey)) continue;
+
+          const records = attendanceByDate.get(dayKey) || [];
+          const presentHours = records.filter((r) => r.status === "PRESENT").length;
+
+          if (presentHours === 0) {
+            absentCount++;
+            if (absentCount <= freeAbsences) continue;
+
+            addCandidate(
+              rule,
+              "Attendance",
+              `absent_${dayKey}`,
+              `${rule.name}: Unaccounted absence on working day ${dayKey}.`,
+              undefined,
+              { date: dayKey, absentCount, freeAbsences }
+            );
+          }
+        }
+      } else if (sub === "INCOMPLETE_ATTENDANCE") {
+        for (const [date, records] of attendanceByDate.entries()) {
+          if (!isDateWithinRuleWindow(date)) continue;
+          if (isDateExempt(date)) continue;
+          if (approvedLeaveDates.has(date) || approvedPassDates.has(date)) continue;
+
+          const presentHours = records.filter((r) => r.status === "PRESENT").length;
+          if (presentHours > 0 && presentHours < 7) {
+            addCandidate(
+              rule,
+              "Attendance",
+              date,
+              `${rule.name}: Incomplete attendance on ${date} (${presentHours}/7 hours marked).`,
+              undefined,
+              { date, hours: presentHours }
+            );
+          }
+        }
+      } else if (sub === "FULL_DAY_ATTENDANCE") {
+        for (const [date, records] of attendanceByDate.entries()) {
+          if (!isDateWithinRuleWindow(date)) continue;
+          const presentHours = records.filter((r) => r.status === "PRESENT").length;
+          if (presentHours >= 7) {
+            addCandidate(
+              rule,
+              "Attendance",
+              date,
+              `${rule.name}: Full day attendance completed on ${date} (7/7 hours).`,
+              undefined,
+              { date, hours: presentHours }
+            );
+          }
+        }
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 4. LINKEDIN SCHEDULED SUBMISSIONS RULES
+    // ────────────────────────────────────────────────────────────────────────
+    else if (rule.category === "LINKEDIN") {
+      const sub = (rule.subCategory || "SCHEDULED_LINKEDIN_MISSED").toUpperCase();
+
+      // Parse scheduled dates from rule.scheduledDates (comma or newline separated YYYY-MM-DD)
+      const scheduledDates = (rule.scheduledDates || "")
+        .split(/[,\n\s]+/)
+        .map((s) => s.trim())
+        .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s));
+
+      const verifiedPostDates = new Set<string>();
+      for (const post of user.linkedinPosts) {
+        if (post.verified) {
+          verifiedPostDates.add(toDayKey(new Date(post.createdAt)));
+        }
+      }
+
+      for (const scheduledDate of scheduledDates) {
+        if (!isDateWithinRuleWindow(scheduledDate)) continue;
+
+        // Only evaluate scheduled dates that have already arrived
+        if (scheduledDate > today) continue;
+
+        const hasVerifiedPost = verifiedPostDates.has(scheduledDate);
+
+        if (!hasVerifiedPost && (rule.type === "DEDUCTION" || sub.includes("MISSED"))) {
+          addCandidate(
+            rule,
+            "LinkedinPost",
+            `missed_linkedin_${scheduledDate}`,
+            `${rule.name}: Missed scheduled LinkedIn post submission on ${scheduledDate}.`,
+            undefined,
+            { scheduledDate }
+          );
+        } else if (hasVerifiedPost && (rule.type === "REWARD" || sub.includes("SUBMITTED"))) {
+          addCandidate(
+            rule,
+            "LinkedinPost",
+            `verified_linkedin_${scheduledDate}`,
+            `${rule.name}: Verified LinkedIn post completed for scheduled date ${scheduledDate}.`,
+            undefined,
+            { scheduledDate }
+          );
+        }
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 5. ON-DUTY ACTIVITY PASS RULES
+    // ────────────────────────────────────────────────────────────────────────
+    else if (rule.category === "ON_DUTY") {
+      const sub = (rule.subCategory || "REJECTED_PASS").toUpperCase();
+      for (const pass of user.passes) {
+        if (!isDateWithinRuleWindow(pass.date)) continue;
+
+        if (pass.status === "REJECTED" && (sub === "REJECTED_PASS" || rule.type === "DEDUCTION")) {
+          addCandidate(
+            rule,
+            "ActivityPass",
+            pass.id,
+            `${rule.name}: Rejected on-duty pass for ${pass.date} (${pass.destination}): ${pass.reason}.`,
+            undefined,
+            { passId: pass.id, date: pass.date }
+          );
+        } else if (pass.status === "APPROVED" && (sub === "APPROVED_PASS" || rule.type === "REWARD")) {
+          addCandidate(
+            rule,
+            "ActivityPass",
+            pass.id,
+            `${rule.name}: Approved on-duty activity pass for ${pass.date} (${pass.destination}).`,
+            undefined,
+            { passId: pass.id, date: pass.date }
+          );
+        }
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 6. TASK SPRINT RULES
+    // ────────────────────────────────────────────────────────────────────────
+    else if (rule.category === "TASK") {
+      const sub = (rule.subCategory || "OVERDUE_TASK").toUpperCase();
+      for (const task of user.tasksAssigned) {
+        if (!task.dueDate || !isDateWithinRuleWindow(task.dueDate)) continue;
+
+        if (task.status !== "DONE" && task.dueDate < today && (sub === "OVERDUE_TASK" || rule.type === "DEDUCTION")) {
+          addCandidate(
+            rule,
+            "Task",
+            task.id,
+            `${rule.name}: Overdue task "${task.title}" passed deadline ${task.dueDate}.`,
+            undefined,
+            { taskId: task.id, dueDate: task.dueDate }
+          );
+        } else if (task.status === "DONE" && task.dueDate >= today && (sub === "COMPLETED_TASK_ON_TIME" || rule.type === "REWARD")) {
+          addCandidate(
+            rule,
+            "Task",
+            task.id,
+            `${rule.name}: Task "${task.title}" completed on time.`,
+            undefined,
+            { taskId: task.id, dueDate: task.dueDate }
+          );
+        }
       }
     }
   }
 
-  // 2. Leave Requests Evaluation
-  let approvedLeaveCount = 0;
-  for (const leave of user.leaveRequests) {
-    if (leave.status === "REJECTED") {
-      addIfEnabled(
-        "LEAVE_UNAPPROVED",
-        "LeaveRequest",
-        leave.id,
-        `Rejected leave request from ${leave.fromDate} (${leave.leaveType}): ${leave.reason || "Policy violation"}.`,
-        undefined,
-        { leaveId: leave.id, leaveType: leave.leaveType, fromDate: leave.fromDate }
-      );
-    } else if (leave.status === "APPROVED") {
-      approvedLeaveCount++;
-      if (approvedLeaveCount > 3) {
-        addIfEnabled(
-          "LEAVE_EXCESSIVE",
-          "LeaveRequest",
-          leave.id,
-          `Excessive leave on ${leave.fromDate}: exceeded 3-day semester threshold.`,
-          undefined,
-          { leaveId: leave.id, leaveCount: approvedLeaveCount }
-        );
-      }
-    }
-  }
-
-  // 3. On-Duty / Passes Evaluation
-  for (const pass of user.passes) {
-    if (pass.status === "REJECTED") {
-      addIfEnabled(
-        "OD_REJECTED",
-        "ActivityPass",
-        pass.id,
-        `Rejected on-duty pass for ${pass.date} (${pass.destination}): ${pass.reason}.`,
-        undefined,
-        { passId: pass.id, date: pass.date, destination: pass.destination }
-      );
-    } else if (pass.status === "APPROVED") {
-      addIfEnabled(
-        "OD_APPROVED",
-        "ActivityPass",
-        pass.id,
-        `Approved on-duty pass for ${pass.date} (${pass.destination}).`,
-        undefined,
-        { passId: pass.id, date: pass.date }
-      );
-    }
-  }
-
-  // 4. Worklog Evaluation
-  const worklogDates = new Set<string>();
-  for (const wl of user.worklogs) {
-    worklogDates.add(wl.date);
-    const slots = [wl.s1, wl.s2, wl.s3, wl.s4, wl.s5].filter((s) => Boolean(s && s.trim().length > 0)).length;
-
-    // Incomplete slots
-    if (slots < 5) {
-      addIfEnabled(
-        "WL_INCOMPLETE",
-        "Worklog",
-        wl.id,
-        `Incomplete worklog for ${wl.date}: only ${slots}/5 slots documented.`,
-        undefined,
-        { worklogId: wl.id, date: wl.date, filledSlots: slots }
-      );
-    }
-
-    // Flagged by mentor
-    if (wl.status === "FLAGGED") {
-      addIfEnabled(
-        "WL_FLAGGED",
-        "Worklog",
-        wl.id,
-        `Worklog for ${wl.date} flagged by mentor: ${wl.mentorRemark || "Substandard entries"}.`,
-        undefined,
-        { worklogId: wl.id, date: wl.date, remark: wl.mentorRemark }
-      );
-    }
-
-    // Check if submitted late (created on a subsequent day)
-    const createdDate = toDayKey(new Date(wl.createdAt));
-    if (createdDate > wl.date) {
-      addIfEnabled(
-        "WL_LATE",
-        "Worklog",
-        wl.id,
-        `Late worklog submission for ${wl.date}: logged on ${createdDate}.`,
-        undefined,
-        { worklogId: wl.id, date: wl.date, submittedOn: createdDate }
-      );
-    } else {
-      addIfEnabled(
-        "WL_ON_TIME",
-        "Worklog",
-        wl.id,
-        `Worklog for ${wl.date} submitted promptly on time.`,
-        undefined,
-        { worklogId: wl.id, date: wl.date }
-      );
-    }
-  }
-
-  // Missed worklog on working days where student attended but didn't submit worklog
-  for (const [date, records] of attendanceByDate.entries()) {
-    const presentHours = records.filter((r) => r.status === "PRESENT").length;
-    if (presentHours >= 3 && !worklogDates.has(date) && date < today && !isWeekend(date)) {
-      addIfEnabled(
-        "WL_MISSED",
-        "Worklog",
-        date,
-        `Missed worklog submission for ${date} despite attendance check-in.`,
-        undefined,
-        { date, hoursPresent: presentHours }
-      );
-    }
-  }
-
-  // 5. Tasks Evaluation
-  for (const task of user.tasksAssigned) {
-    if (task.status === "DONE" || task.completedAt) {
-      const isLate = task.dueDate && task.completedAt && toDayKey(new Date(task.completedAt)) > task.dueDate;
-      if (!isLate) {
-        addIfEnabled(
-          "TASK_ON_TIME",
-          "Task",
-          task.id,
-          `Task completed on schedule: "${task.title}".`,
-          task.points > 0 ? task.points : undefined,
-          { taskId: task.id, title: task.title, dueDate: task.dueDate }
-        );
-      }
-    } else if (task.dueDate && task.dueDate < today && task.status !== "DONE") {
-      addIfEnabled(
-        "TASK_OVERDUE",
-        "Task",
-        task.id,
-        `Overdue task "${task.title}": deadline was ${task.dueDate}.`,
-        undefined,
-        { taskId: task.id, title: task.title, dueDate: task.dueDate }
-      );
-    }
-  }
-
-  // 6. LinkedIn Posts Evaluation
-  for (const post of user.linkedinPosts) {
-    if (post.verified) {
-      addIfEnabled(
-        "LINKEDIN_VERIFIED",
-        "LinkedinPost",
-        post.id,
-        `Verified build-in-public post published on ${post.postedOn}.`,
-        undefined,
-        { postId: post.id, postedOn: post.postedOn, url: post.url }
-      );
-    }
-  }
-
-  // 7. Retain all manual adjustments
-  for (const manual of user.rewardTransactions) {
+  // ──────────────────────────────────────────────────────────────────────────
+  // MANUAL ADJUSTMENTS
+  // ──────────────────────────────────────────────────────────────────────────
+  for (const m of user.rewardTransactions) {
     candidates.push({
-      ruleCode: manual.ruleCode || "MANUAL_ADJUST",
+      ruleId: m.ruleId || undefined,
+      ruleCode: m.ruleCode,
       category: "MANUAL",
       type: "ADJUSTMENT",
-      points: manual.points,
-      entityType: "Manual",
-      entityId: manual.entityId,
-      reason: manual.reason,
-      meta: manual.meta,
+      points: m.points,
+      entityType: m.entityType,
+      entityId: m.entityId,
+      reason: m.reason,
+      meta: m.meta,
       isManual: true,
-      actorId: manual.actorId,
-      createdAt: manual.createdAt,
+      actorId: m.actorId,
+      createdAt: m.createdAt,
     });
   }
 
-  // Calculate sequential scores
+  // Sort candidate transactions deterministically by date
+  candidates.sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeA - timeB;
+  });
+
+  // Calculate final score starting from baseScore (100)
   let currentScore = policy.baseScore;
-  const processedTransactions: Array<CandidateTx & { previousScore: number; newScore: number }> = [];
+  const finalTransactions: Array<CandidateTx & { previousScore: number; newScore: number }> = [];
 
-  for (const item of candidates) {
-    const prev = currentScore;
-    currentScore = Math.max(policy.minScore, Math.min(policy.maxScore, currentScore + item.points));
-    processedTransactions.push({
-      ...item,
-      previousScore: prev,
-      newScore: currentScore,
-    });
-  }
-
-  const finalScore = currentScore;
-
-  // Breakdown by category
   const breakdown: Record<RewardCategory, { additions: number; deductions: number; net: number; count: number }> = {
     ATTENDANCE: { additions: 0, deductions: 0, net: 0, count: 0 },
-    LEAVE: { additions: 0, deductions: 0, net: 0, count: 0 },
-    ON_DUTY: { additions: 0, deductions: 0, net: 0, count: 0 },
     WORKLOG: { additions: 0, deductions: 0, net: 0, count: 0 },
     TASK: { additions: 0, deductions: 0, net: 0, count: 0 },
+    LEAVE: { additions: 0, deductions: 0, net: 0, count: 0 },
+    ON_DUTY: { additions: 0, deductions: 0, net: 0, count: 0 },
+    LINKEDIN: { additions: 0, deductions: 0, net: 0, count: 0 },
     OTHER: { additions: 0, deductions: 0, net: 0, count: 0 },
     MANUAL: { additions: 0, deductions: 0, net: 0, count: 0 },
   };
 
-  for (const t of processedTransactions) {
-    const cat = t.category;
-    if (!breakdown[cat]) {
-      breakdown[cat] = { additions: 0, deductions: 0, net: 0, count: 0 };
-    }
-    if (t.points > 0) {
-      breakdown[cat].additions += t.points;
-    } else {
-      breakdown[cat].deductions += Math.abs(t.points);
-    }
-    breakdown[cat].net += t.points;
-    breakdown[cat].count += 1;
-  }
+  for (const cand of candidates) {
+    const prev = currentScore;
+    const next = Math.max(policy.minScore, Math.min(policy.maxScore, currentScore + cand.points));
+    currentScore = next;
 
-  // Persist if requested
-  if (options.persist) {
-    await prisma.rewardTransaction.deleteMany({
-      where: {
-        userId,
-        isManual: false,
-      },
+    finalTransactions.push({
+      ...cand,
+      previousScore: prev,
+      newScore: next,
     });
 
-    const nonManual = processedTransactions.filter((t) => !t.isManual);
-    if (nonManual.length > 0) {
-      await prisma.rewardTransaction.createMany({
-        data: nonManual.map((t) => ({
-          userId,
-          ruleId: ruleMap.get(t.ruleCode)?.id ?? null,
-          ruleCode: t.ruleCode,
-          category: t.category,
-          type: t.type,
-          points: t.points,
-          previousScore: t.previousScore,
-          newScore: t.newScore,
-          entityType: t.entityType,
-          entityId: t.entityId,
-          reason: t.reason,
-          meta: t.meta || "",
-          isManual: false,
-          actorId: options.actorId || null,
-        })),
-        skipDuplicates: true,
-      });
+    const cat = cand.category in breakdown ? cand.category : "OTHER";
+    breakdown[cat].count++;
+    if (cand.points > 0) {
+      breakdown[cat].additions += cand.points;
+    } else {
+      breakdown[cat].deductions += Math.abs(cand.points);
     }
+    breakdown[cat].net += cand.points;
+  }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { rewardPoints: finalScore },
+  // Persist updated transactions and score if requested
+  if (options.persist) {
+    await prisma.$transaction(async (tx) => {
+      // Delete non-manual automated transactions
+      await tx.rewardTransaction.deleteMany({
+        where: { userId, isManual: false },
+      });
+
+      // Insert fresh evaluated transactions
+      const nonManuals = finalTransactions.filter((t) => !t.isManual);
+      if (nonManuals.length > 0) {
+        await tx.rewardTransaction.createMany({
+          data: nonManuals.map((t) => ({
+            userId,
+            ruleId: t.ruleId || null,
+            ruleCode: t.ruleCode,
+            category: t.category,
+            type: t.type,
+            points: t.points,
+            previousScore: t.previousScore,
+            newScore: t.newScore,
+            entityType: t.entityType,
+            entityId: t.entityId,
+            reason: t.reason,
+            meta: t.meta || "",
+            isManual: false,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      // Update user current rewardPoints
+      await tx.user.update({
+        where: { id: userId },
+        data: { rewardPoints: currentScore },
+      });
     });
   }
 
   return {
     userId,
-    score: finalScore,
+    score: currentScore,
     baseScore: policy.baseScore,
     maxScore: policy.maxScore,
     minScore: policy.minScore,
     enabled: true,
     breakdown,
-    transactions: processedTransactions,
+    transactions: finalTransactions,
   };
 }
 
 /**
  * Recalculate reward scores for all active users across the portal.
+ * Applies to both STUDENT and STUDENT_ADMIN roles.
  */
 export async function recalculateAllRewardScores(actorId?: string) {
   const policy = await ensureDefaultPolicyAndRules();
@@ -678,19 +719,17 @@ export async function manuallyAdjustPoints(params: {
   const prevScore = user.rewardPoints;
   const newScore = Math.max(policy.minScore, Math.min(policy.maxScore, prevScore + points));
 
-  const entityId = `manual-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-
-  const txRecord = await prisma.rewardTransaction.create({
+  const tx = await prisma.rewardTransaction.create({
     data: {
       userId,
-      ruleCode: "MANUAL_ADJUST",
+      ruleCode: "MANUAL_ADJUSTMENT",
       category: "MANUAL",
       type: "ADJUSTMENT",
       points,
       previousScore: prevScore,
       newScore,
       entityType: "Manual",
-      entityId,
+      entityId: `manual_${Date.now()}`,
       reason: reason.trim(),
       isManual: true,
       actorId,
@@ -703,34 +742,29 @@ export async function manuallyAdjustPoints(params: {
   });
 
   return {
-    transaction: txRecord,
+    transaction: tx,
     previousScore: prevScore,
     newScore,
   };
 }
 
 /**
- * Fetch detailed reward summary and audit history for an individual user profile.
+ * Fetch detailed reward summary for an individual student (or STUDENT_ADMIN).
  */
 export async function getUserRewardSummary(userId: string) {
   const policy = await ensureDefaultPolicyAndRules();
-  const user = await prisma.user.findUnique({
+
+  const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
     select: {
       id: true,
       name: true,
       rollNo: true,
-      email: true,
       department: true,
-      year: true,
-      domain: true,
       rewardPoints: true,
       rewardPointsEnabled: true,
-      portalNavDisabled: true,
     },
   });
-
-  if (!user) throw new Error("User not found");
 
   const transactions = await prisma.rewardTransaction.findMany({
     where: { userId },
@@ -739,64 +773,57 @@ export async function getUserRewardSummary(userId: string) {
       rule: { select: { name: true, code: true, category: true } },
       actor: { select: { id: true, name: true, role: true } },
     },
+    take: 200,
   });
 
-  // Calculate breakdown
+  const score = user.rewardPoints;
+
+  let tier: "OUTSTANDING" | "GOOD" | "SATISFACTORY" | "AT_RISK" = "OUTSTANDING";
+  let tierLabel = "Outstanding (95%+)";
+  if (score < 65) {
+    tier = "AT_RISK";
+    tierLabel = "Needs Immediate Attention (< 65%)";
+  } else if (score < 80) {
+    tier = "SATISFACTORY";
+    tierLabel = "Satisfactory (65%–79%)";
+  } else if (score < 95) {
+    tier = "GOOD";
+    tierLabel = "Good Performance (80%–94%)";
+  }
+
   const breakdown: Record<RewardCategory, { additions: number; deductions: number; net: number; count: number }> = {
     ATTENDANCE: { additions: 0, deductions: 0, net: 0, count: 0 },
-    LEAVE: { additions: 0, deductions: 0, net: 0, count: 0 },
-    ON_DUTY: { additions: 0, deductions: 0, net: 0, count: 0 },
     WORKLOG: { additions: 0, deductions: 0, net: 0, count: 0 },
     TASK: { additions: 0, deductions: 0, net: 0, count: 0 },
+    LEAVE: { additions: 0, deductions: 0, net: 0, count: 0 },
+    ON_DUTY: { additions: 0, deductions: 0, net: 0, count: 0 },
+    LINKEDIN: { additions: 0, deductions: 0, net: 0, count: 0 },
     OTHER: { additions: 0, deductions: 0, net: 0, count: 0 },
     MANUAL: { additions: 0, deductions: 0, net: 0, count: 0 },
   };
 
+  const monthlyTrends: Record<string, { additions: number; deductions: number; count: number }> = {};
+
   for (const t of transactions) {
-    const cat = t.category as RewardCategory;
-    if (!breakdown[cat]) {
-      breakdown[cat] = { additions: 0, deductions: 0, net: 0, count: 0 };
-    }
+    const cat = (t.category in breakdown ? t.category : "OTHER") as RewardCategory;
+    breakdown[cat].count++;
     if (t.points > 0) {
       breakdown[cat].additions += t.points;
     } else {
       breakdown[cat].deductions += Math.abs(t.points);
     }
     breakdown[cat].net += t.points;
-    breakdown[cat].count += 1;
-  }
 
-  // Monthly trends (last 6 months)
-  const monthlyTrends: Record<string, { additions: number; deductions: number; count: number }> = {};
-  for (const t of transactions) {
     const monthKey = t.createdAt.toISOString().slice(0, 7); // YYYY-MM
     if (!monthlyTrends[monthKey]) {
       monthlyTrends[monthKey] = { additions: 0, deductions: 0, count: 0 };
     }
+    monthlyTrends[monthKey].count++;
     if (t.points > 0) {
       monthlyTrends[monthKey].additions += t.points;
     } else {
       monthlyTrends[monthKey].deductions += Math.abs(t.points);
     }
-    monthlyTrends[monthKey].count++;
-  }
-
-  // Performance tier
-  const score = user.rewardPoints;
-  let tier: "OUTSTANDING" | "GOOD" | "SATISFACTORY" | "AT_RISK" = "GOOD";
-  let tierLabel = "Good Performance";
-  if (score >= 95) {
-    tier = "OUTSTANDING";
-    tierLabel = "Outstanding (95-100%)";
-  } else if (score >= 80) {
-    tier = "GOOD";
-    tierLabel = "Good Standing (80-94%)";
-  } else if (score >= 65) {
-    tier = "SATISFACTORY";
-    tierLabel = "Satisfactory (65-79%)";
-  } else {
-    tier = "AT_RISK";
-    tierLabel = "Action Required (< 65%)";
   }
 
   return {
@@ -817,11 +844,12 @@ export async function getUserRewardSummary(userId: string) {
 
 /**
  * Fetch comprehensive cohort analytics for the admin console.
+ * Includes both STUDENT and STUDENT_ADMIN, custom rules, and scheduled holidays.
  */
 export async function getAdminRewardAnalytics() {
   const policy = await ensureDefaultPolicyAndRules();
 
-  const [users, allTransactions] = await Promise.all([
+  const [users, allTransactions, scheduledHolidays] = await Promise.all([
     prisma.user.findMany({
       where: {
         role: { in: ["STUDENT", "STUDENT_ADMIN"] },
@@ -834,6 +862,7 @@ export async function getAdminRewardAnalytics() {
         department: true,
         year: true,
         domain: true,
+        role: true,
         rewardPoints: true,
         rewardPointsEnabled: true,
         portalNavDisabled: true,
@@ -848,6 +877,9 @@ export async function getAdminRewardAnalytics() {
         rule: { select: { name: true, code: true } },
         actor: { select: { name: true, role: true } },
       },
+    }),
+    prisma.scheduledHoliday.findMany({
+      orderBy: { date: "asc" },
     }),
   ]);
 
@@ -914,6 +946,7 @@ export async function getAdminRewardAnalytics() {
 
   return {
     policy,
+    scheduledHolidays,
     summary: {
       totalStudents: totalUsers,
       averageScore: avgScore,

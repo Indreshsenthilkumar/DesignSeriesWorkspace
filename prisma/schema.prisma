@@ -448,14 +448,19 @@ model RewardRule {
   policyId               String?
   code                   String              @unique
   name                   String
-  category               String              // "ATTENDANCE" | "LEAVE" | "ON_DUTY" | "WORKLOG" | "TASK" | "OTHER"
+  category               String              // "LEAVE" | "WORKLOG" | "ATTENDANCE" | "LINKEDIN" | "ON_DUTY" | "TASK" | "OTHER"
+  subCategory            String?             // Specific subcategory: e.g. "SICK", "CASUAL", "ON_DUTY", "UNAPPROVED", "MISSED_WORKLOG", "SCHEDULED_LINKEDIN", etc.
   type                   String              // "DEDUCTION" | "REWARD"
   points                 Int                 // Amount to deduct or add (e.g. 5, 2, 10)
   isPercentage           Boolean             @default(true)
   isEnabled              Boolean             @default(true)
   description            String              @default("")
   maxDeductionsPerPeriod Int?
-  gracePeriodDays        Int                 @default(0)
+  gracePeriodDays        Int                 @default(0) // Free allowance: e.g. Free Leave Days or Grace Days before penalty applies
+  effectiveFrom          String?             // YYYY-MM-DD: From when reward calculation starts
+  effectiveTo            String?             // YYYY-MM-DD: Optional end date
+  scheduledDates         String              @default("") // Comma-separated YYYY-MM-DD dates (e.g. scheduled LinkedIn dates)
+  configJson             String              @default("{}") // Detailed flexible JSON parameters
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
   policy                 RewardPolicy?       @relation(fields: [policyId], references: [id], onDelete: Cascade)
@@ -463,6 +468,18 @@ model RewardRule {
 
   @@index([category])
   @@index([isEnabled])
+}
+
+model ScheduledHoliday {
+  id          String   @id @default(cuid())
+  date        String   @unique // YYYY-MM-DD
+  title       String   // Holiday name (e.g. "Diwali Festival", "Semester Break")
+  category    String   @default("INSTITUTIONAL") // "GOVERNMENT" | "INSTITUTIONAL" | "FESTIVAL" | "OTHER"
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
 }
 
 model RewardTransaction {

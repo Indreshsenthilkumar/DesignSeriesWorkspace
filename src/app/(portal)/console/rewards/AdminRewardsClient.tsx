@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, type Tone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -12,15 +12,18 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { ProgressBar } from "@/components/ui/Progress";
 import { StatTile } from "@/components/ui/StatTile";
 import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { formatDay, relativeTime } from "@/lib/dates";
 import type { RewardCategory } from "@/lib/rewards-engine";
 
-type Rule = {
+export type CustomRule = {
   id: string;
   policyId?: string | null;
   code: string;
   name: string;
   category: string;
+  subCategory?: string | null;
   type: string;
   points: number;
   isPercentage: boolean;
@@ -28,6 +31,18 @@ type Rule = {
   description: string;
   maxDeductionsPerPeriod?: number | null;
   gracePeriodDays: number;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  scheduledDates?: string;
+  configJson?: string;
+};
+
+export type ScheduledHoliday = {
+  id: string;
+  date: string;
+  title: string;
+  category: string;
+  description: string;
 };
 
 type Policy = {
@@ -38,10 +53,8 @@ type Policy = {
   minScore: number;
   isActive: boolean;
   periodType: string;
-  startDate?: string | null;
-  endDate?: string | null;
   description: string;
-  rules: Rule[];
+  rules: CustomRule[];
 };
 
 type UserRow = {
@@ -51,6 +64,7 @@ type UserRow = {
   department: string;
   year: string;
   domain: string;
+  role?: string;
   rewardPoints: number;
   rewardPointsEnabled: boolean;
   portalNavDisabled?: string;
@@ -58,6 +72,7 @@ type UserRow = {
 
 type AdminData = {
   policy: Policy;
+  scheduledHolidays: ScheduledHoliday[];
   summary: {
     totalStudents: number;
     averageScore: number;
@@ -102,14 +117,56 @@ type AdminData = {
   }>;
 };
 
-const CATEGORIES: RewardCategory[] = [
-  "ATTENDANCE",
-  "WORKLOG",
-  "TASK",
-  "LEAVE",
-  "ON_DUTY",
-  "OTHER",
+const CATEGORIES: Array<{ key: RewardCategory; label: string; icon: IconName; tone: Tone }> = [
+  { key: "LEAVE", label: "Leave Management", icon: "calendar", tone: "red" },
+  { key: "WORKLOG", label: "Worklog Management", icon: "clipboard", tone: "blue" },
+  { key: "ATTENDANCE", label: "Attendance & OTP", icon: "check-circle", tone: "green" },
+  { key: "LINKEDIN", label: "LinkedIn Tracker", icon: "linkedin", tone: "blue" },
+  { key: "ON_DUTY", label: "On-Duty Passes", icon: "ticket", tone: "slate" },
+  { key: "TASK", label: "Sprint Tasks", icon: "target", tone: "amber" },
+  { key: "OTHER", label: "Custom Activities", icon: "award", tone: "slate" },
 ];
+
+const SUBCATEGORIES_BY_CATEGORY: Record<string, Array<{ key: string; label: string; defaultPoints: number; defaultType: "DEDUCTION" | "REWARD"; defaultGrace?: number }>> = {
+  LEAVE: [
+    { key: "ALL_LEAVES", label: "All Approved Leaves (Exceeding Allowance)", defaultPoints: 3, defaultType: "DEDUCTION", defaultGrace: 2 },
+    { key: "CASUAL", label: "Casual Leave (Exceeding Allowance)", defaultPoints: 3, defaultType: "DEDUCTION", defaultGrace: 2 },
+    { key: "SICK", label: "Sick / Medical Leave (Exceeding Allowance)", defaultPoints: 2, defaultType: "DEDUCTION", defaultGrace: 3 },
+    { key: "PERSONAL", label: "Personal / Family Leave", defaultPoints: 4, defaultType: "DEDUCTION", defaultGrace: 1 },
+    { key: "ON_DUTY", label: "On-Duty Academic Leave", defaultPoints: 1, defaultType: "REWARD", defaultGrace: 0 },
+    { key: "UNAPPROVED", label: "Unapproved / Rejected Leave Request", defaultPoints: 5, defaultType: "DEDUCTION", defaultGrace: 0 },
+  ],
+  WORKLOG: [
+    { key: "MISSED_WORKLOG", label: "Failed to Submit Daily Worklog", defaultPoints: 5, defaultType: "DEDUCTION", defaultGrace: 1 },
+    { key: "LATE_WORKLOG", label: "Late Worklog Submission (Past Deadline)", defaultPoints: 2, defaultType: "DEDUCTION", defaultGrace: 1 },
+    { key: "INCOMPLETE_WORKLOG", label: "Incomplete Worklog (< 5 Slots Documented)", defaultPoints: 2, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "FLAGGED_WORKLOG", label: "Worklog Flagged by Mentor for Revision", defaultPoints: 3, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "ON_TIME_WORKLOG", label: "Worklog Submitted On Time (Positive Credit)", defaultPoints: 2, defaultType: "REWARD", defaultGrace: 0 },
+  ],
+  ATTENDANCE: [
+    { key: "MISSED_ATTENDANCE", label: "Unaccounted Absence (0 Hours on Working Day)", defaultPoints: 5, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "INCOMPLETE_ATTENDANCE", label: "Incomplete Attendance (< 7 Hours Marked)", defaultPoints: 2, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "MISSED_OTP", label: "Missed OTP Attendance Verification", defaultPoints: 3, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "FULL_DAY_ATTENDANCE", label: "Full Day Completed (7/7 Hours Check-In)", defaultPoints: 2, defaultType: "REWARD", defaultGrace: 0 },
+  ],
+  LINKEDIN: [
+    { key: "SCHEDULED_LINKEDIN_MISSED", label: "Failed to Post on Scheduled LinkedIn Date", defaultPoints: 5, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "SCHEDULED_LINKEDIN_SUBMITTED", label: "Verified Post on Scheduled LinkedIn Date", defaultPoints: 5, defaultType: "REWARD", defaultGrace: 0 },
+    { key: "LINKEDIN_VERIFIED_ANY", label: "Any Verified Build-in-Public Post Bonus", defaultPoints: 10, defaultType: "REWARD", defaultGrace: 0 },
+  ],
+  ON_DUTY: [
+    { key: "REJECTED_PASS", label: "Rejected On-Duty Request", defaultPoints: 3, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "APPROVED_PASS", label: "Approved On-Duty Activity Bonus", defaultPoints: 1, defaultType: "REWARD", defaultGrace: 0 },
+  ],
+  TASK: [
+    { key: "OVERDUE_TASK", label: "Overdue / Incomplete Task Passed Deadline", defaultPoints: 4, defaultType: "DEDUCTION", defaultGrace: 0 },
+    { key: "COMPLETED_TASK_ON_TIME", label: "Sprint Task Completed On Time Bonus", defaultPoints: 5, defaultType: "REWARD", defaultGrace: 0 },
+  ],
+  OTHER: [
+    { key: "CUSTOM_ACHIEVEMENT", label: "Special Institutional Achievement", defaultPoints: 5, defaultType: "REWARD", defaultGrace: 0 },
+    { key: "CUSTOM_INFRACTION", label: "Custom Disciplinary Infraction", defaultPoints: 5, defaultType: "DEDUCTION", defaultGrace: 0 },
+  ],
+};
 
 export function AdminRewardsClient({
   user,
@@ -120,46 +177,50 @@ export function AdminRewardsClient({
 }) {
   const toast = useToast();
   const [data, setData] = useState<AdminData>(initialData);
-  const [activeTab, setActiveTab] = useState<"students" | "analytics" | "rules" | "ledger">("students");
-  const [isPending, startTransition] = useTransition();
+  const [activeTab, setActiveTab] = useState<"students" | "rules" | "holidays" | "analytics" | "ledger">("students");
 
-  // Search & Filter for Students tab
-  const [searchStudent, setSearchStudent] = useState("");
-  const [filterDept, setFilterDept] = useState("ALL");
-  const [filterScoreTier, setFilterScoreTier] = useState("ALL");
+  // Filter state for students roster
+  const [studentSearch, setStudentSearch] = useState("");
+  const [deptFilter, setDeptFilter] = useState("ALL");
+  const [domainFilter, setDomainFilter] = useState("ALL");
+  const [tierFilter, setTierFilter] = useState<"ALL" | "OUTSTANDING" | "GOOD" | "SATISFACTORY" | "AT_RISK">("ALL");
 
-  // Manual Adjust Modal
+  // Modals state
+  const [recalculating, setRecalculating] = useState(false);
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<UserRow | null>(null);
-  const [adjustPoints, setAdjustPoints] = useState<number>(-5);
+  const [adjustTargetUser, setAdjustTargetUser] = useState<UserRow | null>(null);
+  const [adjustPoints, setAdjustPoints] = useState<number>(0);
   const [adjustReason, setAdjustReason] = useState("");
-  const [isSubmittingAdjust, setIsSubmittingAdjust] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
 
-  // Policy Settings Modal
-  const [policyModalOpen, setPolicyModalOpen] = useState(false);
-  const [policyBaseScore, setPolicyBaseScore] = useState(data.policy.baseScore);
-  const [policyMaxScore, setPolicyMaxScore] = useState(data.policy.maxScore);
-  const [policyPeriodType, setPolicyPeriodType] = useState(data.policy.periodType);
-  const [isSavingPolicy, setIsSavingPolicy] = useState(false);
-
-  // Edit Rule Modal
+  // Add / Edit Custom Rule state
+  const [addRuleModalOpen, setAddRuleModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<CustomRule | null>(null);
   const [ruleModalOpen, setRuleModalOpen] = useState(false);
-  const [editingRule, setEditingRule] = useState<Rule | null>(null);
-  const [editRulePoints, setEditRulePoints] = useState<number>(0);
-  const [editRuleDesc, setEditRuleDesc] = useState("");
+
+  // Form fields for Custom Rule
+  const [formCategory, setFormCategory] = useState<RewardCategory>("LEAVE");
+  const [formSubCategory, setFormSubCategory] = useState("ALL_LEAVES");
+  const [formName, setFormName] = useState("");
+  const [formCode, setFormCode] = useState("");
+  const [formType, setFormType] = useState<"DEDUCTION" | "REWARD">("DEDUCTION");
+  const [formPoints, setFormPoints] = useState<number>(3);
+  const [formGraceDays, setFormGraceDays] = useState<number>(2); // Free leave allowance or grace count
+  const [formEffectiveFrom, setFormEffectiveFrom] = useState<string>("");
+  const [formEffectiveTo, setFormEffectiveTo] = useState<string>("");
+  const [formScheduledDates, setFormScheduledDates] = useState<string>("");
+  const [formDescription, setFormDescription] = useState("");
   const [isSavingRule, setIsSavingRule] = useState(false);
 
-  // Add Custom Rule Modal
-  const [addRuleModalOpen, setAddRuleModalOpen] = useState(false);
-  const [newRuleCode, setNewRuleCode] = useState("");
-  const [newRuleName, setNewRuleName] = useState("");
-  const [newRuleCategory, setNewRuleCategory] = useState<RewardCategory>("WORKLOG");
-  const [newRuleType, setNewRuleType] = useState<"DEDUCTION" | "REWARD">("DEDUCTION");
-  const [newRulePoints, setNewRulePoints] = useState<number>(3);
-  const [newRuleDesc, setNewRuleDesc] = useState("");
-  const [isAddingRule, setIsAddingRule] = useState(false);
+  // Scheduled Holidays Modal state
+  const [holidayModalOpen, setHolidayModalOpen] = useState(false);
+  const [newHolidayDate, setNewHolidayDate] = useState("");
+  const [newHolidayTitle, setNewHolidayTitle] = useState("");
+  const [newHolidayCategory, setNewHolidayCategory] = useState("INSTITUTIONAL");
+  const [newHolidayDesc, setNewHolidayDesc] = useState("");
+  const [isSavingHoliday, setIsSavingHoliday] = useState(false);
 
-  // Refresh data
+  // Refresh data from server
   const refreshData = async () => {
     try {
       const res = await fetch("/api/admin/rewards");
@@ -168,459 +229,498 @@ export function AdminRewardsClient({
         setData(json.data);
       }
     } catch {
-      toast.error("Failed to reload data");
+      // Background refresh failure handled quietly
     }
   };
 
-  // Recalculate All
-  const handleRecalculateAll = () => {
-    if (!confirm("Are you sure you want to recalculate reward points for all active students? This will re-evaluate attendance, worklogs, tasks, and leaves.")) {
-      return;
-    }
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/admin/rewards/recalculate", { method: "POST" });
-        const json = await res.json();
-        if (json.ok) {
-          toast.success(`Successfully recalculated reward points for ${json.data.totalRecalculated} students.`);
-          await refreshData();
-        } else {
-          toast.error(json.error || "Recalculation failed");
-        }
-      } catch {
-        toast.error("Recalculation error");
-      }
-    });
-  };
-
-  // Toggle Rule Enable/Disable
-  const handleToggleRule = async (rule: Rule) => {
-    const updated = !rule.isEnabled;
+  // Recalculate all scores
+  const handleRecalculateAll = async () => {
+    if (!confirm("Recalculate dynamic reward points for all active students based on active custom rules?")) return;
+    setRecalculating(true);
     try {
-      const res = await fetch("/api/admin/rewards/rules", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: rule.id, isEnabled: updated }),
-      });
+      const res = await fetch("/api/admin/rewards/recalculate", { method: "POST" });
       const json = await res.json();
-      if (json.ok) {
-        toast.success(`Rule "${rule.name}" is now ${updated ? "enabled" : "disabled"}.`);
-        await refreshData();
-      } else {
-        toast.error(json.error || "Failed to update rule");
-      }
-    } catch {
-      toast.error("Error updating rule");
-    }
-  };
-
-  // Submit Rule Edit
-  const handleSaveRule = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingRule) return;
-    setIsSavingRule(true);
-    try {
-      const res = await fetch("/api/admin/rewards/rules", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingRule.id,
-          points: editRulePoints,
-          description: editRuleDesc,
-        }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success("Rule updated successfully.");
-        setRuleModalOpen(false);
-        await refreshData();
-      } else {
-        toast.error(json.error || "Failed to save rule");
-      }
-    } catch {
-      toast.error("Error saving rule");
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Scores Recalculated", `Successfully updated scores for ${json.data.totalRecalculated} students.`);
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Recalculation Failed", err instanceof Error ? err.message : "Error");
     } finally {
-      setIsSavingRule(false);
+      setRecalculating(false);
     }
   };
 
-  // Submit Add Rule
-  const handleAddRule = async (e: React.FormEvent) => {
+  // Submit manual adjustment
+  const handleAdjustSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAddingRule(true);
-    try {
-      const res = await fetch("/api/admin/rewards/rules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: newRuleCode.trim().toUpperCase(),
-          name: newRuleName.trim(),
-          category: newRuleCategory,
-          type: newRuleType,
-          points: newRulePoints,
-          description: newRuleDesc.trim(),
-        }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success("New rule created successfully.");
-        setAddRuleModalOpen(false);
-        setNewRuleCode("");
-        setNewRuleName("");
-        setNewRuleDesc("");
-        await refreshData();
-      } else {
-        toast.error(json.error || "Failed to create rule");
-      }
-    } catch {
-      toast.error("Error creating rule");
-    } finally {
-      setIsAddingRule(false);
-    }
-  };
-
-  // Submit Policy Settings
-  const handleSavePolicy = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingPolicy(true);
-    try {
-      const res = await fetch("/api/admin/rewards/policy", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: data.policy.id,
-          baseScore: policyBaseScore,
-          maxScore: policyMaxScore,
-          periodType: policyPeriodType,
-        }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success("Scoring policy settings updated.");
-        setPolicyModalOpen(false);
-        await refreshData();
-      } else {
-        toast.error(json.error || "Failed to update policy");
-      }
-    } catch {
-      toast.error("Error updating policy");
-    } finally {
-      setIsSavingPolicy(false);
-    }
-  };
-
-  // Submit Manual Adjustment
-  const handleManualAdjust = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedStudent) return;
-    if (!adjustReason.trim() || adjustReason.trim().length < 5) {
-      toast.error("Please provide an audit reason of at least 5 characters.");
-      return;
-    }
-    setIsSubmittingAdjust(true);
+    if (!adjustTargetUser || adjustPoints === 0 || !adjustReason.trim()) return;
+    setIsAdjusting(true);
     try {
       const res = await fetch("/api/admin/rewards/adjust", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: selectedStudent.id,
+          userId: adjustTargetUser.id,
           points: adjustPoints,
           reason: adjustReason.trim(),
         }),
       });
       const json = await res.json();
-      if (json.ok) {
-        toast.success(`Adjusted points for ${selectedStudent.name}. New score: ${json.data.newScore}%`);
-        setAdjustModalOpen(false);
-        setSelectedStudent(null);
-        setAdjustReason("");
-        await refreshData();
-      } else {
-        toast.error(json.error || "Adjustment failed");
-      }
-    } catch {
-      toast.error("Error applying adjustment");
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Points Adjusted", `${adjustPoints > 0 ? "+" : ""}${adjustPoints}% applied to ${adjustTargetUser.name}.`);
+      setAdjustModalOpen(false);
+      setAdjustTargetUser(null);
+      setAdjustPoints(0);
+      setAdjustReason("");
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Adjustment Failed", err instanceof Error ? err.message : "Error");
     } finally {
-      setIsSubmittingAdjust(false);
+      setIsAdjusting(false);
     }
   };
 
-  // Unique departments for filter
-  const departments = Array.from(new Set(data.users.map((u) => u.department).filter(Boolean)));
+  // Open Add Custom Rule modal with auto-suggested defaults
+  const handleOpenAddRule = (cat: RewardCategory = "LEAVE") => {
+    setFormCategory(cat);
+    const subOptions = SUBCATEGORIES_BY_CATEGORY[cat] || [];
+    const firstSub = subOptions[0];
+    const subKey = firstSub?.key || "ALL";
+    setFormSubCategory(subKey);
+    setFormName(firstSub?.label || `${cat} Custom Rule`);
+    setFormCode(`${cat}_${subKey}_${Date.now().toString().slice(-4)}`);
+    setFormType(firstSub?.defaultType || "DEDUCTION");
+    setFormPoints(firstSub?.defaultPoints || 3);
+    setFormGraceDays(firstSub?.defaultGrace || 0);
+    setFormEffectiveFrom("");
+    setFormEffectiveTo("");
+    setFormScheduledDates("");
+    setFormDescription("");
+    setAddRuleModalOpen(true);
+  };
 
-  // Filter students
-  const filteredUsers = data.users.filter((u) => {
-    if (filterDept !== "ALL" && u.department !== filterDept) return false;
-    if (filterScoreTier === "OUTSTANDING" && u.rewardPoints < 95) return false;
-    if (filterScoreTier === "GOOD" && (u.rewardPoints < 80 || u.rewardPoints >= 95)) return false;
-    if (filterScoreTier === "SATISFACTORY" && (u.rewardPoints < 65 || u.rewardPoints >= 80)) return false;
-    if (filterScoreTier === "AT_RISK" && u.rewardPoints >= 65) return false;
-    if (searchStudent.trim()) {
-      const q = searchStudent.toLowerCase();
-      const matchName = u.name.toLowerCase().includes(q);
-      const matchRoll = u.rollNo.toLowerCase().includes(q);
-      if (!matchName && !matchRoll) return false;
+  // Handle category change in form
+  const handleCategoryChange = (cat: RewardCategory) => {
+    setFormCategory(cat);
+    const subOptions = SUBCATEGORIES_BY_CATEGORY[cat] || [];
+    const firstSub = subOptions[0];
+    const subKey = firstSub?.key || "ALL";
+    setFormSubCategory(subKey);
+    setFormName(firstSub?.label || `${cat} Custom Rule`);
+    setFormCode(`${cat}_${subKey}_${Date.now().toString().slice(-4)}`);
+    setFormType(firstSub?.defaultType || "DEDUCTION");
+    setFormPoints(firstSub?.defaultPoints || 3);
+    setFormGraceDays(firstSub?.defaultGrace || 0);
+  };
+
+  // Handle subcategory change in form
+  const handleSubCategoryChange = (subKey: string) => {
+    setFormSubCategory(subKey);
+    const subOptions = SUBCATEGORIES_BY_CATEGORY[formCategory] || [];
+    const found = subOptions.find((s) => s.key === subKey);
+    if (found) {
+      setFormName(found.label);
+      setFormType(found.defaultType);
+      setFormPoints(found.defaultPoints);
+      if (found.defaultGrace !== undefined) setFormGraceDays(found.defaultGrace);
+      setFormCode(`${formCategory}_${subKey}_${Date.now().toString().slice(-4)}`);
     }
-    return true;
-  });
+  };
+
+  // Save New Custom Rule
+  const handleSaveNewRule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formCode.trim()) return;
+    setIsSavingRule(true);
+    try {
+      const res = await fetch("/api/admin/rewards/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: formCode.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
+          name: formName.trim(),
+          category: formCategory,
+          subCategory: formSubCategory,
+          type: formType,
+          points: formPoints,
+          gracePeriodDays: formGraceDays,
+          effectiveFrom: formEffectiveFrom || null,
+          effectiveTo: formEffectiveTo || null,
+          scheduledDates: formScheduledDates.trim(),
+          description: formDescription.trim(),
+          isEnabled: true,
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Custom Rule Created", `Rule "${formName}" has been configured.`);
+      setAddRuleModalOpen(false);
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Failed to Create Rule", err instanceof Error ? err.message : "Error");
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  // Toggle Rule Status
+  const handleToggleRule = async (rule: CustomRule) => {
+    try {
+      const res = await fetch("/api/admin/rewards/rules", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: rule.id, isEnabled: !rule.isEnabled }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      toast.success(rule.isEnabled ? "Rule Disabled" : "Rule Enabled", rule.name);
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Update Failed", err instanceof Error ? err.message : "Error");
+    }
+  };
+
+  // Delete Custom Rule
+  const handleDeleteRule = async (rule: CustomRule) => {
+    if (!confirm(`Are you sure you want to delete rule "${rule.name}" (${rule.code})?`)) return;
+    try {
+      const res = await fetch("/api/admin/rewards/rules", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: rule.id }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Rule Deleted", rule.name);
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Delete Failed", err instanceof Error ? err.message : "Error");
+    }
+  };
+
+  // Save Scheduled Holiday
+  const handleSaveHoliday = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHolidayDate || !newHolidayTitle.trim()) return;
+    setIsSavingHoliday(true);
+    try {
+      const res = await fetch("/api/admin/rewards/holidays", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: newHolidayDate,
+          title: newHolidayTitle.trim(),
+          category: newHolidayCategory,
+          description: newHolidayDesc.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Holiday Scheduled", `${newHolidayTitle} on ${newHolidayDate} — no deductions will occur.`);
+      setHolidayModalOpen(false);
+      setNewHolidayDate("");
+      setNewHolidayTitle("");
+      setNewHolidayDesc("");
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Holiday Scheduling Failed", err instanceof Error ? err.message : "Error");
+    } finally {
+      setIsSavingHoliday(false);
+    }
+  };
+
+  // Delete Scheduled Holiday
+  const handleDeleteHoliday = async (holiday: ScheduledHoliday) => {
+    if (!confirm(`Remove scheduled holiday "${holiday.title}" on ${holiday.date}?`)) return;
+    try {
+      const res = await fetch("/api/admin/rewards/holidays", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: holiday.id }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      toast.success("Holiday Removed", holiday.title);
+      await refreshData();
+    } catch (err: unknown) {
+      toast.error("Failed to Remove Holiday", err instanceof Error ? err.message : "Error");
+    }
+  };
+
+  // Departments & Domains for filter dropdowns
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of data.users) if (u.department) set.add(u.department);
+    return Array.from(set).sort();
+  }, [data.users]);
+
+  const domains = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of data.users) if (u.domain && u.domain !== "Data not Feeded") set.add(u.domain);
+    return Array.from(set).sort();
+  }, [data.users]);
+
+  // Filtered Students
+  const filteredUsers = useMemo(() => {
+    const q = studentSearch.trim().toLowerCase();
+    return data.users.filter((u) => {
+      if (deptFilter !== "ALL" && u.department !== deptFilter) return false;
+      if (domainFilter !== "ALL" && u.domain !== domainFilter) return false;
+      if (tierFilter !== "ALL") {
+        if (tierFilter === "OUTSTANDING" && u.rewardPoints < 95) return false;
+        if (tierFilter === "GOOD" && (u.rewardPoints < 80 || u.rewardPoints >= 95)) return false;
+        if (tierFilter === "SATISFACTORY" && (u.rewardPoints < 65 || u.rewardPoints >= 80)) return false;
+        if (tierFilter === "AT_RISK" && u.rewardPoints >= 65) return false;
+      }
+      if (!q) return true;
+      return (
+        u.name.toLowerCase().includes(q) ||
+        u.rollNo.toLowerCase().includes(q) ||
+        u.department.toLowerCase().includes(q) ||
+        u.domain.toLowerCase().includes(q)
+      );
+    });
+  }, [data.users, studentSearch, deptFilter, domainFilter, tierFilter]);
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Page Header */}
       <PageHeader
         title="Reward Points & Performance Management"
-        description="Centralized policy engine to configure activity deductions, track cohort scores, audit points movements, and adjust student performance standings."
+        description="Configure dynamic activity-based rules, schedule exempted holidays, monitor student scores, and audit compliance."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               icon="refresh"
-              loading={isPending}
+              loading={recalculating}
               onClick={handleRecalculateAll}
             >
-              Recalculate All
+              Recalculate All Scores
             </Button>
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
-              icon="settings"
-              onClick={() => setPolicyModalOpen(true)}
+              icon="plus"
+              onClick={() => handleOpenAddRule("LEAVE")}
             >
-              Policy Settings
+              Add Custom Rule
             </Button>
-            <a href="/api/admin/rewards/export?type=summary" download>
-              <Button variant="outline" size="sm" icon="download">
-                Export Scores
-              </Button>
-            </a>
-            <a href="/api/admin/rewards/export?type=ledger" download>
-              <Button variant="outline" size="sm" icon="download">
-                Export Ledger
-              </Button>
-            </a>
           </div>
         }
       />
 
-      {/* Top Stat Tiles */}
+      {/* Top Stat Summary Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatTile
-          label="Average Score"
-          value={`${data.summary.averageScore}%`}
-          tone={data.summary.averageScore >= 80 ? "green" : "amber"}
-          caption={`${data.summary.goodStandingPercent}% in good standing`}
-        />
-        <StatTile
-          label="Score Range"
-          value={`${data.summary.minScore}% – ${data.summary.maxScore}%`}
+          label="Total Eligible Students"
+          value={data.summary.totalStudents}
+          caption="Students & Student+ Admins"
           tone="blue"
-          caption="Current cohort spread"
         />
         <StatTile
-          label="At Risk (<65%)"
-          value={data.summary.distribution.atRisk}
-          tone={data.summary.distribution.atRisk > 0 ? "red" : "green"}
-          caption="Need performance review"
+          label="Cohort Average Score"
+          value={`${data.summary.averageScore}%`}
+          caption="Calculated across active rules"
+          tone={data.summary.averageScore >= 80 ? "green" : data.summary.averageScore >= 65 ? "amber" : "red"}
         />
         <StatTile
-          label="Active Rules"
-          value={data.policy.rules.filter((r) => r.isEnabled).length}
+          label="Good Standing Ratio"
+          value={`${data.summary.goodStandingPercent}%`}
+          caption="Students with 80%+ score"
+          tone="blue"
+        />
+        <StatTile
+          label="Scheduled Holidays"
+          value={data.scheduledHolidays.length}
+          caption="Dates exempt from deductions"
           tone="slate"
-          caption={`${data.policy.rules.length} configured rules`}
         />
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="border-b border-slate-200">
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab("students")}
-            className={`flex items-center gap-2 border-b-2 pb-3 pt-1 text-sm font-semibold transition-colors ${
-              activeTab === "students"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Icon name="users" className="h-4 w-4" />
-            <span>Student Standings ({data.users.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("analytics")}
-            className={`flex items-center gap-2 border-b-2 pb-3 pt-1 text-sm font-semibold transition-colors ${
-              activeTab === "analytics"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Icon name="chart" className="h-4 w-4" />
-            <span>Department & Risk Analytics</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("rules")}
-            className={`flex items-center gap-2 border-b-2 pb-3 pt-1 text-sm font-semibold transition-colors ${
-              activeTab === "rules"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Icon name="settings" className="h-4 w-4" />
-            <span>Rule Configuration ({data.policy.rules.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("ledger")}
-            className={`flex items-center gap-2 border-b-2 pb-3 pt-1 text-sm font-semibold transition-colors ${
-              activeTab === "ledger"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Icon name="layers" className="h-4 w-4" />
-            <span>Global Audit Ledger</span>
-          </button>
-        </div>
+      {/* Modern Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b pb-1" style={{ borderColor: "var(--line-soft)" }}>
+        {[
+          { key: "students", label: "Student Scores Roster", icon: "user" as IconName, count: data.users.length },
+          { key: "rules", label: "Custom Activity Rules", icon: "settings" as IconName, count: data.policy.rules.length },
+          { key: "holidays", label: "Scheduled Holidays", icon: "calendar" as IconName, count: data.scheduledHolidays.length },
+          { key: "analytics", label: "Cohort Analytics", icon: "chart" as IconName },
+          { key: "ledger", label: "Global Audit Ledger", icon: "clock" as IconName },
+        ].map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`flex items-center gap-2 rounded-[10px] px-3.5 py-2 text-[12.5px] font-semibold transition-all cursor-pointer ${
+                isActive
+                  ? "bg-[var(--accent)] text-white shadow-sm"
+                  : "text-[var(--text-default)] hover:bg-[var(--surface-sunken)]"
+              }`}
+            >
+              <Icon name={tab.icon} className="h-4 w-4" />
+              <span>{tab.label}</span>
+              {tab.count !== undefined ? (
+                <span
+                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                    isActive ? "bg-white/20 text-white" : "bg-[var(--surface-sunken)] text-[var(--text-faint)]"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
-      {/* TAB 1: Student Standings */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB 1: STUDENT PERFORMANCE ROSTER */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === "students" && (
-        <Card className="p-4 sm:p-6 space-y-4">
-          {/* Filters Bar */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative flex-1 max-w-sm">
-              <Icon
-                name="search"
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        <Card className="space-y-4 p-4 sm:p-5">
+          {/* Filter Bar */}
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+            <Field label="Search Students" htmlFor="search-input">
+              <Input
+                id="search-input"
+                placeholder="Name, roll number, department..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
               />
-              <input
-                type="text"
-                placeholder="Search by student name or roll number..."
-                value={searchStudent}
-                onChange={(e) => setSearchStudent(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 py-1.5 pl-9 pr-3 text-xs placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
+            </Field>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={filterDept}
-                onChange={(e) => setFilterDept(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-none"
-              >
+            <Field label="Performance Tier" htmlFor="tier-select">
+              <Select id="tier-select" value={tierFilter} onChange={(e) => setTierFilter(e.target.value as any)}>
+                <option value="ALL">All Tiers</option>
+                <option value="OUTSTANDING">Outstanding (95%+)</option>
+                <option value="GOOD">Good Standing (80%–94%)</option>
+                <option value="SATISFACTORY">Satisfactory (65%–79%)</option>
+                <option value="AT_RISK">At Risk (&lt;65%)</option>
+              </Select>
+            </Field>
+
+            <Field label="Department" htmlFor="dept-select">
+              <Select id="dept-select" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
                 <option value="ALL">All Departments</option>
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
                   </option>
                 ))}
-              </select>
+              </Select>
+            </Field>
 
-              <select
-                value={filterScoreTier}
-                onChange={(e) => setFilterScoreTier(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-none"
+            <Field label="Domain" htmlFor="domain-select">
+              <Select id="domain-select" value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)}>
+                <option value="ALL">All Domains</option>
+                {domains.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <div className="flex items-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setStudentSearch("");
+                  setTierFilter("ALL");
+                  setDeptFilter("ALL");
+                  setDomainFilter("ALL");
+                }}
               >
-                <option value="ALL">All Standing Tiers</option>
-                <option value="OUTSTANDING">Outstanding (95-100%)</option>
-                <option value="GOOD">Good Standing (80-94%)</option>
-                <option value="SATISFACTORY">Satisfactory (65-79%)</option>
-                <option value="AT_RISK">At Risk (&lt;65%)</option>
-              </select>
+                Reset Filters
+              </Button>
             </div>
           </div>
 
-          {/* Table */}
+          {/* Student Table */}
           <TableWrap>
             <Table>
               <THead>
                 <TR>
                   <TH>Student</TH>
-                  <TH>Department / Year</TH>
-                  <TH>Domain</TH>
-                  <TH numeric>Score (%)</TH>
-                  <TH>Standing</TH>
-                  <TH>Feature Access</TH>
-                  <TH numeric>Actions</TH>
+                  <TH>Role</TH>
+                  <TH>Department & Domain</TH>
+                  <TH className="text-right">Performance Score</TH>
+                  <TH>Standing Tier</TH>
+                  <TH className="text-right">Actions</TH>
                 </TR>
               </THead>
               <TBody>
                 {filteredUsers.length === 0 ? (
                   <TR>
-                    <TD colSpan={7} className="text-center py-8 text-slate-500">
-                      No students found matching current filters.
+                    <TD colSpan={6} className="py-8 text-center text-[var(--text-faint)]">
+                      No matching students found.
                     </TD>
                   </TR>
                 ) : (
                   filteredUsers.map((u) => {
-                    const isFeatureDisabled =
-                      u.rewardPointsEnabled === false ||
-                      (u.portalNavDisabled || "").split(",").map((s) => s.trim().toLowerCase()).includes("rewards");
-
-                    let tierTone: "green" | "blue" | "amber" | "red" = "blue";
-                    let tierText = "Good (80-94%)";
-                    if (u.rewardPoints >= 95) {
-                      tierTone = "green";
-                      tierText = "Outstanding";
-                    } else if (u.rewardPoints >= 80) {
-                      tierTone = "blue";
-                      tierText = "Good Standing";
-                    } else if (u.rewardPoints >= 65) {
-                      tierTone = "amber";
-                      tierText = "Satisfactory";
-                    } else {
-                      tierTone = "red";
-                      tierText = "At Risk";
-                    }
+                    const isStudentAdmin = u.role === "STUDENT_ADMIN";
+                    const score = u.rewardPoints;
+                    const tierTone: Tone =
+                      score >= 95 ? "green" : score >= 80 ? "blue" : score >= 65 ? "amber" : "red";
+                    const tierLabel =
+                      score >= 95
+                        ? "Outstanding"
+                        : score >= 80
+                        ? "Good Standing"
+                        : score >= 65
+                        ? "Satisfactory"
+                        : "At Risk";
 
                     return (
                       <TR key={u.id}>
                         <TD>
-                          <div>
-                            <span className="font-semibold text-slate-900 block">{u.name}</span>
-                            <span className="text-[11px] text-slate-500 font-mono">{u.rollNo}</span>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[var(--text-strong)]">{u.name}</span>
+                            <span className="font-mono text-[11px] text-[var(--text-faint)]">{u.rollNo}</span>
                           </div>
                         </TD>
                         <TD>
-                          <span className="text-xs text-slate-700 block">{u.department || "—"}</span>
-                          <span className="text-[11px] text-slate-400">{u.year || "—"}</span>
+                          {isStudentAdmin ? (
+                            <Badge tone="green">Student + Admin</Badge>
+                          ) : (
+                            <Badge tone="slate">Student</Badge>
+                          )}
                         </TD>
                         <TD>
-                          <span className="text-xs text-slate-600">{u.domain || "General"}</span>
+                          <div className="flex flex-col text-[11.5px]">
+                            <span className="truncate max-w-[220px] text-[var(--text-default)]">{u.department || "General"}</span>
+                            <span className="truncate max-w-[220px] text-[var(--text-faint)]">{u.domain || "Unassigned"}</span>
+                          </div>
                         </TD>
-                        <TD numeric>
-                          <span className="text-sm font-extrabold text-slate-900">
-                            {u.rewardPoints}%
+                        <TD className="text-right">
+                          <span className={`font-mono text-[14px] font-extrabold ${score < 65 ? "text-rose-600" : score >= 80 ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700"}`}>
+                            {score}%
                           </span>
                         </TD>
                         <TD>
-                          <Badge tone={tierTone}>
-                            {tierText}
-                          </Badge>
+                          <Badge tone={tierTone}>{tierLabel}</Badge>
                         </TD>
-                        <TD>
-                          <Badge tone={isFeatureDisabled ? "red" : "green"}>
-                            {isFeatureDisabled ? "Disabled" : "Active"}
-                          </Badge>
-                        </TD>
-                        <TD numeric>
+                        <TD className="text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Button
-                              variant="outline"
                               size="sm"
+                              variant="secondary"
                               onClick={() => {
-                                setSelectedStudent(u);
-                                setAdjustPoints(-5);
+                                setAdjustTargetUser(u);
+                                setAdjustPoints(0);
                                 setAdjustReason("");
                                 setAdjustModalOpen(true);
                               }}
                             >
                               Adjust Points
                             </Button>
-                            <Link href={`/console/people/${u.id}`}>
-                              <Button variant="ghost" size="sm" icon="user" />
+                            <Link href={`/console/people/${u.id}`} target="_blank">
+                              <Button size="sm" variant="ghost" icon="arrow-right" title="View Profile" />
                             </Link>
                           </div>
                         </TD>
@@ -634,591 +734,610 @@ export function AdminRewardsClient({
         </Card>
       )}
 
-      {/* TAB 2: Department & Risk Analytics */}
-      {activeTab === "analytics" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Department Breakdown */}
-            <Card className="p-4 sm:p-6 space-y-4">
-              <h3 className="text-base font-bold text-slate-900">
-                Department Performance Averages
-              </h3>
-              <div className="space-y-3">
-                {data.departmentAnalytics.map((dept) => (
-                  <div key={dept.department} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-800">
-                        {dept.department} ({dept.count} students)
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {dept.atRiskCount > 0 && (
-                          <span className="text-[11px] font-bold text-rose-600">
-                            {dept.atRiskCount} at risk
-                          </span>
-                        )}
-                        <span className="font-bold text-slate-900">
-                          {dept.averageScore}%
-                        </span>
-                      </div>
-                    </div>
-                    <ProgressBar
-                      value={dept.averageScore}
-                      tone={dept.averageScore >= 80 ? "green" : dept.averageScore >= 65 ? "amber" : "red"}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Common Deductions */}
-            <Card className="p-4 sm:p-6 space-y-4">
-              <h3 className="text-base font-bold text-slate-900">
-                Most Frequent Deduction Violations
-              </h3>
-              <div className="divide-y divide-slate-100">
-                {data.commonDeductions.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-slate-500">
-                    No deductions logged yet.
-                  </p>
-                ) : (
-                  data.commonDeductions.map((d) => (
-                    <div key={d.code} className="flex items-center justify-between py-2.5 text-xs">
-                      <div>
-                        <span className="font-semibold text-slate-800 block">
-                          {d.name}
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                          {d.code}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-rose-600 block">
-                          -{d.totalDeducted} pts total
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          {d.count} occurrences
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {/* Performance Distribution */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-base font-bold text-slate-900 mb-3">
-              Score Distribution Overview
-            </h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                <span className="text-xs font-semibold text-emerald-800">Outstanding (95-100%)</span>
-                <span className="mt-1 block text-2xl font-extrabold text-emerald-900">
-                  {data.summary.distribution.outstanding}
-                </span>
-                <span className="text-[11px] text-emerald-700">Top performers</span>
-              </div>
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                <span className="text-xs font-semibold text-blue-800">Good Standing (80-94%)</span>
-                <span className="mt-1 block text-2xl font-extrabold text-blue-900">
-                  {data.summary.distribution.good}
-                </span>
-                <span className="text-[11px] text-blue-700">Full compliance</span>
-              </div>
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
-                <span className="text-xs font-semibold text-amber-800">Satisfactory (65-79%)</span>
-                <span className="mt-1 block text-2xl font-extrabold text-amber-900">
-                  {data.summary.distribution.satisfactory}
-                </span>
-                <span className="text-[11px] text-amber-700">Minor deductions</span>
-              </div>
-              <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
-                <span className="text-xs font-semibold text-rose-800">Action Required (&lt;65%)</span>
-                <span className="mt-1 block text-2xl font-extrabold text-rose-900">
-                  {data.summary.distribution.atRisk}
-                </span>
-                <span className="text-[11px] text-rose-700">Attendance/worklog alerts</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* TAB 3: Rule Configuration */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB 2: CUSTOM ACTIVITY RULES (NO PREDEFINED RULES) */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === "rules" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Dynamic Activity Rules
+              <h3 className="text-[15px] font-bold text-[var(--text-strong)]">
+                Configured Custom Activity Rules
               </h3>
-              <p className="text-xs text-slate-500">
-                Enable or disable rules instantly, or adjust point deductions and reward credits without modifying code.
+              <p className="text-[12px] text-[var(--text-faint)]">
+                Every rule is custom-configured. Set exact free allowances, start dates, and percentage impact without code modifications.
               </p>
             </div>
-            <Button size="sm" icon="plus" onClick={() => setAddRuleModalOpen(true)}>
+            <Button size="sm" variant="primary" icon="plus" onClick={() => handleOpenAddRule("LEAVE")}>
               Add Custom Rule
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {CATEGORIES.map((category) => {
-              const categoryRules = data.policy.rules.filter((r) => r.category === category);
-              if (categoryRules.length === 0) return null;
+          {data.policy.rules.length === 0 ? (
+            <Card className="p-8 text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30">
+                <Icon name="settings" className="h-6 w-6" />
+              </div>
+              <h4 className="text-[14px] font-bold text-[var(--text-strong)]">No Custom Rules Configured</h4>
+              <p className="mx-auto max-w-md text-[12px] text-[var(--text-faint)]">
+                All predefined rules have been removed. You have complete control: click below to configure custom rules for leave allowances, worklog compliance, attendance check-ins, or scheduled LinkedIn posts.
+              </p>
+              <div className="pt-2">
+                <Button size="sm" variant="primary" icon="plus" onClick={() => handleOpenAddRule("LEAVE")}>
+                  Configure First Rule
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {CATEGORIES.map((catMeta) => {
+                const categoryRules = data.policy.rules.filter((r) => r.category === catMeta.key);
+                if (categoryRules.length === 0) return null;
 
-              return (
-                <Card key={category} className="p-4 sm:p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                      {category} Rules
-                    </span>
-                    <Badge tone="slate">
-                      {categoryRules.length} rules
-                    </Badge>
-                  </div>
-
-                  <div className="divide-y divide-slate-100">
-                    {categoryRules.map((rule) => (
-                      <div key={rule.id} className="py-2.5 flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-900">
-                              {rule.name}
-                            </span>
-                            <span
-                              className={`text-[11px] font-extrabold ${
-                                rule.type === "DEDUCTION" ? "text-rose-600" : "text-emerald-600"
-                              }`}
-                            >
-                              {rule.type === "DEDUCTION" ? `-${rule.points}%` : `+${rule.points}%`}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500">
-                            {rule.description || "No description provided."}
-                          </p>
-                          <span className="font-mono text-[10px] text-slate-400">
-                            {rule.code}
-                          </span>
-                        </div>
-
-                        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
-                          {/* Toggle switch */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleRule(rule)}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                              rule.isEnabled ? "bg-blue-600" : "bg-slate-200"
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                rule.isEnabled ? "translate-x-4" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon="edit"
-                            onClick={() => {
-                              setEditingRule(rule);
-                              setEditRulePoints(rule.points);
-                              setEditRuleDesc(rule.description);
-                              setRuleModalOpen(true);
-                            }}
-                          />
-                        </div>
+                return (
+                  <Card key={catMeta.key} className="space-y-3 p-4 sm:p-5">
+                    <div className="flex items-center justify-between border-b pb-2.5" style={{ borderColor: "var(--line-soft)" }}>
+                      <div className="flex items-center gap-2">
+                        <Icon name={catMeta.icon} className="h-4 w-4 text-[var(--accent)]" />
+                        <span className="text-[13px] font-bold text-[var(--text-strong)]">
+                          {catMeta.label}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                      <Badge tone={catMeta.tone}>{categoryRules.length} rules</Badge>
+                    </div>
+
+                    <div className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                      {categoryRules.map((rule) => {
+                        const isDeduction = rule.type === "DEDUCTION";
+
+                        return (
+                          <div key={rule.id} className="py-3 flex flex-col gap-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-[13px] font-bold text-[var(--text-strong)]">
+                                    {rule.name}
+                                  </span>
+                                  <span
+                                    className={`rounded px-1.5 py-0.5 text-[11px] font-extrabold ${
+                                      isDeduction
+                                        ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                                        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    }`}
+                                  >
+                                    {isDeduction ? `-${rule.points}%` : `+${rule.points}%`}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 text-[11.5px] text-[var(--text-faint)]">
+                                  {rule.description || "Custom activity rule criteria."}
+                                </p>
+                              </div>
+
+                              {/* Toggle & Delete buttons */}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRule(rule)}
+                                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                                    rule.isEnabled ? "bg-[var(--accent)]" : "bg-gray-300 dark:bg-gray-700"
+                                  }`}
+                                  title={rule.isEnabled ? "Rule active" : "Rule disabled"}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                                      rule.isEnabled ? "translate-x-4" : "translate-x-0"
+                                    }`}
+                                  />
+                                </button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  icon="trash"
+                                  onClick={() => handleDeleteRule(rule)}
+                                  title="Delete rule"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Detailed Rule Attributes Pill Badges */}
+                            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-[var(--text-muted)]">
+                              <span className="rounded bg-[var(--surface-sunken)] px-2 py-0.5 font-mono text-[10px]">
+                                {rule.code}
+                              </span>
+                              {rule.gracePeriodDays > 0 ? (
+                                <span className="rounded bg-blue-50 px-2 py-0.5 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                  🎁 {rule.gracePeriodDays} Free Allowance
+                                </span>
+                              ) : null}
+                              {rule.effectiveFrom ? (
+                                <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                  📅 From: {rule.effectiveFrom}
+                                </span>
+                              ) : null}
+                              {rule.scheduledDates ? (
+                                <span className="rounded bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                                  🗓️ Scheduled: {rule.scheduledDates}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* TAB 4: Global Audit Ledger */}
-      {activeTab === "ledger" && (
-        <Card className="p-4 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between">
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB 3: SCHEDULED HOLIDAYS (NO REWARD POINTS DEDUCTED ON HOLIDAYS) */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === "holidays" && (
+        <Card className="space-y-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3" style={{ borderColor: "var(--line-soft)" }}>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Immutable Transaction Log
+              <h3 className="text-[15px] font-bold text-[var(--text-strong)]">
+                Scheduled Holidays & Break Calendar
               </h3>
-              <p className="text-xs text-slate-500">
-                Traceable history of all additions, deductions and manual adjustments with original actor and timestamps.
+              <p className="text-[12px] text-[var(--text-faint)]">
+                Reward points are NEVER deducted on scheduled holidays or Sundays. Attendance and worklog requirements are automatically exempted.
               </p>
             </div>
-            <a href="/api/admin/rewards/export?type=ledger" download>
-              <Button variant="outline" size="sm" icon="download">
-                Export Ledger (CSV)
-              </Button>
-            </a>
+            <Button size="sm" variant="primary" icon="plus" onClick={() => setHolidayModalOpen(true)}>
+              Schedule New Holiday
+            </Button>
           </div>
 
-          <div className="divide-y divide-slate-100">
-            {data.recentTransactions.length === 0 ? (
-              <p className="py-8 text-center text-xs text-slate-500">
-                No transactions recorded yet.
-              </p>
-            ) : (
-              data.recentTransactions.map((tx) => {
-                const isNegative = tx.points < 0;
-                return (
-                  <div
-                    key={tx.id}
-                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between text-xs"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-slate-900">
-                          {tx.user?.name}
+          <TableWrap>
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Date</TH>
+                  <TH>Holiday Name</TH>
+                  <TH>Category</TH>
+                  <TH>Notes / Description</TH>
+                  <TH className="text-right">Actions</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {data.scheduledHolidays.length === 0 ? (
+                  <TR>
+                    <TD colSpan={5} className="py-8 text-center text-[var(--text-faint)]">
+                      No holidays scheduled yet. Click "Schedule New Holiday" to add official non-working dates.
+                    </TD>
+                  </TR>
+                ) : (
+                  data.scheduledHolidays.map((h) => (
+                    <TR key={h.id}>
+                      <TD>
+                        <span className="font-mono font-bold text-[var(--text-strong)]">{h.date}</span>
+                      </TD>
+                      <TD>
+                        <span className="font-semibold text-[var(--text-strong)]">{h.title}</span>
+                      </TD>
+                      <TD>
+                        <Badge tone="blue">{h.category}</Badge>
+                      </TD>
+                      <TD>
+                        <span className="text-[12px] text-[var(--text-faint)]">
+                          {h.description || "Automatic deduction exemption active."}
                         </span>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          ({tx.user?.rollNo})
-                        </span>
-                        <Badge tone="slate">
-                          {tx.category}
-                        </Badge>
-                        {tx.isManual && (
-                          <Badge tone="amber">
-                            Manual · Adjusted by {tx.actor?.name || "Staff"}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-slate-600">{tx.reason}</p>
-                      <span className="text-[11px] text-slate-400">
-                        {new Date(tx.createdAt).toLocaleString("en-IN")}
-                      </span>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span
-                        className={`font-extrabold text-sm block ${
-                          isNegative ? "text-rose-600" : "text-emerald-600"
-                        }`}
-                      >
-                        {isNegative ? `${tx.points}` : `+${tx.points}`} pts
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        {tx.previousScore}% → {tx.newScore}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                      </TD>
+                      <TD className="text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon="trash"
+                          onClick={() => handleDeleteHoliday(h)}
+                          title="Remove holiday"
+                        />
+                      </TD>
+                    </TR>
+                  ))
+                )}
+              </TBody>
+            </Table>
+          </TableWrap>
         </Card>
       )}
 
-      {/* Manual Point Adjustment Modal */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB 4: COHORT ANALYTICS */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === "analytics" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Department Breakdown */}
+          <Card className="space-y-4 p-4 sm:p-5">
+            <CardHeader title="Department Performance Averages" icon="chart" />
+            <TableWrap>
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Department</TH>
+                    <TH className="text-right">Students</TH>
+                    <TH className="text-right">Average Score</TH>
+                    <TH className="text-right">At Risk (&lt;65%)</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {data.departmentAnalytics.map((dept) => (
+                    <TR key={dept.department}>
+                      <TD className="font-semibold text-[var(--text-strong)]">{dept.department}</TD>
+                      <TD className="text-right font-mono">{dept.count}</TD>
+                      <TD className="text-right font-mono font-bold text-blue-600">{dept.averageScore}%</TD>
+                      <TD className="text-right font-mono text-rose-600">{dept.atRiskCount}</TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </TableWrap>
+          </Card>
+
+          {/* Common Deductions Breakdown */}
+          <Card className="space-y-4 p-4 sm:p-5">
+            <CardHeader title="Frequent Deduction Areas" icon="alert" />
+            {data.commonDeductions.length === 0 ? (
+              <p className="py-6 text-center text-[12px] text-[var(--text-faint)]">
+                No deductions recorded across the active custom rules.
+              </p>
+            ) : (
+              <div className="divide-y" style={{ borderColor: "var(--line-soft)" }}>
+                {data.commonDeductions.map((d) => (
+                  <div key={d.code} className="py-2.5 flex items-center justify-between text-[12.5px]">
+                    <div>
+                      <span className="font-semibold text-[var(--text-strong)]">{d.name}</span>
+                      <span className="ml-2 font-mono text-[10px] text-[var(--text-faint)]">{d.code}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-rose-600">-{d.totalDeducted}% total</span>
+                      <span className="ml-2 text-[11px] text-[var(--text-faint)]">({d.count} events)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB 5: GLOBAL AUDIT LEDGER */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === "ledger" && (
+        <Card className="space-y-4 p-4 sm:p-5">
+          <CardHeader title="Real-Time Reward Audit Stream" icon="clock" />
+          <TableWrap>
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Time</TH>
+                  <TH>Student</TH>
+                  <TH>Category</TH>
+                  <TH>Rule / Reason</TH>
+                  <TH className="text-right">Points</TH>
+                  <TH className="text-right">Balance</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {data.recentTransactions.length === 0 ? (
+                  <TR>
+                    <TD colSpan={6} className="py-8 text-center text-[var(--text-faint)]">
+                      No activity ledger records found.
+                    </TD>
+                  </TR>
+                ) : (
+                  data.recentTransactions.map((tx) => (
+                    <TR key={tx.id}>
+                      <TD className="text-[11px] text-[var(--text-faint)]">
+                        {relativeTime(tx.createdAt)}
+                      </TD>
+                      <TD>
+                        <span className="font-semibold text-[var(--text-strong)]">{tx.user.name}</span>
+                        <span className="ml-1.5 font-mono text-[11px] text-[var(--text-faint)]">({tx.user.rollNo})</span>
+                      </TD>
+                      <TD>
+                        <Badge tone={tx.points > 0 ? "green" : "red"}>{tx.category}</Badge>
+                      </TD>
+                      <TD className="max-w-[320px] truncate text-[12px] text-[var(--text-default)]">
+                        {tx.reason}
+                      </TD>
+                      <TD className="text-right font-mono font-bold">
+                        <span className={tx.points > 0 ? "text-emerald-600" : "text-rose-600"}>
+                          {tx.points > 0 ? `+${tx.points}%` : `${tx.points}%`}
+                        </span>
+                      </TD>
+                      <TD className="text-right font-mono text-[12px] text-[var(--text-faint)]">
+                        {tx.previousScore}% → <span className="font-bold text-[var(--text-strong)]">{tx.newScore}%</span>
+                      </TD>
+                    </TR>
+                  ))
+                )}
+              </TBody>
+            </Table>
+          </TableWrap>
+        </Card>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* MODAL: ADD / EDIT CUSTOM RULE (DETAILED CONFIGURATION) */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
       <Modal
-        open={adjustModalOpen}
-        onClose={() => setAdjustModalOpen(false)}
-        title={`Adjust Reward Points: ${selectedStudent?.name || ""}`}
+        open={addRuleModalOpen}
+        onClose={() => setAddRuleModalOpen(false)}
+        title="Add Custom Activity Rule"
+        description="Configure dynamic performance scoring, free leave allowances, start dates, and deadline criteria."
+        size="lg"
       >
-        {selectedStudent && (
-          <form onSubmit={handleManualAdjust} className="space-y-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Current Score:</span>
-                <span className="font-bold text-slate-800">{selectedStudent.rewardPoints}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Roll Number:</span>
-                <span className="font-mono text-slate-700">{selectedStudent.rollNo}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Department:</span>
-                <span className="text-slate-700">{selectedStudent.department}</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Points Adjustment (+ to credit, - to deduct)
-              </label>
-              <input
-                type="number"
-                value={adjustPoints}
-                onChange={(e) => setAdjustPoints(parseInt(e.target.value, 10) || 0)}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-                placeholder="e.g. -5 or 10"
-                required
-              />
-              <span className="mt-1 block text-[11px] text-slate-500">
-                Projected New Score:{" "}
-                <span className="font-bold text-slate-800">
-                  {Math.max(
-                    data.policy.minScore,
-                    Math.min(data.policy.maxScore, selectedStudent.rewardPoints + adjustPoints)
-                  )}
-                  %
-                </span>
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Mandatory Audit Reason (min 5 characters)
-              </label>
-              <textarea
-                value={adjustReason}
-                onChange={(e) => setAdjustReason(e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-                placeholder="Explain why points are being adjusted. The student will receive an in-app notice with this explanation."
-                required
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setAdjustModalOpen(false)}
+        <form onSubmit={handleSaveNewRule} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Category / Website Module" htmlFor="rule-cat">
+              <Select
+                id="rule-cat"
+                value={formCategory}
+                onChange={(e) => handleCategoryChange(e.target.value as RewardCategory)}
               >
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" loading={isSubmittingAdjust}>
-                Apply Adjustment
-              </Button>
+                {CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="Specific Activity / Event" htmlFor="rule-sub">
+              <Select
+                id="rule-sub"
+                value={formSubCategory}
+                onChange={(e) => handleSubCategoryChange(e.target.value)}
+              >
+                {(SUBCATEGORIES_BY_CATEGORY[formCategory] || []).map((sub) => (
+                  <option key={sub.key} value={sub.key}>
+                    {sub.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Rule Display Name" htmlFor="rule-name">
+              <Input
+                id="rule-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g. Casual Leave Exceeding Allowance"
+                required
+              />
+            </Field>
+
+            <Field label="Rule Code" htmlFor="rule-code" hint="Uppercase with underscores">
+              <Input
+                id="rule-code"
+                value={formCode}
+                onChange={(e) => setFormCode(e.target.value.toUpperCase())}
+                placeholder="e.g. CASUAL_LEAVE_DEDUCTION"
+                required
+              />
+            </Field>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Impact Type" htmlFor="rule-type">
+              <Select
+                id="rule-type"
+                value={formType}
+                onChange={(e) => setFormType(e.target.value as "DEDUCTION" | "REWARD")}
+              >
+                <option value="DEDUCTION">Deduction (-)</option>
+                <option value="REWARD">Reward Credit (+)</option>
+              </Select>
+            </Field>
+
+            <Field label="Score Percentage (%)" htmlFor="rule-points">
+              <Input
+                id="rule-points"
+                type="number"
+                min={1}
+                max={100}
+                value={formPoints}
+                onChange={(e) => setFormPoints(parseInt(e.target.value, 10) || 0)}
+                required
+              />
+            </Field>
+          </div>
+
+          {/* Detailed Criteria Fields */}
+          <div className="rounded-[12px] border p-3.5 space-y-3" style={{ background: "var(--surface-sunken)", borderColor: "var(--line-soft)" }}>
+            <h4 className="text-[12.5px] font-bold text-[var(--text-strong)]">
+              Detailed Grace Allowance & Scheduling Controls
+            </h4>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label={
+                  formCategory === "LEAVE"
+                    ? "Free Leave Allowance (Days)"
+                    : formCategory === "WORKLOG"
+                    ? "Free Grace Submissions"
+                    : formCategory === "ATTENDANCE"
+                    ? "Free Absence Days"
+                    : "Grace Allowance Count"
+                }
+                htmlFor="rule-grace"
+                hint="Deductions will ONLY start after this threshold is exceeded."
+              >
+                <Input
+                  id="rule-grace"
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={formGraceDays}
+                  onChange={(e) => setFormGraceDays(parseInt(e.target.value, 10) || 0)}
+                />
+              </Field>
+
+              <Field
+                label="Effective From Date (epola erundhu calculate aganum)"
+                htmlFor="rule-from"
+                hint="Activities before this date are ignored."
+              >
+                <Input
+                  id="rule-from"
+                  type="date"
+                  value={formEffectiveFrom}
+                  onChange={(e) => setFormEffectiveFrom(e.target.value)}
+                />
+              </Field>
             </div>
-          </form>
-        )}
-      </Modal>
 
-      {/* Policy Settings Modal */}
-      <Modal
-        open={policyModalOpen}
-        onClose={() => setPolicyModalOpen(false)}
-        title="Reward Policy Settings"
-      >
-        <form onSubmit={handleSavePolicy} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Base Starting Score (%)
-            </label>
-            <input
-              type="number"
-              value={policyBaseScore}
-              onChange={(e) => setPolicyBaseScore(parseInt(e.target.value, 10) || 100)}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              required
+            {/* Scheduled Dates Input (specifically for LinkedIn or scheduled events) */}
+            {formCategory === "LINKEDIN" || formCategory === "OTHER" ? (
+              <Field
+                label="Scheduled Submission Dates (Comma-separated YYYY-MM-DD)"
+                htmlFor="rule-dates"
+                hint="Students must submit on or before these exact dates. If failed, points are deducted."
+              >
+                <Input
+                  id="rule-dates"
+                  value={formScheduledDates}
+                  onChange={(e) => setFormScheduledDates(e.target.value)}
+                  placeholder="e.g. 2026-11-14, 2026-11-21, 2026-11-28"
+                />
+              </Field>
+            ) : null}
+          </div>
+
+          <Field label="Description & Policy Justification" htmlFor="rule-desc">
+            <Input
+              id="rule-desc"
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              placeholder="Explain how and when this rule applies to students..."
             />
-            <span className="text-[11px] text-slate-500">
-              Default score every student begins with (normally 100%).
-            </span>
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Maximum Score Cap (%)
-            </label>
-            <input
-              type="number"
-              value={policyMaxScore}
-              onChange={(e) => setPolicyMaxScore(parseInt(e.target.value, 10) || 100)}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Reward Period Type
-            </label>
-            <select
-              value={policyPeriodType}
-              onChange={(e) => setPolicyPeriodType(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-            >
-              <option value="MONTHLY">Monthly</option>
-              <option value="SEMESTER">Semester-wise</option>
-              <option value="ANNUAL">Annual</option>
-              <option value="CUSTOM">Custom Range</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPolicyModalOpen(false)}
-            >
+          <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: "var(--line-soft)" }}>
+            <Button variant="secondary" onClick={() => setAddRuleModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" loading={isSavingPolicy}>
-              Save Policy
+            <Button variant="primary" type="submit" loading={isSavingRule}>
+              Save Custom Rule
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Edit Rule Modal */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* MODAL: SCHEDULE HOLIDAY */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
       <Modal
-        open={ruleModalOpen}
-        onClose={() => setRuleModalOpen(false)}
-        title={`Edit Rule: ${editingRule?.name || ""}`}
+        open={holidayModalOpen}
+        onClose={() => setHolidayModalOpen(false)}
+        title="Schedule Non-Working Holiday"
+        description="Exempt specific calendar dates from all reward point deductions."
+        size="md"
       >
-        {editingRule && (
-          <form onSubmit={handleSaveRule} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Point Value ({editingRule.type === "DEDUCTION" ? "Percentage Points Deducted" : "Percentage Points Awarded"})
-              </label>
-              <input
-                type="number"
-                value={editRulePoints}
-                onChange={(e) => setEditRulePoints(parseInt(e.target.value, 10) || 0)}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-                min={0}
-                max={100}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Description / Policy Explanation
-              </label>
-              <textarea
-                value={editRuleDesc}
-                onChange={(e) => setEditRuleDesc(e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setRuleModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" loading={isSavingRule}>
-                Save Changes
-              </Button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* Add Custom Rule Modal */}
-      <Modal
-        open={addRuleModalOpen}
-        onClose={() => setAddRuleModalOpen(false)}
-        title="Add Custom Reward Rule"
-      >
-        <form onSubmit={handleAddRule} className="space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Rule Code (UPPERCASE with underscores, e.g. WORKSHOP_ATTENDED)
-            </label>
-            <input
-              type="text"
-              value={newRuleCode}
-              onChange={(e) => setNewRuleCode(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs font-mono focus:border-blue-500 focus:outline-none"
+        <form onSubmit={handleSaveHoliday} className="space-y-3.5">
+          <Field label="Holiday Date (YYYY-MM-DD)" htmlFor="hol-date">
+            <Input
+              id="hol-date"
+              type="date"
+              value={newHolidayDate}
+              onChange={(e) => setNewHolidayDate(e.target.value)}
               required
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Display Name
-            </label>
-            <input
-              type="text"
-              value={newRuleName}
-              onChange={(e) => setNewRuleName(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              placeholder="e.g. Design Critique Attendance"
+          <Field label="Holiday Name / Title" htmlFor="hol-title">
+            <Input
+              id="hol-title"
+              value={newHolidayTitle}
+              onChange={(e) => setNewHolidayTitle(e.target.value)}
+              placeholder="e.g. Diwali Festival, Semester Break, Symposium"
               required
             />
-          </div>
+          </Field>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Category
-              </label>
-              <select
-                value={newRuleCategory}
-                onChange={(e) => setNewRuleCategory(e.target.value as RewardCategory)}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Type
-              </label>
-              <select
-                value={newRuleType}
-                onChange={(e) => setNewRuleType(e.target.value as "DEDUCTION" | "REWARD")}
-                className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              >
-                <option value="DEDUCTION">Deduction (-)</option>
-                <option value="REWARD">Reward (+)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Points
-            </label>
-            <input
-              type="number"
-              value={newRulePoints}
-              onChange={(e) => setNewRulePoints(parseInt(e.target.value, 10) || 0)}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              min={0}
-              max={100}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Description
-            </label>
-            <textarea
-              value={newRuleDesc}
-              onChange={(e) => setNewRuleDesc(e.target.value)}
-              rows={2}
-              className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:border-blue-500 focus:outline-none"
-              placeholder="Explain the criteria for this rule..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setAddRuleModalOpen(false)}
+          <Field label="Category" htmlFor="hol-cat">
+            <Select
+              id="hol-cat"
+              value={newHolidayCategory}
+              onChange={(e) => setNewHolidayCategory(e.target.value)}
             >
+              <option value="INSTITUTIONAL">Institutional Holiday</option>
+              <option value="GOVERNMENT">Government / National Holiday</option>
+              <option value="FESTIVAL">Festival / Cultural Event</option>
+              <option value="SEMESTER_BREAK">Semester / Exam Break</option>
+            </Select>
+          </Field>
+
+          <Field label="Notes / Reason" htmlFor="hol-desc">
+            <Input
+              id="hol-desc"
+              value={newHolidayDesc}
+              onChange={(e) => setNewHolidayDesc(e.target.value)}
+              placeholder="Optional notes for administration records..."
+            />
+          </Field>
+
+          <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: "var(--line-soft)" }}>
+            <Button variant="secondary" onClick={() => setHolidayModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" loading={isAddingRule}>
-              Create Rule
+            <Button variant="primary" type="submit" loading={isSavingHoliday}>
+              Schedule Holiday
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* MODAL: MANUAL POINT ADJUSTMENT */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      <Modal
+        open={adjustModalOpen}
+        onClose={() => setAdjustModalOpen(false)}
+        title={`Adjust Points — ${adjustTargetUser?.name || ""}`}
+        description="Manually credit or deduct performance points with a mandatory audit justification."
+        size="md"
+      >
+        <form onSubmit={handleAdjustSubmit} className="space-y-4">
+          <div className="rounded-[10px] border p-3 text-[12px]" style={{ background: "var(--surface-sunken)", borderColor: "var(--line-soft)" }}>
+            <p className="text-[var(--text-faint)]">
+              Current Score:{" "}
+              <span className="font-mono font-bold text-[var(--text-strong)]">{adjustTargetUser?.rewardPoints}%</span>
+            </p>
+          </div>
+
+          <Field label="Points Adjustment (e.g. +5 or -5)" htmlFor="adj-pts">
+            <Input
+              id="adj-pts"
+              type="number"
+              value={adjustPoints}
+              onChange={(e) => setAdjustPoints(parseInt(e.target.value, 10) || 0)}
+              required
+            />
+          </Field>
+
+          <Field label="Mandatory Audit Justification" htmlFor="adj-reason">
+            <Input
+              id="adj-reason"
+              value={adjustReason}
+              onChange={(e) => setAdjustReason(e.target.value)}
+              placeholder="Explain why this manual score adjustment is being made..."
+              required
+            />
+          </Field>
+
+          <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: "var(--line-soft)" }}>
+            <Button variant="secondary" onClick={() => setAdjustModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={isAdjusting}>
+              Apply Adjustment
             </Button>
           </div>
         </form>

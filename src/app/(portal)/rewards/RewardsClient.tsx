@@ -5,13 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, type Tone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { ProgressBar } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
+import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
+import { Field, Input } from "@/components/ui/Field";
+import { relativeTime } from "@/lib/dates";
 import type { RewardCategory } from "@/lib/rewards-engine";
 
 type UserSummary = {
@@ -20,6 +23,7 @@ type UserSummary = {
     name: string;
     rollNo: string;
     department: string;
+    role?: string;
   };
   policy: {
     id: string;
@@ -34,10 +38,13 @@ type UserSummary = {
       code: string;
       name: string;
       category: string;
+      subCategory?: string | null;
       type: string;
       points: number;
       isEnabled: boolean;
       description: string;
+      gracePeriodDays?: number;
+      effectiveFrom?: string | null;
     }>;
   };
   score: number;
@@ -67,14 +74,15 @@ type UserSummary = {
 
 const CATEGORY_META: Record<
   RewardCategory,
-  { label: string; icon: IconName; tone: "blue" | "green" | "amber" | "red" | "slate" }
+  { label: string; icon: IconName; tone: Tone }
 > = {
-  ATTENDANCE: { label: "Attendance", icon: "check-circle", tone: "green" },
-  WORKLOG: { label: "Worklog", icon: "clipboard", tone: "blue" },
-  TASK: { label: "Tasks", icon: "target", tone: "amber" },
-  LEAVE: { label: "Leaves", icon: "calendar", tone: "red" },
-  ON_DUTY: { label: "On-Duty", icon: "ticket", tone: "slate" },
-  OTHER: { label: "LinkedIn & Other", icon: "linkedin", tone: "blue" },
+  LEAVE: { label: "Leave Management", icon: "calendar", tone: "red" },
+  WORKLOG: { label: "Worklog Management", icon: "clipboard", tone: "blue" },
+  ATTENDANCE: { label: "Attendance & OTP", icon: "check-circle", tone: "green" },
+  LINKEDIN: { label: "LinkedIn Tracker", icon: "linkedin", tone: "blue" },
+  ON_DUTY: { label: "On-Duty Passes", icon: "ticket", tone: "slate" },
+  TASK: { label: "Sprint Tasks", icon: "target", tone: "amber" },
+  OTHER: { label: "Custom Activities", icon: "award", tone: "slate" },
   MANUAL: { label: "Manual Adjustments", icon: "award", tone: "amber" },
 };
 
@@ -82,7 +90,7 @@ export function RewardsClient({
   user,
   initialSummary,
 }: {
-  user: { id: string; name: string; rollNo: string };
+  user: { id: string; name: string; rollNo: string; role?: string };
   initialSummary: UserSummary;
 }) {
   const router = useRouter();
@@ -125,7 +133,7 @@ export function RewardsClient({
     return true;
   });
 
-  const getTierBadgeTone = (tier: string) => {
+  const getTierBadgeTone = (tier: string): Tone => {
     switch (tier) {
       case "OUTSTANDING":
         return "green";
@@ -142,20 +150,20 @@ export function RewardsClient({
     <div className="space-y-6 pb-12">
       {/* Page Header */}
       <PageHeader
-        title="Reward Points & Performance"
-        description="Your dynamic performance-based score calculated from daily attendance, worklog submission deadlines, sprint tasks, and approved institutional leaves."
+        title="Reward Points & Performance Score"
+        description="Dynamic performance scoring based on daily attendance, worklog compliance, sprint tasks, scheduled LinkedIn posts, and institutional leave allowances."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               icon="info"
               onClick={() => setInfoModalOpen(true)}
             >
-              How it works
+              How Scoring Works
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               icon="refresh"
               loading={isRefreshing}
@@ -164,7 +172,7 @@ export function RewardsClient({
               Refresh
             </Button>
             <Link href="/leaderboard">
-              <Button size="sm" icon="trophy">
+              <Button size="sm" variant="primary" icon="trophy">
                 Leaderboard
               </Button>
             </Link>
@@ -172,12 +180,12 @@ export function RewardsClient({
         }
       />
 
-      {/* Hero Performance Card */}
-      <Card className="relative overflow-hidden border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/60 p-5 shadow-sm sm:p-7">
+      {/* Top Hero Card */}
+      <Card className="p-5 sm:p-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-faint)]">
                 Current Performance Score
               </span>
               <Badge tone={getTierBadgeTone(summary.tier)}>
@@ -186,28 +194,36 @@ export function RewardsClient({
               <Badge tone="slate">
                 Base Score: {summary.baseScore}%
               </Badge>
+              {user.role === "STUDENT_ADMIN" ? (
+                <Badge tone="green">Student + Admin</Badge>
+              ) : null}
             </div>
+
             <div className="flex items-baseline gap-3">
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              <h1 className="text-4xl font-extrabold tracking-tight text-[var(--text-strong)] sm:text-5xl">
                 {summary.score}
-                <span className="text-2xl font-semibold text-slate-400">
+                <span className="text-2xl font-normal text-[var(--text-faint)]">
                   / {summary.maxScore}
                 </span>
               </h1>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="text-lg font-bold text-[var(--accent)]">
                 {summary.percentage}%
               </span>
             </div>
-            <p className="max-w-xl text-sm text-slate-600">
-              You began with a base score of {summary.baseScore}%. Verified activities and on-time submissions protect your score; rule violations or missed deadlines deduct configurable percentage points.
+
+            <p className="max-w-xl text-[12.5px] text-[var(--text-muted)]">
+              Eligible cohort members start with a base score of {summary.baseScore}%. On-time submissions, full attendance, and verified tasks maintain your standing, while missed deadlines and unapproved absences deduct configurable percentage points. Scheduled holidays are exempted.
             </p>
           </div>
 
-          {/* Quick Progress Ring or Bar representation */}
-          <div className="flex min-w-[200px] flex-col justify-center rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-              <span>Cohort Standing</span>
-              <span className="font-bold text-slate-800">{summary.percentage}%</span>
+          {/* Quick Standing Progress Gauge */}
+          <div
+            className="flex min-w-[220px] flex-col justify-center rounded-[14px] border p-4 shadow-sm"
+            style={{ background: "var(--surface-sunken)", borderColor: "var(--line-soft)" }}
+          >
+            <div className="flex items-center justify-between text-[12px] font-semibold text-[var(--text-default)]">
+              <span>Performance Tier</span>
+              <span className="font-bold">{summary.percentage}%</span>
             </div>
             <div className="mt-2.5">
               <ProgressBar
@@ -215,7 +231,7 @@ export function RewardsClient({
                 tone={summary.percentage >= 80 ? "green" : summary.percentage >= 65 ? "amber" : "red"}
               />
             </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--text-faint)]">
               <span>Min: {summary.minScore}%</span>
               <span>Target: {summary.maxScore}%</span>
             </div>
@@ -223,30 +239,31 @@ export function RewardsClient({
         </div>
       </Card>
 
-      {/* Category Breakdown Cards */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900">
+      {/* Activity Category Breakdown Cards */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[14px] font-bold text-[var(--text-strong)]">
             Activity Category Breakdown
           </h2>
-          <span className="text-xs text-slate-500">
-            Click any card to filter transaction history
+          <span className="text-[11.5px] text-[var(--text-faint)]">
+            Click any category to filter your ledger
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-7">
           {(
             [
-              "ATTENDANCE",
-              "WORKLOG",
-              "TASK",
               "LEAVE",
+              "WORKLOG",
+              "ATTENDANCE",
+              "LINKEDIN",
               "ON_DUTY",
+              "TASK",
               "OTHER",
             ] as RewardCategory[]
           ).map((cat) => {
             const meta = CATEGORY_META[cat];
-            const data = summary.breakdown[cat] || { additions: 0, deductions: 0, net: 0, count: 0 };
+            const catData = summary.breakdown[cat] || { additions: 0, deductions: 0, net: 0, count: 0 };
             const isSelected = selectedCategory === cat;
 
             return (
@@ -254,44 +271,44 @@ export function RewardsClient({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(isSelected ? "ALL" : cat)}
-                className={`flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all sm:p-4 ${
+                className={`flex flex-col justify-between rounded-[12px] border p-3 text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "border-blue-600 bg-blue-50/60 shadow-sm ring-2 ring-blue-500/20"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                    ? "border-[var(--accent)] bg-[var(--accent)]/10 shadow-sm ring-2 ring-[var(--accent)]/30"
+                    : "border-[var(--line-soft)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)]"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"
+                    className={`flex h-7 w-7 items-center justify-center rounded-[8px] ${
+                      isSelected ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-sunken)] text-[var(--text-default)]"
                     }`}
                   >
-                    <Icon name={meta.icon} className="h-4 w-4" />
+                    <Icon name={meta.icon} className="h-3.5 w-3.5" />
                   </div>
                   <span
-                    className={`text-xs font-bold ${
-                      data.net > 0
-                        ? "text-emerald-600"
-                        : data.net < 0
-                        ? "text-rose-600"
-                        : "text-slate-400"
+                    className={`text-[11px] font-bold ${
+                      catData.net > 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : catData.net < 0
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-[var(--text-faint)]"
                     }`}
                   >
-                    {data.net > 0 ? `+${data.net}` : data.net < 0 ? `${data.net}` : "0"} pts
+                    {catData.net > 0 ? `+${catData.net}%` : catData.net < 0 ? `${catData.net}%` : "0%"}
                   </span>
                 </div>
 
-                <div className="mt-3">
-                  <span className="block text-xs font-semibold text-slate-800">
+                <div className="mt-2.5">
+                  <span className="block text-[12px] font-bold text-[var(--text-strong)]">
                     {meta.label}
                   </span>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-                    <span>{data.count} events</span>
-                    {data.deductions > 0 && (
-                      <span className="font-medium text-rose-500">
-                        -{data.deductions}
+                  <div className="mt-0.5 flex items-center justify-between text-[10.5px] text-[var(--text-faint)]">
+                    <span>{catData.count} events</span>
+                    {catData.deductions > 0 ? (
+                      <span className="font-semibold text-rose-500">
+                        -{catData.deductions}%
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </button>
@@ -301,27 +318,27 @@ export function RewardsClient({
       </div>
 
       {/* Transaction History & Audit Ledger */}
-      <Card className="p-4 sm:p-6">
+      <Card className="space-y-4 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Reward Points Audit Ledger
+            <h3 className="text-[14px] font-bold text-[var(--text-strong)]">
+              Reward Points Activity Ledger
             </h3>
-            <p className="text-xs text-slate-500">
-              Every addition, penalty deduction and manual adjustment with transparent reasons.
+            <p className="text-[11.5px] text-[var(--text-faint)]">
+              Transparent record of all activity deductions, bonus additions, and free allowances.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Filter by Type */}
-            <div className="inline-flex rounded-lg border border-slate-200 p-0.5 text-xs">
+            {/* Filter buttons */}
+            <div className="inline-flex rounded-[8px] border p-0.5 text-[11.5px]" style={{ borderColor: "var(--line-soft)" }}>
               <button
                 type="button"
                 onClick={() => setTypeFilter("ALL")}
-                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`rounded-[6px] px-2.5 py-1 font-semibold transition-colors cursor-pointer ${
                   typeFilter === "ALL"
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-[var(--accent)] text-white shadow-xs"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-strong)]"
                 }`}
               >
                 All
@@ -329,10 +346,10 @@ export function RewardsClient({
               <button
                 type="button"
                 onClick={() => setTypeFilter("DEDUCTIONS")}
-                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`rounded-[6px] px-2.5 py-1 font-semibold transition-colors cursor-pointer ${
                   typeFilter === "DEDUCTIONS"
-                    ? "bg-rose-600 text-white"
-                    : "text-slate-600 hover:text-rose-600"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "text-[var(--text-muted)] hover:text-rose-600"
                 }`}
               >
                 Deductions
@@ -340,177 +357,117 @@ export function RewardsClient({
               <button
                 type="button"
                 onClick={() => setTypeFilter("REWARDS")}
-                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`rounded-[6px] px-2.5 py-1 font-semibold transition-colors cursor-pointer ${
                   typeFilter === "REWARDS"
-                    ? "bg-emerald-600 text-white"
-                    : "text-slate-600 hover:text-emerald-600"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-[var(--text-muted)] hover:text-emerald-600"
                 }`}
               >
                 Additions
               </button>
             </div>
 
-            {/* Clear category filter button if active */}
-            {selectedCategory !== "ALL" && (
+            {selectedCategory !== "ALL" ? (
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 icon="close"
                 onClick={() => setSelectedCategory("ALL")}
               >
-                Clear Category
+                Clear Filter
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="mt-4">
-          <div className="relative">
-            <Icon
-              name="search"
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              placeholder="Search by activity, rule or explanation..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-4 text-xs placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+        {/* Search */}
+        <Field label="Search Ledger" htmlFor="ledger-search">
+          <Input
+            id="ledger-search"
+            placeholder="Search by rule, explanation or activity..."
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          />
+        </Field>
 
-        {/* Ledger List */}
-        <div className="mt-4 divide-y divide-slate-100">
-          {filteredTransactions.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">
-              No transactions found matching your current filter.
-            </div>
-          ) : (
-            filteredTransactions.map((tx) => {
-              const meta = CATEGORY_META[tx.category as RewardCategory] || {
-                label: tx.category,
-                icon: "award",
-                tone: "slate",
-              };
-              const isNegative = tx.points < 0;
+        {/* Table representation */}
+        <TableWrap>
+          <Table>
+            <THead>
+              <TR>
+                <TH>Time</TH>
+                <TH>Category</TH>
+                <TH>Activity / Explanation</TH>
+                <TH className="text-right">Points Impact</TH>
+                <TH className="text-right">Resulting Balance</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {filteredTransactions.length === 0 ? (
+                <TR>
+                  <TD colSpan={5} className="py-8 text-center text-[var(--text-faint)]">
+                    No reward transactions recorded for your account.
+                  </TD>
+                </TR>
+              ) : (
+                filteredTransactions.map((tx) => {
+                  const meta = CATEGORY_META[tx.category as RewardCategory] || {
+                    label: tx.category,
+                    icon: "award",
+                    tone: "slate",
+                  };
+                  const isNegative = tx.points < 0;
 
-              return (
-                <div
-                  key={tx.id}
-                  className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                        isNegative
-                          ? "bg-rose-50 text-rose-600"
-                          : "bg-emerald-50 text-emerald-600"
-                      }`}
-                    >
-                      <Icon name={meta.icon} className="h-4 w-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900">
-                          {tx.rule?.name || tx.ruleCode}
+                  return (
+                    <TR key={tx.id}>
+                      <TD className="text-[11px] text-[var(--text-faint)]">
+                        {relativeTime(tx.createdAt)}
+                      </TD>
+                      <TD>
+                        <Badge tone={meta.tone}>{meta.label}</Badge>
+                      </TD>
+                      <TD className="max-w-[400px] text-[12.5px] text-[var(--text-default)]">
+                        {tx.reason}
+                      </TD>
+                      <TD className="text-right font-mono font-bold">
+                        <span className={isNegative ? "text-rose-600" : "text-emerald-600"}>
+                          {isNegative ? `${tx.points}%` : `+${tx.points}%`}
                         </span>
-                        <Badge tone={meta.tone}>
-                          {meta.label}
-                        </Badge>
-                        {tx.isManual && (
-                          <Badge tone="amber">
-                            Manual Adjustment {tx.actor?.name ? `(${tx.actor.name})` : ""}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-600">{tx.reason}</p>
-                      <span className="block text-[11px] text-slate-400">
-                        {new Date(tx.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Points Impact and Balance */}
-                  <div className="flex shrink-0 items-center justify-between sm:flex-col sm:items-end">
-                    <span
-                      className={`text-sm font-extrabold ${
-                        isNegative ? "text-rose-600" : "text-emerald-600"
-                      }`}
-                    >
-                      {isNegative ? `${tx.points}` : `+${tx.points}`} pts
-                    </span>
-                    <span className="text-[11px] font-medium text-slate-500">
-                      Balance: {tx.newScore}%
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                      </TD>
+                      <TD className="text-right font-mono text-[12px] text-[var(--text-faint)]">
+                        {tx.previousScore}% → <span className="font-bold text-[var(--text-strong)]">{tx.newScore}%</span>
+                      </TD>
+                    </TR>
+                  );
+                })
+              )}
+            </TBody>
+          </Table>
+        </TableWrap>
       </Card>
 
-      {/* Info / Transparency Modal */}
+      {/* Info Modal */}
       <Modal
         open={infoModalOpen}
         onClose={() => setInfoModalOpen(false)}
         title="How Reward Points Work"
+        size="md"
       >
-        <div className="space-y-4 text-xs text-slate-600">
+        <div className="space-y-3.5 text-[12.5px] leading-relaxed text-[var(--text-default)]">
           <p>
-            The KreateUp DesignSeries dynamic scoring system evaluates institutional excellence based on active portal engagement:
+            Your reward score is a real-time index of your academic consistency, worklog compliance, and cohort velocity.
           </p>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-            <h4 className="font-bold text-slate-900">Current Scoring Policy:</h4>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div>
-                <span className="text-slate-500">Base Score:</span>{" "}
-                <span className="font-semibold text-slate-800">{summary.baseScore}%</span>
-              </div>
-              <div>
-                <span className="text-slate-500">Max Score:</span>{" "}
-                <span className="font-semibold text-slate-800">{summary.maxScore}%</span>
-              </div>
-              <div>
-                <span className="text-slate-500">Period:</span>{" "}
-                <span className="font-semibold text-slate-800">{summary.policy.periodType}</span>
-              </div>
-            </div>
+          <ul className="list-disc pl-5 space-y-1.5 text-[var(--text-muted)]">
+            <li><strong>Base Score:</strong> Every student starts at 100%.</li>
+            <li><strong>Free Allowances:</strong> Approved leaves and reasonable grace periods configured by administration do not incur point deductions until your free allowance is exceeded.</li>
+            <li><strong>Holidays:</strong> No deductions are applied on official scheduled holidays or Sundays.</li>
+            <li><strong>Scheduled Submissions:</strong> For scheduled milestones (such as LinkedIn build-in-public posts or worklogs), submissions must be completed on the scheduled dates.</li>
+          </ul>
+          <div className="pt-2 flex justify-end">
+            <Button size="sm" variant="secondary" onClick={() => setInfoModalOpen(false)}>
+              Got it
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <h4 className="font-bold text-slate-900">Active Scoring Rules:</h4>
-            <div className="max-h-60 overflow-y-auto space-y-2 divide-y divide-slate-100 pr-1">
-              {summary.policy.rules.map((rule) => (
-                <div key={rule.id} className="pt-2 text-[11px] flex items-start justify-between">
-                  <div>
-                    <span className="font-semibold text-slate-800">{rule.name}</span>
-                    <p className="text-slate-500">{rule.description}</p>
-                  </div>
-                  <span
-                    className={`ml-2 shrink-0 font-bold ${
-                      rule.type === "DEDUCTION" ? "text-rose-600" : "text-emerald-600"
-                    }`}
-                  >
-                    {rule.type === "DEDUCTION" ? `-${rule.points}%` : `+${rule.points}%`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-500">
-            Points are recalculated against verified website activities. If you spot an irregularity, you can request clarification through the Help & Support module.
-          </p>
         </div>
       </Modal>
     </div>
