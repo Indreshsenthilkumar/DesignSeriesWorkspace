@@ -39,8 +39,10 @@ model User {
   permLinkedinTracker  Boolean            @default(false)
   permScanStudentQr    Boolean            @default(false)
   permAdminDatabase    Boolean            @default(false)
+  permRewardManagement Boolean            @default(false)
   portalNavDisabled    String             @default("")
-  rewardPoints         Int                @default(0)
+  rewardPoints         Int                @default(100)
+  rewardPointsEnabled  Boolean            @default(true)
   avatarSeed           Int                @default(0)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
@@ -57,6 +59,8 @@ model User {
   notifications        Notification[]     @relation("NotificationAuthor")
   notificationReads    NotificationRead[]
   rewardEntries        RewardEntry[]
+  rewardTransactions   RewardTransaction[] @relation("UserRewardTransactions")
+  actedRewardTransactions RewardTransaction[] @relation("RewardActor")
   tasksAssigned        Task[]             @relation("TaskAssignee")
   tasksCreated         Task[]             @relation("TaskAuthor")
   worklogs             Worklog[]
@@ -422,3 +426,70 @@ model FaqArticle {
   @@index([category])
   @@index([module])
 }
+
+model RewardPolicy {
+  id          String       @id @default(cuid())
+  name        String       @default("Standard Academic Performance Policy")
+  baseScore   Int          @default(100)
+  maxScore    Int          @default(100)
+  minScore    Int          @default(0)
+  isActive    Boolean      @default(true)
+  periodType  String       @default("SEMESTER") // "MONTHLY" | "SEMESTER" | "ANNUAL" | "CUSTOM"
+  startDate   String?      // YYYY-MM-DD
+  endDate     String?      // YYYY-MM-DD
+  description String       @default("")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  rules       RewardRule[]
+}
+
+model RewardRule {
+  id                     String              @id @default(cuid())
+  policyId               String?
+  code                   String              @unique
+  name                   String
+  category               String              // "ATTENDANCE" | "LEAVE" | "ON_DUTY" | "WORKLOG" | "TASK" | "OTHER"
+  type                   String              // "DEDUCTION" | "REWARD"
+  points                 Int                 // Amount to deduct or add (e.g. 5, 2, 10)
+  isPercentage           Boolean             @default(true)
+  isEnabled              Boolean             @default(true)
+  description            String              @default("")
+  maxDeductionsPerPeriod Int?
+  gracePeriodDays        Int                 @default(0)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  policy                 RewardPolicy?       @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  transactions           RewardTransaction[]
+
+  @@index([category])
+  @@index([isEnabled])
+}
+
+model RewardTransaction {
+  id            String      @id @default(cuid())
+  userId        String
+  ruleId        String?
+  ruleCode      String
+  category      String      // "ATTENDANCE" | "LEAVE" | "ON_DUTY" | "WORKLOG" | "TASK" | "OTHER" | "MANUAL"
+  type          String      // "DEDUCTION" | "REWARD" | "ADJUSTMENT"
+  points        Int         // signed delta: negative for deduction (e.g. -5), positive for reward (e.g. +10)
+  previousScore Int
+  newScore      Int
+  entityType    String      // "Worklog" | "Attendance" | "LeaveRequest" | "ActivityPass" | "Task" | "LinkedinPost" | "Manual"
+  entityId      String      // Entity ID or unique date string (prevents duplicate deductions)
+  reason        String
+  meta          String      @default("") // JSON string with extra details
+  isManual      Boolean     @default(false)
+  actorId       String?
+  createdAt     DateTime    @default(now())
+  user          User        @relation("UserRewardTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  rule          RewardRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  actor         User?       @relation("RewardActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, ruleCode, entityId])
+  @@index([userId, createdAt])
+  @@index([category])
+  @@index([ruleCode])
+  @@index([createdAt])
+}
+

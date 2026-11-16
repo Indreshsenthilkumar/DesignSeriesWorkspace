@@ -27,6 +27,7 @@ const createSchema = z.object({
   role: z.enum(ROLES).default("STUDENT"),
   password: z.string().min(3).max(200).optional(),
   portalNavDisabled: z.string().max(500).optional().default(""),
+  rewardPointsEnabled: z.boolean().optional().default(true),
   ...permissionShape,
 });
 
@@ -119,6 +120,7 @@ const updateSchema = z.object({
   systemStatus: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
   resetPassword: z.string().min(10).max(200).optional(),
   portalNavDisabled: z.string().max(500).optional(),
+  rewardPointsEnabled: z.boolean().optional(),
   ...permissionShape,
 });
 

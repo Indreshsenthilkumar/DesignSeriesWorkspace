@@ -44,6 +44,12 @@ export const STUDENT_NAV: NavItem[] = [
     description: "Sprint deliverables assigned to you by your mentor.",
   },
   {
+    href: "/rewards",
+    label: "Reward Points",
+    icon: "award",
+    description: "Your dynamic reward score, activity breakdown, transactions and performance.",
+  },
+  {
     href: "/leaves",
     label: "My Leave",
     icon: "calendar",
@@ -176,6 +182,13 @@ export const CONSOLE_NAV: NavItem[] = [
     icon: "layers",
     permission: "permAdminDatabase",
     description: "Export raw tables and read the audit trail.",
+  },
+  {
+    href: "/console/rewards",
+    label: "Reward Points",
+    icon: "award",
+    permission: "permRewardManagement",
+    description: "Manage scoring policies, rules, deductions, user performance and audit logs.",
   },
   {
     href: "/console/support",

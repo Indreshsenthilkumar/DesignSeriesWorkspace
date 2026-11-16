@@ -43,6 +43,7 @@ export const PERMISSIONS = [
   "permLinkedinTracker",
   "permScanStudentQr",
   "permAdminDatabase",
+  "permRewardManagement",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -59,6 +60,7 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   permLinkedinTracker: "LinkedIn tracker",
   permScanStudentQr: "QR check-in",
   permAdminDatabase: "Data & audit",
+  permRewardManagement: "Reward Points",
 };
 
 export const PERMISSION_HINT: Record<Permission, string> = {
@@ -74,6 +76,7 @@ export const PERMISSION_HINT: Record<Permission, string> = {
   permLinkedinTracker: "Verify build-in-public posts submitted by students.",
   permScanStudentQr: "Mark attendance on behalf of a student at the studio door.",
   permAdminDatabase: "Export raw tables and read the audit trail.",
+  permRewardManagement: "Configure scoring policies, activity rules, deductions, user performance and audit logs.",
 };
 
 // ---------------------------------------------------------------------------
@@ -85,6 +88,7 @@ export const PORTAL_MODULES = [
   { key: "attendance", href: "/attendance", label: "Missed OTP Attendance", hint: "Check in for the day and review your hour-by-hour history." },
   { key: "worklog", href: "/worklog", label: "Worklog", hint: "Log what you worked on in each slot and track mentor remarks." },
   { key: "tasks", href: "/tasks", label: "Tasks", hint: "Sprint deliverables assigned to you by your mentor." },
+  { key: "rewards", href: "/rewards", label: "Reward Points", hint: "Your dynamic reward score, activity breakdown, transactions and performance." },
   { key: "leaves", href: "/leaves", label: "My Leave", hint: "Apply for leaves or OnDuty requests and track mentor approvals." },
   { key: "passes", href: "/passes", label: "Activity passes", hint: "Request a gate pass and carry the approved slip on your phone." },
   { key: "announcements", href: "/announcements", label: "Announcements", hint: "Programme-wide notices from the DesignSeries team." },

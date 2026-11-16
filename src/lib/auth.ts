@@ -120,6 +120,7 @@ export async function getCurrentUser() {
       role: true,
       systemStatus: true,
       rewardPoints: true,
+      rewardPointsEnabled: true,
       avatarSeed: true,
       mustChangePassword: true,
       lastLoginAt: true,
@@ -136,6 +137,7 @@ export async function getCurrentUser() {
       permExtensionRequest: true,
       permAdminDatabase: true,
       permActivityApproval: true,
+      permRewardManagement: true,
       portalNavDisabled: true,
     },
   });

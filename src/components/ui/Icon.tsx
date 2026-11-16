@@ -11,7 +11,7 @@
  */
 
 import {
-  AlertTriangle, ArrowRight, ArrowUpRight, Bell, BookOpen, Calendar, Check, CheckCircle2,
+  AlertTriangle, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, Calendar, Check, CheckCircle2,
   ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Ellipsis,
   Eye, EyeOff, Filter, Flag, Info, Layers, LayoutGrid, Link2,
   Loader2, Lock, LogOut, Mail, Menu, Minus, Moon, Pencil, Phone,
@@ -31,7 +31,7 @@ export type IconName =
   | "logout" | "menu" | "more" | "alert" | "info" | "pin" | "edit" | "trash"
   | "link" | "linkedin" | "github" | "mail" | "phone" | "sparkle" | "target"
   | "flag" | "lock" | "eye" | "eye-off" | "refresh" | "qr" | "ticket" | "book"
-  | "trophy" | "spinner";
+  | "trophy" | "award" | "spinner";
 
 /** Lucide accepts `absoluteStrokeWidth`; the plain SVG brand marks ignore it. */
 type Glyph = (props: SVGProps<SVGSVGElement> & { absoluteStrokeWidth?: boolean }) => React.ReactNode;
@@ -90,6 +90,7 @@ const MAP: Record<IconName, Glyph> = {
   ticket: Ticket,
   book: BookOpen,
   trophy: Trophy,
+  award: Award,
   spinner: Loader2,
 };
 
