@@ -84,7 +84,13 @@ export function PeopleClient({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return people.filter((person) => {
-      if (role !== "ALL" && person.role !== role) return false;
+      if (role !== "ALL") {
+        if (role === "STUDENT") {
+          if (person.role !== "STUDENT" && person.role !== "STUDENT_ADMIN") return false;
+        } else if (person.role !== role) {
+          return false;
+        }
+      }
       if (department !== "ALL" && person.department !== department) return false;
       if (year !== "ALL" && person.year !== year) return false;
       if (domain !== "ALL" && person.domain !== domain) return false;
@@ -192,7 +198,7 @@ export function PeopleClient({
             <option value="ALL">All roles</option>
             {ROLES.map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABEL[r]}
+                {r === "STUDENT" ? "Students (incl. Student+ Admin)" : ROLE_LABEL[r]}
               </option>
             ))}
           </Select>

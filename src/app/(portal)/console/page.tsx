@@ -373,7 +373,7 @@ async function lowAttendanceStudents() {
 
   const [students, rows] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "STUDENT", systemStatus: "ACTIVE" },
+      where: { role: { in: ["STUDENT", "STUDENT_ADMIN"] }, systemStatus: "ACTIVE" },
       select: { id: true, name: true, domain: true },
     }),
     prisma.attendance.groupBy({

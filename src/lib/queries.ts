@@ -382,7 +382,11 @@ export async function cohortAttendance(
 ) {
   const users = await prisma.user.findMany({
     where: {
-      ...(filters.role && filters.role !== "ALL" ? { role: filters.role as any } : {}),
+      ...(filters.role && filters.role !== "ALL"
+        ? filters.role === "STUDENT"
+          ? { role: { in: ["STUDENT", "STUDENT_ADMIN"] } }
+          : { role: filters.role as any }
+        : {}),
       ...(filters.year && filters.year !== "ALL" ? { year: filters.year } : {}),
       ...(filters.domain && filters.domain !== "ALL" ? { domain: filters.domain } : {}),
     },

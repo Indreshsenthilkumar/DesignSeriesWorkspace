@@ -86,7 +86,7 @@ export function WorklogMonthlyGrid({
   const filteredRows = useMemo(() => {
     return rows.filter((r) => {
       // Role filter
-      if (roleFilter === "STUDENT" && r.role !== "STUDENT") return false;
+      if (roleFilter === "STUDENT" && r.role !== "STUDENT" && r.role !== "STUDENT_ADMIN") return false;
       if (
         roleFilter === "STUDENT_ADMIN" &&
         r.role !== "STUDENT_ADMIN" &&
@@ -250,7 +250,7 @@ export function WorklogMonthlyGrid({
           aria-label="Filter by role"
         >
           <option value="ALL">All Roles</option>
-          <option value="STUDENT">Students Only</option>
+          <option value="STUDENT">Students (incl. Student+ Admin)</option>
           <option value="STUDENT_ADMIN">Student + Admin Only</option>
         </select>
 

@@ -128,7 +128,8 @@ export function AttendanceMatrix({
               onChange={(e) => applyRange(from, to, filters.year, filters.domain, e.target.value)}
             >
               <option value="ALL">All roles</option>
-              <option value="STUDENT">Students</option>
+              <option value="STUDENT">Students (incl. Student+ Admin)</option>
+              <option value="STUDENT_ADMIN">Student + Admin Only</option>
               <option value="MENTOR">Mentors</option>
               <option value="ADMIN">Admins</option>
             </Select>
@@ -267,7 +268,7 @@ export function AttendanceMatrix({
               <tbody>
                 {filtered.map((student) => {
                   const role = student.role || "STUDENT";
-                  const roleTone = role === "ADMIN" ? "red" : role === "MENTOR" ? "amber" : "slate";
+                  const roleTone = role === "ADMIN" ? "red" : role === "MENTOR" ? "amber" : role === "STUDENT_ADMIN" ? "green" : "slate";
 
                   return (
                     <tr key={student.id} className="border-b last:border-0 hover:bg-[var(--surface-inset)]/30 transition-colors" style={{ borderColor: "var(--line-soft)" }}>
@@ -532,7 +533,7 @@ function ManualEntryDialog({
   };
 
   const role = student.role || "STUDENT";
-  const roleTone = role === "ADMIN" ? "red" : role === "MENTOR" ? "amber" : "slate";
+  const roleTone = role === "ADMIN" ? "red" : role === "MENTOR" ? "amber" : role === "STUDENT_ADMIN" ? "green" : "slate";
 
   return (
     <Modal

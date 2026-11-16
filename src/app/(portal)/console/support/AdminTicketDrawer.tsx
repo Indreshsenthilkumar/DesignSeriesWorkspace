@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -106,6 +106,12 @@ export function AdminTicketDrawer({
   const categoryConfig = CATEGORIES_CONFIG[ticket.category as TicketCategory];
   const moduleConfig = MODULES_CONFIG[ticket.module as TicketModule];
   const isOverdue = ticket.slaDueAt && new Date(ticket.slaDueAt) < new Date() && ticket.status !== "RESOLVED" && ticket.status !== "CLOSED";
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [ticket.messages]);
 
   // Send reply or internal note
   const handleSendMessage = async () => {
@@ -241,7 +247,8 @@ export function AdminTicketDrawer({
             style={{ background: "var(--surface-sunken)", borderColor: "var(--line-soft)" }}
           >
             {ticket.messages.map((msg) => {
-              const isStaffMsg = msg.senderRole !== "STUDENT";
+              const isStudentSender = msg.senderId === ticket.userId;
+              const isStaffMsg = !isStudentSender;
               const isInternal = msg.isInternalNote;
 
               return (
@@ -274,7 +281,7 @@ export function AdminTicketDrawer({
                   </div>
 
                   <div
-                    className={`max-w-[85%] min-w-0 overflow-hidden break-words [overflow-wrap:anywhere] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
+                    className={`max-w-[85%] min-w-0 break-words break-all [word-break:break-word] [overflow-wrap:anywhere] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
                       isInternal
                         ? "w-full border border-amber-300 bg-amber-50 text-amber-950"
                         : isStaffMsg
@@ -282,11 +289,14 @@ export function AdminTicketDrawer({
                         : "rounded-tl-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#202C33] text-[#111827] dark:text-[#E9EDEF]"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap font-normal break-words [overflow-wrap:anywhere] min-w-0">{msg.message}</p>
+                    <p className="whitespace-pre-wrap font-normal break-words break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 text-[#111827] dark:text-[#E9EDEF]">
+                      {msg.message}
+                    </p>
                   </div>
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Reply Box with Public vs Internal Note Toggle */}
@@ -335,10 +345,18 @@ export function AdminTicketDrawer({
             <textarea
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (messageText.trim() && !sendingMessage) {
+                    handleSendMessage();
+                  }
+                }
+              }}
               placeholder={
                 isInternalNote
-                  ? "Write private internal note visible ONLY to administrators and mentors…"
-                  : "Type your public reply to the student…"
+                  ? "Write private internal note visible ONLY to administrators and mentors… (Press Enter to send, Shift+Enter for newline)"
+                  : "Type your public reply to the student… (Press Enter to send, Shift+Enter for newline)"
               }
               rows={3}
               className={`w-full rounded-[8px] border p-2.5 text-[12.8px] focus:outline-none focus:ring-2 ${

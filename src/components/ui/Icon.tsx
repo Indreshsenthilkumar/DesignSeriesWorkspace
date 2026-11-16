@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Icon layer.
  *
  * Glyphs come from Lucide â€” a real, professionally drawn, consistently
