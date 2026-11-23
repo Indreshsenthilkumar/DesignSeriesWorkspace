@@ -14,6 +14,7 @@ import { ProgressBar } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
 import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { Field, Input } from "@/components/ui/Field";
+import { GmailSectionSearch } from "@/components/ui/GmailSectionSearch";
 import { relativeTime } from "@/lib/dates";
 import type { RewardCategory } from "@/lib/rewards-engine";
 
@@ -381,14 +382,16 @@ export function RewardsClient({
         </div>
 
         {/* Search */}
-        <Field label="Search Ledger" htmlFor="ledger-search">
-          <Input
-            id="ledger-search"
+        <div className="mb-3">
+          <GmailSectionSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
             placeholder="Search by rule, explanation or activity..."
-            value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            totalResults={filteredTransactions.length}
+            hasActiveFilters={Boolean(searchQuery.trim())}
+            onClearAll={() => setSearchQuery("")}
           />
-        </Field>
+        </div>
 
         {/* Table representation */}
         <TableWrap>

@@ -18,6 +18,7 @@ import {
 } from "@/lib/support";
 import { CreateTicketDialog, type StudentProfile, type FaqItem } from "./CreateTicketDialog";
 import { TicketConversationModal, type TicketDetail } from "./TicketConversationModal";
+import { GmailSectionSearch, type SectionFilter } from "@/components/ui/GmailSectionSearch";
 
 export function SupportClient({
   user,
@@ -91,6 +92,42 @@ export function SupportClient({
       return true;
     });
   }, [initialTickets, statusFilter, categoryFilter, searchQuery]);
+
+  const supportFilters: SectionFilter[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "Status",
+        icon: "check-circle",
+        value: statusFilter,
+        onChange: setStatusFilter,
+        options: [
+          { label: "All Statuses", value: "ALL" },
+          { label: "New", value: "NEW" },
+          { label: "Open", value: "OPEN" },
+          { label: "In Progress", value: "IN_PROGRESS" },
+          { label: "Waiting for Student", value: "WAITING_STUDENT" },
+          { label: "Resolved", value: "RESOLVED" },
+          { label: "Closed", value: "CLOSED" },
+        ],
+      },
+      {
+        id: "category",
+        label: "Category",
+        icon: "sparkle",
+        value: categoryFilter,
+        onChange: setCategoryFilter,
+        options: [
+          { label: "All Categories", value: "ALL" },
+          ...(Object.keys(CATEGORIES_CONFIG) as TicketCategory[]).map((cat) => ({
+            label: CATEGORIES_CONFIG[cat].label,
+            value: cat,
+          })),
+        ],
+      },
+    ],
+    [statusFilter, categoryFilter]
+  );
 
   // Filtered FAQs
   const filteredFaqs = useMemo(() => {
@@ -198,64 +235,20 @@ export function SupportClient({
             />
 
             {/* Filter Toolbar */}
-            <div className="mb-4 grid gap-2.5 sm:grid-cols-3">
-              <div className="relative">
-                <span
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-faint)" }}
-                >
-                  <Icon name="search" className="h-3.5 w-3.5" />
-                </span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by ticket ID or subject…"
-                  className="h-9 w-full rounded-[8px] border pl-8 pr-3 text-[12.5px] transition-colors focus:outline-none"
-                  style={{
-                    borderColor: "var(--line-default)",
-                    background: "var(--surface-sunken)",
-                    color: "var(--text-default)",
-                  }}
-                />
-              </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none"
-                style={{
-                  borderColor: "var(--line-default)",
-                  background: "var(--surface-sunken)",
-                  color: "var(--text-default)",
+            <div className="mb-4">
+              <GmailSectionSearch
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                placeholder="Search by ticket ID or subject…"
+                filters={supportFilters}
+                totalResults={filteredTickets.length}
+                hasActiveFilters={statusFilter !== "ALL" || categoryFilter !== "ALL" || Boolean(searchQuery.trim())}
+                onClearAll={() => {
+                  setStatusFilter("ALL");
+                  setCategoryFilter("ALL");
+                  setSearchQuery("");
                 }}
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="NEW">New</option>
-                <option value="OPEN">Open</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="WAITING_STUDENT">Waiting for Student</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="CLOSED">Closed</option>
-              </select>
-
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none"
-                style={{
-                  borderColor: "var(--line-default)",
-                  background: "var(--surface-sunken)",
-                  color: "var(--text-default)",
-                }}
-              >
-                <option value="ALL">All Categories</option>
-                {(Object.keys(CATEGORIES_CONFIG) as TicketCategory[]).map((cat) => (
-                  <option key={cat} value={cat}>
-                    {CATEGORIES_CONFIG[cat].label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {filteredTickets.length === 0 ? (

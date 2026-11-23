@@ -20,6 +20,7 @@ import {
   type TicketStatus,
 } from "@/lib/support";
 import { AdminTicketDrawer, type AdminTicketDetail } from "./AdminTicketDrawer";
+import { GmailSectionSearch, type SectionFilter } from "@/components/ui/GmailSectionSearch";
 
 export function AdminSupportClient({
   currentUser,
@@ -99,6 +100,53 @@ export function AdminSupportClient({
       return true;
     });
   }, [initialTickets, activeTab, categoryFilter, priorityFilter, assigneeFilter, searchQuery, currentUser.id]);
+
+  const adminSupportFilters: SectionFilter[] = useMemo(
+    () => [
+      {
+        id: "category",
+        label: "Category",
+        icon: "sparkle",
+        value: categoryFilter,
+        onChange: setCategoryFilter,
+        options: [
+          { label: "All Categories", value: "ALL" },
+          ...(Object.keys(CATEGORIES_CONFIG) as TicketCategory[]).map((cat) => ({
+            label: CATEGORIES_CONFIG[cat].label,
+            value: cat,
+          })),
+        ],
+      },
+      {
+        id: "priority",
+        label: "Priority",
+        icon: "alert",
+        value: priorityFilter,
+        onChange: setPriorityFilter,
+        options: [
+          { label: "All Priorities", value: "ALL" },
+          { label: "Critical", value: "CRITICAL" },
+          { label: "High", value: "HIGH" },
+          { label: "Medium", value: "MEDIUM" },
+          { label: "Low", value: "LOW" },
+        ],
+      },
+      {
+        id: "assignee",
+        label: "Assignee",
+        icon: "user",
+        value: assigneeFilter,
+        onChange: setAssigneeFilter,
+        options: [
+          { label: "All Assignees", value: "ALL" },
+          { label: "Assigned to Me", value: "ME" },
+          { label: "Unassigned", value: "UNASSIGNED" },
+          ...staffList.map((s) => ({ label: s.name, value: s.id })),
+        ],
+      },
+    ],
+    [categoryFilter, priorityFilter, assigneeFilter, staffList]
+  );
 
   // Bulk Actions
   const handleBulkStatus = async (status: string) => {
@@ -223,86 +271,21 @@ export function AdminSupportClient({
           />
         </div>
 
-        {/* Search & Multi-Filters Card */}
-        <Card>
-          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="relative">
-              <span
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-faint)" }}
-              >
-                <Icon name="search" className="h-3.5 w-3.5" />
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ticket, roll no, or student…"
-                className="h-9 w-full rounded-[8px] border pl-8 pr-3 text-[12.5px] focus:outline-none"
-                style={{
-                  borderColor: "var(--line-default)",
-                  background: "var(--surface-sunken)",
-                  color: "var(--text-default)",
-                }}
-              />
-            </div>
-
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none"
-              style={{
-                borderColor: "var(--line-default)",
-                background: "var(--surface-sunken)",
-                color: "var(--text-default)",
-              }}
-            >
-              <option value="ALL">All Categories</option>
-              {(Object.keys(CATEGORIES_CONFIG) as TicketCategory[]).map((cat) => (
-                <option key={cat} value={cat}>
-                  {CATEGORIES_CONFIG[cat].label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none"
-              style={{
-                borderColor: "var(--line-default)",
-                background: "var(--surface-sunken)",
-                color: "var(--text-default)",
-              }}
-            >
-              <option value="ALL">All Priorities</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-
-            <select
-              value={assigneeFilter}
-              onChange={(e) => setAssigneeFilter(e.target.value)}
-              className="h-9 w-full rounded-[8px] border px-3 text-[12.5px] focus:outline-none"
-              style={{
-                borderColor: "var(--line-default)",
-                background: "var(--surface-sunken)",
-                color: "var(--text-default)",
-              }}
-            >
-              <option value="ALL">All Assignees</option>
-              <option value="ME">Assigned to Me</option>
-              <option value="UNASSIGNED">Unassigned Only</option>
-              {staffList.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </Card>
+        {/* Search & Multi-Filters Toolbar */}
+        <GmailSectionSearch
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search ticket, roll no, or student…"
+          filters={adminSupportFilters}
+          totalResults={filteredTickets.length}
+          hasActiveFilters={categoryFilter !== "ALL" || priorityFilter !== "ALL" || assigneeFilter !== "ALL" || Boolean(searchQuery.trim())}
+          onClearAll={() => {
+            setCategoryFilter("ALL");
+            setPriorityFilter("ALL");
+            setAssigneeFilter("ALL");
+            setSearchQuery("");
+          }}
+        />
 
         {/* Bulk Action Toolbar if items selected */}
         {selectedIds.length > 0 ? (

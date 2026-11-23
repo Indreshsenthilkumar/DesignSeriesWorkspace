@@ -18,6 +18,7 @@ import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Tabl
 import { EmptyRow } from "@/components/ui/EmptyState";
 import { CheckInPanel, type ActiveLeaveInfo } from "@/components/features/CheckInPanel";
 import { BulkImportAttendanceModal } from "@/components/features/BulkImportAttendanceModal";
+import { GmailSectionSearch, type SectionFilter } from "@/components/ui/GmailSectionSearch";
 
 export interface AttendanceHistoryRecord {
   date: string;
@@ -183,6 +184,48 @@ export function AttendanceHistoryView({
       ? "Last 90 Days"
       : "Total";
 
+  const sectionFilters: SectionFilter[] = useMemo(
+    () => [
+      {
+        id: "date",
+        label: "Date",
+        icon: "calendar",
+        value: dateFilter,
+        onChange: setDateFilter,
+        options: [
+          { label: "All Dates", value: "all" },
+          { label: "This Month", value: "this-month" },
+          { label: "Last 30 Days", value: "last-30" },
+          { label: "Last 90 Days", value: "last-90" },
+        ],
+      },
+      {
+        id: "absent",
+        label: "Absent Days",
+        icon: "clock",
+        value: absentFilter,
+        onChange: setAbsentFilter,
+        options: [
+          { label: "All Absent Days", value: "all" },
+          { label: "1.0 Day Absent", value: "1" },
+          { label: "0.5 Day Absent", value: "0.5" },
+        ],
+      },
+      {
+        id: "reason",
+        label: "Reason",
+        icon: "note",
+        value: reasonFilter,
+        onChange: setReasonFilter,
+        options: [
+          { label: "All Reasons", value: "all" },
+          ...uniqueReasons.map((r) => ({ label: r, value: r })),
+        ],
+      },
+    ],
+    [dateFilter, absentFilter, reasonFilter, uniqueReasons]
+  );
+
   return (
     <div className="space-y-5">
       {/* =====================================================================
@@ -255,115 +298,19 @@ export function AttendanceHistoryView({
       </div>
 
       {/* =====================================================================
-          3. Filter & Action Toolbar (Standalone panel)
+          3. Unified Gmail-Style Advanced Search & Filter Toolbar
           ===================================================================== */}
-      <div className="surface p-3.5 sm:p-4 rounded-[14px] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Search Input */}
-          <div className="relative w-full sm:w-auto min-w-[180px] sm:min-w-[230px] flex-1">
-            <Icon
-              name="search"
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-faint)]"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search logs..."
-              className="w-full rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-8 pr-3 text-[12.5px] text-[var(--text-strong)] placeholder-[var(--text-faint)] transition-colors focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:outline-none"
-            />
-          </div>
-
-          {/* Date Filter */}
-          <div className="relative">
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-7 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Dates</option>
-              <option value="this-month">This Month</option>
-              <option value="last-30">Last 30 Days</option>
-              <option value="last-90">Last 90 Days</option>
-            </select>
-            <Icon
-              name="calendar"
-              className="pointer-events-none absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-            />
-            <Icon
-              name="chevron-down"
-              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-            />
-          </div>
-
-          {/* Absent Days Filter */}
-          <div className="relative">
-            <select
-              value={absentFilter}
-              onChange={(e) => setAbsentFilter(e.target.value)}
-              className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Absent Days</option>
-              <option value="1">1.0 Day Absent</option>
-              <option value="0.5">0.5 Day Absent</option>
-            </select>
-            <Icon
-              name="chevron-down"
-              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-            />
-          </div>
-
-          {/* Reason Filter */}
-          <div className="relative max-w-[200px]">
-            <select
-              value={reasonFilter}
-              onChange={(e) => setReasonFilter(e.target.value)}
-              className="w-full appearance-none truncate rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Reasons</option>
-              {uniqueReasons.map((reason) => (
-                <option key={reason} value={reason}>
-                  {reason}
-                </option>
-              ))}
-            </select>
-            <Icon
-              name="chevron-down"
-              className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-faint)]"
-            />
-          </div>
-
-          {/* Clear All */}
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-muted)] hover:text-red-600 transition-colors cursor-pointer"
-            >
-              <Icon name="close" className="h-3 w-3" />
-              Clear All
-            </button>
-          )}
-        </div>
-
-        {/* Right Action: Counter & Refresh Button */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--line-soft)]">
-          <span className="text-[12px] text-[var(--text-muted)]">
-            Showing <span className="font-semibold text-[var(--text-strong)]">{filteredRecords.length}</span> {filteredRecords.length === 1 ? "record" : "records"}
-          </span>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="refresh"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={refreshing ? "[&_svg]:animate-spin" : ""}
-          >
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </Button>
-        </div>
-      </div>
+      <GmailSectionSearch
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        placeholder="Search logs, dates, reasons..."
+        filters={sectionFilters}
+        totalResults={filteredRecords.length}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        onClearAll={clearAllFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       {/* =====================================================================
           4. DESKTOP TABLE VIEW (md:block inside Card)
