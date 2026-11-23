@@ -453,6 +453,22 @@ function MobileDrawer({
   badges: NavBadges;
   onClose: () => void;
 }) {
+  const [signingOut, setSigningOut] = useState(false);
+  const router = useRouter();
+  const toast = useToast();
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Could not sign out", "Check your connection and try again.");
+      setSigningOut(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[70] lg:hidden">
       <div
@@ -465,23 +481,25 @@ function MobileDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col border-r"
+        className="absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col border-r shadow-2xl"
         style={{
           background: "var(--surface-rail)",
-          borderColor: "var(--line-soft)",
+          borderColor: "var(--line-default)",
           animation: "kup-rise 0.26s var(--ease-out-quint) both",
         }}
       >
-        <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-4">
+        <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-4 border-b border-[var(--line-soft)]">
           <LogoLockup height={21} />
-          <button
-            onClick={onClose}
-            aria-label="Close navigation"
-            className="grid h-9 w-9 place-items-center rounded-[10px]"
-            style={{ color: "var(--text-muted)" }}
-          >
-            <Icon name="close" className="h-[18px] w-[18px]" />
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle compact />
+            <button
+              onClick={onClose}
+              aria-label="Close navigation"
+              className="grid h-9 w-9 place-items-center rounded-[10px] text-[var(--text-muted)] hover:bg-[var(--surface-inset)]"
+            >
+              <Icon name="close" className="h-[18px] w-[18px]" />
+            </button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -493,8 +511,23 @@ function MobileDrawer({
           />
         </div>
 
-        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="shrink-0 border-t p-3 space-y-2.5 bg-[var(--surface-raised)]" style={{ borderColor: "var(--line-default)" }}>
+          <div className="flex items-center justify-between rounded-[10px] bg-[var(--surface-inset)] px-2.5 py-1.5 border border-[var(--line-soft)]">
+            <span className="text-[12px] font-semibold text-[var(--text-default)]">Appearance</span>
+            <ThemeToggle />
+          </div>
+
           <UserCard user={user} />
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-2 text-[13px] font-bold text-[var(--color-brand-red)] transition-all active:scale-95 disabled:opacity-50"
+          >
+            <Icon name={signingOut ? "spinner" : "logout"} className={cn("h-4 w-4", signingOut && "animate-spin")} />
+            {signingOut ? "Signing out..." : "Sign Out"}
+          </button>
         </div>
       </div>
     </div>
