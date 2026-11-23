@@ -172,8 +172,8 @@ function TopBar({
     <header
       className="sticky top-0 z-30 border-b backdrop-blur-xl"
       style={{
-        borderColor: "var(--line-soft)",
-        background: "color-mix(in srgb, var(--surface-page) 82%, transparent)",
+        borderColor: "var(--line-default)",
+        background: "color-mix(in srgb, var(--surface-raised) 92%, transparent)",
       }}
     >
       <div className="mx-auto flex w-full max-w-[1420px] items-center px-3 sm:px-4 lg:h-16 lg:px-6">

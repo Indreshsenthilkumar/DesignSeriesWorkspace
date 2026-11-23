@@ -13,7 +13,7 @@ export function TableWrap({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn("overflow-x-auto rounded-[12px] border", className)}
-      style={{ borderColor: "var(--line-soft)" }}
+      style={{ borderColor: "var(--line-default)" }}
     >
       {children}
     </div>
@@ -26,7 +26,7 @@ export function Table({ children, className }: { children: ReactNode; className?
 
 export function THead({ children }: { children: ReactNode }) {
   return (
-    <thead style={{ background: "var(--surface-inset)" }}>
+    <thead style={{ background: "var(--surface-sunken)" }}>
       {children}
     </thead>
   );
@@ -42,11 +42,11 @@ export function TH({
     <th
       scope="col"
       className={cn(
-        "whitespace-nowrap border-b px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.07em]",
+        "whitespace-nowrap border-b px-3.5 py-2.5 text-[11px] font-bold uppercase tracking-[0.08em]",
         numeric && "text-right",
         className
       )}
-      style={{ color: "var(--text-muted)", borderColor: "var(--line-soft)" }}
+      style={{ color: "var(--text-strong)", borderColor: "var(--line-default)" }}
       {...rest}
     >
       {children}
@@ -74,7 +74,7 @@ export function TR({
         interactive && "hover:bg-[var(--surface-inset)]",
         className
       )}
-      style={{ borderColor: "var(--line-soft)" }}
+      style={{ borderColor: "var(--line-default)" }}
     >
       {children}
     </tr>

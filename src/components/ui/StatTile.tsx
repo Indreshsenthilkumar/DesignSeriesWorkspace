@@ -40,13 +40,13 @@ export function StatTile({
     <>
       <span
         aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] rounded-l-[15px]"
+        className="absolute inset-y-0 left-0 w-[4px] rounded-l-[15px]"
         style={{ background: "var(--tone)" }}
       />
 
       <div className="flex items-start justify-between gap-3">
         <p
-          className="text-[11px] font-semibold uppercase tracking-[0.09em]"
+          className="text-[11px] font-bold uppercase tracking-[0.09em]"
           style={{ color: "var(--text-muted)" }}
         >
           {label}
@@ -63,7 +63,7 @@ export function StatTile({
 
       <div className="mt-2 flex items-baseline gap-1.5">
         <span
-          className="text-[28px] font-bold leading-none tabular-nums"
+          className="text-[30px] font-extrabold leading-none tabular-nums"
           style={{ color: "var(--text-strong)", letterSpacing: "-0.035em" }}
         >
           {value}

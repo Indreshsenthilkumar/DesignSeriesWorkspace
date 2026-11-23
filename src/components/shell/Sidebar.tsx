@@ -34,7 +34,7 @@ function NavLink({
       )}
       style={{
         background: active ? "var(--accent-soft)" : "transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
+        color: active ? "var(--accent)" : "var(--text-default)",
         fontWeight: active ? 650 : 500,
       }}
     >
