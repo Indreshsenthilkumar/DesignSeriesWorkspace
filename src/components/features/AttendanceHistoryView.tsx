@@ -73,7 +73,12 @@ export function AttendanceHistoryView({
   const [refreshing, setRefreshing] = useState(false);
 
   const todayActiveLeave = useMemo(
-    () => activeLeaves.find((l) => l.fromDate <= today && l.toDate >= today) || null,
+    () =>
+      activeLeaves.find((l) => {
+        const fromDay = l.fromDate.slice(0, 10);
+        const toDay = l.toDate.slice(0, 10);
+        return fromDay <= today && toDay >= today;
+      }) || null,
     [activeLeaves, today]
   );
 
@@ -380,9 +385,11 @@ export function AttendanceHistoryView({
                 <EmptyRow colSpan={5} message="No attendance logs found." />
               ) : (
                 filteredRecords.map((record) => {
-                  const recordLeave = activeLeaves.find(
-                    (l) => l.fromDate <= record.date && l.toDate >= record.date
-                  );
+                  const recordLeave = activeLeaves.find((l) => {
+                    const fromDay = l.fromDate.slice(0, 10);
+                    const toDay = l.toDate.slice(0, 10);
+                    return fromDay <= record.date && toDay >= record.date;
+                  });
                   return (
                   <TR key={record.date} interactive>
                     {/* Column 1: Date */}
@@ -514,9 +521,11 @@ export function AttendanceHistoryView({
         ) : (
           filteredRecords.map((record) => {
             const isOneDay = record.absentDays === 1;
-            const recordLeave = activeLeaves.find(
-              (l) => l.fromDate <= record.date && l.toDate >= record.date
-            );
+            const recordLeave = activeLeaves.find((l) => {
+              const fromDay = l.fromDate.slice(0, 10);
+              const toDay = l.toDate.slice(0, 10);
+              return fromDay <= record.date && toDay >= record.date;
+            });
 
             return (
               <div
@@ -713,11 +722,11 @@ export function AttendanceHistoryView({
               </div>
               <div>
                 <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">From Date</span>
-                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.fromDate, "medium")}</p>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.fromDate.slice(0, 10), "medium")}</p>
               </div>
               <div>
                 <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">To Date</span>
-                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.toDate, "medium")}</p>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.toDate.slice(0, 10), "medium")}</p>
               </div>
               {selectedLeave.duration ? (
                 <div className="col-span-2">

@@ -215,7 +215,7 @@ export function CheckInPanel({
                   </span>
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-amber-900/80 dark:text-amber-200/90">
-                  You have an active leave request covering this date ({formatDay(activeLeave.fromDate, "medium")} – {formatDay(activeLeave.toDate, "medium")}).
+                  You have an approved leave covering this date ({formatDay(activeLeave.fromDate.slice(0, 10), "medium")} – {formatDay(activeLeave.toDate.slice(0, 10), "medium")}).
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-amber-200/60 dark:border-amber-800/40">
                   <span className="text-[12px] font-medium text-amber-800 dark:text-amber-300">
@@ -490,11 +490,11 @@ export function CheckInPanel({
               </div>
               <div>
                 <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">From Date</span>
-                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.fromDate, "medium")}</p>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.fromDate.slice(0, 10), "medium")}</p>
               </div>
               <div>
                 <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">To Date</span>
-                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.toDate, "medium")}</p>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.toDate.slice(0, 10), "medium")}</p>
               </div>
               {activeLeave.duration ? (
                 <div className="col-span-2">
