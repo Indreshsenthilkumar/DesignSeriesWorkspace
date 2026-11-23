@@ -57,11 +57,11 @@ export function GmailSectionSearch({
   const activeFiltersCount = filters.filter((f) => f.value !== "all" && f.value !== "ALL").length;
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full min-w-0 max-w-full", className)}>
       {/* =================================================================== */}
       {/* 1. MOBILE GMAIL-STYLE SEARCH & FILTER (md:hidden)                  */}
       {/* =================================================================== */}
-      <div className="md:hidden flex flex-col gap-2">
+      <div className="md:hidden flex flex-col gap-2 min-w-0 w-full max-w-full">
         {/* Gmail Floating Search Pill */}
         <div
           className={cn(
@@ -108,7 +108,7 @@ export function GmailSectionSearch({
 
         {/* Gmail Horizontal Scrollable Filter Chips Strip */}
         {filters.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none min-w-0 w-full max-w-full">
             {filters.map((filter) => {
               const isDefault = filter.value === "all" || filter.value === "ALL";
               const selectedOption = filter.options.find((o) => o.value === filter.value);

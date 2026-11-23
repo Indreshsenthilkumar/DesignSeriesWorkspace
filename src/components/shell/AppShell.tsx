@@ -95,7 +95,7 @@ export function AppShell({
   ).slice(0, 4);
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh w-full max-w-full overflow-x-hidden">
       <Sidebar
         studentNav={studentNav}
         consoleNav={consoleNav}
@@ -103,7 +103,7 @@ export function AppShell({
         footer={<UserCard user={user} />}
       />
 
-      <div className="lg:pl-[252px]">
+      <div className="w-full max-w-full overflow-x-hidden lg:pl-[252px]">
         <TopBar
           user={user}
           today={today}
@@ -115,7 +115,7 @@ export function AppShell({
 
         <main
           id="main"
-          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-4 sm:px-6 sm:pt-6 md:pb-[calc(env(safe-area-inset-bottom)+32px)] lg:pb-10"
+          className="mx-auto w-full max-w-[1420px] min-w-0 overflow-x-hidden px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-4 sm:px-6 sm:pt-6 md:pb-[calc(env(safe-area-inset-bottom)+32px)] lg:pb-10"
         >
           {children}
         </main>

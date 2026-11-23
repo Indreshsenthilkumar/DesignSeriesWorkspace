@@ -112,7 +112,7 @@ export function StatTile({
   );
 
   const classes = cn(
-    "surface group relative block overflow-hidden p-4 pl-5",
+    "surface group relative block overflow-hidden p-4 pl-5 min-w-0 w-full",
     href && "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)]",
     className
   );

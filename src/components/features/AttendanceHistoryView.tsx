@@ -233,26 +233,25 @@ export function AttendanceHistoryView({
           ===================================================================== */}
       <PageHeader
         title="Missed OTP Attendance history"
-        description="Track and manage attendance logs."
         actions={
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              icon="plus"
+              className="w-full sm:w-auto justify-center"
+            >
+              Add attendance hour
+            </Button>
             {canManage && (
               <Button
                 variant="secondary"
                 onClick={() => setImportModalOpen(true)}
                 icon="upload"
-                className="flex-1 sm:flex-initial"
+                className="w-full sm:w-auto justify-center"
               >
                 Import Sheet / CSV
               </Button>
             )}
-            <Button
-              onClick={() => setAddModalOpen(true)}
-              icon="plus"
-              className="flex-1 sm:flex-initial"
-            >
-              Add attendance hour
-            </Button>
           </div>
         }
       />
@@ -533,7 +532,7 @@ export function AttendanceHistoryView({
                   </div>
 
                   {/* Hours Circles Row */}
-                  <div className="flex items-center gap-1.5 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                     {record.hours.length === 0 ? (
                       <span className="text-[12px] text-[var(--text-faint)]">—</span>
                     ) : (

@@ -489,23 +489,25 @@ export function AdminRewardsClient({
         title="Reward Points & Performance Management"
         description="Configure dynamic activity-based rules, schedule exempted holidays, monitor student scores, and audit compliance."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="primary"
+              size="sm"
+              icon="plus"
+              onClick={() => handleOpenAddRule("LEAVE")}
+              className="w-full sm:w-auto justify-center"
+            >
+              Add Custom Rule
+            </Button>
             <Button
               variant="secondary"
               size="sm"
               icon="refresh"
               loading={recalculating}
               onClick={handleRecalculateAll}
+              className="w-full sm:w-auto justify-center"
             >
               Recalculate All Scores
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              icon="plus"
-              onClick={() => handleOpenAddRule("LEAVE")}
-            >
-              Add Custom Rule
             </Button>
           </div>
         }

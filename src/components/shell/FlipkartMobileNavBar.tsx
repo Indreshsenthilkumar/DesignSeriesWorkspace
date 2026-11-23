@@ -72,7 +72,7 @@ export function FlipkartMobileNavBar({
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-3.5 right-3.5 z-40 mx-auto max-w-[430px] md:hidden"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-0 right-0 z-40 mx-auto w-[calc(100%-28px)] max-w-[420px] md:hidden pointer-events-auto"
     >
       {/* Floating Pill Container: White background (#FFFFFF), fully rounded, light-grey border, soft elegant shadow */}
       <div

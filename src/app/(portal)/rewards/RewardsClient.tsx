@@ -154,12 +154,18 @@ export function RewardsClient({
         title="Reward Points & Performance Score"
         description="Dynamic performance scoring based on daily attendance, worklog compliance, sprint tasks, scheduled LinkedIn posts, and institutional leave allowances."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Link href="/leaderboard" className="w-full sm:w-auto">
+              <Button size="sm" variant="primary" icon="trophy" className="w-full sm:w-auto justify-center">
+                Leaderboard
+              </Button>
+            </Link>
             <Button
               variant="secondary"
               size="sm"
               icon="info"
               onClick={() => setInfoModalOpen(true)}
+              className="w-full sm:w-auto justify-center"
             >
               How Scoring Works
             </Button>
@@ -169,14 +175,10 @@ export function RewardsClient({
               icon="refresh"
               loading={isRefreshing}
               onClick={handleRefresh}
+              className="w-full sm:w-auto justify-center"
             >
               Refresh
             </Button>
-            <Link href="/leaderboard">
-              <Button size="sm" variant="primary" icon="trophy">
-                Leaderboard
-              </Button>
-            </Link>
           </div>
         }
       />

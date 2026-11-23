@@ -22,19 +22,23 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("mb-5", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <header className={cn("mb-5 w-full min-w-0 max-w-full", className)}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 w-full">
         <div className="min-w-0">
           <h1
-            className="text-[22px] font-bold leading-tight sm:text-[25px]"
+            className="text-[20px] font-bold leading-tight sm:text-[25px] break-words"
             style={{ letterSpacing: "-0.03em" }}
           >
             {title}
           </h1>
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto min-w-0">
+            {actions}
+          </div>
+        ) : null}
       </div>
-      {children ? <div className="mt-4">{children}</div> : null}
+      {children ? <div className="mt-4 min-w-0 w-full">{children}</div> : null}
     </header>
   );
 }
