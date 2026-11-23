@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { audit, fail, handler, ok } from "@/lib/api";
 import { requireApiPermission, requireApiUser } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { can, isStaff } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS, REWARD_RULES } from "@/lib/constants";
 import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
@@ -39,26 +39,29 @@ export const POST = handler(async (request: Request) => {
     return fail("Missed OTP Attendance for today closed at 11:30 PM.", 422);
   }
 
-  // Check if user has an APPROVED leave covering this date
-  const userLeaves = await prisma.leaveRequest.findMany({
-    where: {
-      userId: user.id,
-      status: "APPROVED",
-    },
-    select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
-  });
+  // Check if user has an APPROVED leave covering this date (bypassed if manual entry by admin/staff)
+  const isAdminOrStaff = isStaff(user) || can(user, "permAttendanceLogs");
+  if (!isAdminOrStaff) {
+    const userLeaves = await prisma.leaveRequest.findMany({
+      where: {
+        userId: user.id,
+        status: "APPROVED",
+      },
+      select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
+    });
 
-  const activeLeave = userLeaves.find((l) => {
-    const fromDay = l.fromDate.slice(0, 10);
-    const toDay = l.toDate.slice(0, 10);
-    return fromDay <= date && toDay >= date;
-  });
+    const activeLeave = userLeaves.find((l) => {
+      const fromDay = l.fromDate.slice(0, 10);
+      const toDay = l.toDate.slice(0, 10);
+      return fromDay <= date && toDay >= date;
+    });
 
-  if (activeLeave) {
-    return fail(
-      `You have an approved leave (${activeLeave.leaveType}) from ${activeLeave.fromDate.slice(0, 10)} to ${activeLeave.toDate.slice(0, 10)}. Missed OTP attendance cannot be logged for approved leave dates.`,
-      400
-    );
+    if (activeLeave) {
+      return fail(
+        `You have an approved leave (${activeLeave.leaveType}) from ${activeLeave.fromDate.slice(0, 10)} to ${activeLeave.toDate.slice(0, 10)}. Missed OTP attendance cannot be logged for approved leave dates.`,
+        400
+      );
+    }
   }
 
   // Enforce one-submission-per-day rule
@@ -162,7 +165,9 @@ export const PUT = handler(async (request: Request) => {
   if (date > toDayKey()) return fail("You cannot record attendance for a future date.", 422);
 
   // If user is editing their own attendance, ensure they don't have an approved leave on this date
-  if (isSelf) {
+  // Bypassed if manual entry by admin/staff
+  const isAdminOrStaff = isStaff(caller) || can(caller, "permAttendanceLogs");
+  if (isSelf && !isAdminOrStaff) {
     const userLeaves = await prisma.leaveRequest.findMany({
       where: {
         userId,

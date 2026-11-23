@@ -473,7 +473,7 @@ export function AttendanceHistoryView({
 
                     {/* Column 5: Action */}
                     <TD className="text-right">
-                      {recordLeave ? (
+                      {!canManage && recordLeave ? (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -485,14 +485,25 @@ export function AttendanceHistoryView({
                           On Leave
                         </Button>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon="edit"
-                          onClick={() => setEditingRecord(record)}
-                        >
-                          Edit
-                        </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {recordLeave ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLeave(recordLeave)}
+                              className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-300"
+                            >
+                              Leave
+                            </button>
+                          ) : null}
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon="edit"
+                            onClick={() => setEditingRecord(record)}
+                          >
+                            Edit
+                          </Button>
+                        </div>
                       )}
                     </TD>
                   </TR>
@@ -616,7 +627,7 @@ export function AttendanceHistoryView({
                     <Icon name="check-circle" className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">Verified log</span>
                   </div>
-                  {recordLeave ? (
+                  {!canManage && recordLeave ? (
                     <Button
                       size="sm"
                       variant="secondary"
@@ -628,14 +639,25 @@ export function AttendanceHistoryView({
                       On Leave
                     </Button>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      icon="edit"
-                      onClick={() => setEditingRecord(record)}
-                    >
-                      Edit Hours
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      {recordLeave ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLeave(recordLeave)}
+                          className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-300"
+                        >
+                          Leave
+                        </button>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon="edit"
+                        onClick={() => setEditingRecord(record)}
+                      >
+                        Edit Hours
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>

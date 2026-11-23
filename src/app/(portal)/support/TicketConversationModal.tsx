@@ -73,9 +73,6 @@ export function TicketConversationModal({
   const [sending, setSending] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [reopenReason, setReopenReason] = useState("");
-  const [rating, setRating] = useState<number>(ticket.rating || 5);
-  const [feedback, setFeedback] = useState<string>(ticket.feedback || "");
-  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -137,29 +134,6 @@ export function TicketConversationModal({
       toast.error("Network error");
     } finally {
       setSending(false);
-    }
-  };
-
-  // Submit satisfaction feedback
-  const handleFeedback = async () => {
-    setSubmittingFeedback(true);
-    try {
-      const res = await fetch(`/api/support/tickets/${ticket.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, feedback }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        toast.error("Feedback error", data.error);
-        return;
-      }
-      toast.success("Thank you!", "Your feedback has been saved.");
-      onTicketUpdated();
-    } catch {
-      toast.error("Network error");
-    } finally {
-      setSubmittingFeedback(false);
     }
   };
 
@@ -226,46 +200,6 @@ export function TicketConversationModal({
               </Button>
               <Button size="sm" variant="primary" loading={sending} onClick={handleReopen}>
                 Reopen Ticket
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Satisfaction Rating Form if Resolved */}
-        {ticket.status === "RESOLVED" && !ticket.rating ? (
-          <div
-            className="rounded-[12px] border p-3 text-emerald-950"
-            style={{ background: "#ECFDF5", borderColor: "#A7F3D0" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-[13px] font-bold text-emerald-900">How was your support experience?</h4>
-                <p className="text-[11.5px] text-emerald-800">Rate your resolution to help improve mentor assistance.</p>
-              </div>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className="text-[20px] transition-transform hover:scale-125"
-                    style={{ color: star <= rating ? "#F59E0B" : "#D1D5DB" }}
-                  >
-                    ★
-                  </button>
-                ))}
-              </div>
-            </div>
-            <input
-              type="text"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Optional comments for the mentor..."
-              className="mt-2 w-full rounded-[8px] border border-emerald-300 bg-white px-3 py-1.5 text-[12px] text-gray-900 focus:outline-none"
-            />
-            <div className="mt-2 flex justify-end">
-              <Button size="sm" variant="success" loading={submittingFeedback} onClick={handleFeedback}>
-                Submit Rating
               </Button>
             </div>
           </div>

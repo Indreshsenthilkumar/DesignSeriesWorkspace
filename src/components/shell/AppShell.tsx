@@ -18,6 +18,7 @@ import { formatDay } from "@/lib/dates";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar, SidebarNav, type NavBadges } from "./Sidebar";
 import { FlipkartMobileNavBar } from "./FlipkartMobileNavBar";
+import { GmailMobileSearch } from "./GmailMobileSearch";
 import { SupportNotificationListener } from "@/components/features/SupportNotificationListener";
 
 export type ShellUser = {
@@ -175,73 +176,62 @@ function TopBar({
         background: "color-mix(in srgb, var(--surface-page) 82%, transparent)",
       }}
     >
-      <div className="mx-auto flex h-14 w-full max-w-[1420px] items-center gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
-        {/* Mobile: menu + mark. Desktop: page title + date. */}
-        <button
-          onClick={onOpenDrawer}
-          aria-label="Open navigation"
-          className="-ml-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-[10px] lg:hidden"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <Icon name="menu" className="h-[19px] w-[19px]" />
-        </button>
-
-        <Link href="/dashboard" className="shrink-0 lg:hidden" aria-label="DesignSeries Portal">
-          <LogoMark size={30} />
-        </Link>
-
-        <div className="hidden min-w-0 lg:block">
-          <h1 className="truncate text-[17px] font-semibold leading-tight">{title}</h1>
-          <p className="text-[11.5px]" style={{ color: "var(--text-muted)" }}>
-            {formatDay(today, "long")}
-          </p>
+      <div className="mx-auto flex w-full max-w-[1420px] items-center px-3 sm:px-4 lg:h-16 lg:px-6">
+        {/* Mobile View Only: Unified Gmail Floating Search Bar */}
+        <div className="w-full lg:hidden">
+          <GmailMobileSearch
+            user={user}
+            unreadAnnouncements={unread}
+            onOpenDrawer={onOpenDrawer}
+          />
         </div>
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
-          <button
-            onClick={onOpenPalette}
-            className="hidden h-9 w-56 items-center gap-2 rounded-[10px] border px-3 text-left text-[13px] transition-colors hover:border-[var(--accent)] md:flex xl:w-72"
-            style={{ borderColor: "var(--line-default)", color: "var(--text-faint)", background: "var(--surface-raised)" }}
-          >
-            <Icon name="search" className="h-4 w-4 shrink-0" />
-            <span className="truncate">Search…</span>
-            <kbd
-              className="ml-auto shrink-0 rounded-[5px] border px-1.5 py-px text-[10px] font-semibold"
-              style={{ borderColor: "var(--line-default)" }}
+        {/* Desktop View: Title + Search + Actions */}
+        <div className="hidden w-full items-center justify-between gap-3 lg:flex">
+          <div className="min-w-0">
+            <h1 className="truncate text-[17px] font-semibold leading-tight">{title}</h1>
+            <p className="text-[11.5px]" style={{ color: "var(--text-muted)" }}>
+              {formatDay(today, "long")}
+            </p>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+            <button
+              onClick={onOpenPalette}
+              className="flex h-9 w-56 items-center gap-2 rounded-[10px] border px-3 text-left text-[13px] transition-colors hover:border-[var(--accent)] xl:w-72"
+              style={{ borderColor: "var(--line-default)", color: "var(--text-faint)", background: "var(--surface-raised)" }}
             >
-              ⌘K
-            </kbd>
-          </button>
-
-          <button
-            onClick={onOpenPalette}
-            aria-label="Search"
-            className="grid h-9 w-9 place-items-center rounded-[10px] transition-colors hover:bg-[var(--surface-inset)] md:hidden"
-            style={{ color: "var(--text-muted)" }}
-          >
-            <Icon name="search" className="h-[18px] w-[18px]" />
-          </button>
-
-          <Link
-            href="/announcements"
-            aria-label={unread ? `Announcements, ${unread} unread` : "Announcements"}
-            className="relative grid h-9 w-9 place-items-center rounded-[10px] transition-colors hover:bg-[var(--surface-inset)]"
-            style={{ color: "var(--text-muted)" }}
-          >
-            <Icon name="bell" className="h-[18px] w-[18px]" />
-            {unread > 0 ? (
-              <span
-                className="absolute right-1.5 top-1.5 grid h-[15px] min-w-[15px] place-items-center rounded-full px-[3px] text-[9px] font-bold text-white"
-                style={{ background: "var(--color-brand-red)" }}
+              <Icon name="search" className="h-4 w-4 shrink-0" />
+              <span className="truncate">Search…</span>
+              <kbd
+                className="ml-auto shrink-0 rounded-[5px] border px-1.5 py-px text-[10px] font-semibold"
+                style={{ borderColor: "var(--line-default)" }}
               >
-                {unread > 9 ? "9+" : unread}
-              </span>
-            ) : null}
-          </Link>
+                ⌘K
+              </kbd>
+            </button>
 
-          <ThemeToggle compact />
+            <Link
+              href="/announcements"
+              aria-label={unread ? `Announcements, ${unread} unread` : "Announcements"}
+              className="relative grid h-9 w-9 place-items-center rounded-[10px] transition-colors hover:bg-[var(--surface-inset)]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <Icon name="bell" className="h-[18px] w-[18px]" />
+              {unread > 0 ? (
+                <span
+                  className="absolute right-1.5 top-1.5 grid h-[15px] min-w-[15px] place-items-center rounded-full px-[3px] text-[9px] font-bold text-white"
+                  style={{ background: "var(--color-brand-red)" }}
+                >
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              ) : null}
+            </Link>
 
-          <UserMenu user={user} />
+            <ThemeToggle compact />
+
+            <UserMenu user={user} />
+          </div>
         </div>
       </div>
     </header>

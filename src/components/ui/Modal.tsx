@@ -128,11 +128,6 @@ export function Modal({
             <h2 id="modal-title" className="text-[16px] font-semibold leading-tight">
               {title}
             </h2>
-            {description ? (
-              <p className="mt-1 text-[12.5px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                {description}
-              </p>
-            ) : null}
           </div>
           {dismissible ? (
             <button

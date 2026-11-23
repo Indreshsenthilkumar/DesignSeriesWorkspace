@@ -53,11 +53,6 @@ export function CardHeader({
         ) : null}
         <div className="min-w-0 flex-1">
           <h2 className="text-[15px] font-semibold leading-tight break-words">{title}</h2>
-          {subtitle ? (
-            <p className="mt-0.5 text-[12.5px] leading-snug break-words" style={{ color: "var(--text-muted)" }}>
-              {subtitle}
-            </p>
-          ) : null}
         </div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
