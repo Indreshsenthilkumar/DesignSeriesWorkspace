@@ -281,7 +281,8 @@ export function AdminTicketDrawer({
                   </div>
 
                   <div
-                    className={`max-w-[85%] min-w-0 break-words break-all [word-break:break-word] [overflow-wrap:anywhere] rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
+                    style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                    className={`max-w-[85%] min-w-0 break-words break-all rounded-[16px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-xs ${
                       isInternal
                         ? "w-full border border-amber-300 bg-amber-50 text-amber-950"
                         : isStaffMsg
@@ -289,7 +290,10 @@ export function AdminTicketDrawer({
                         : "rounded-tl-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#202C33] text-[#111827] dark:text-[#E9EDEF]"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap font-normal break-words break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 text-[#111827] dark:text-[#E9EDEF]">
+                    <p
+                      style={{ wordBreak: "break-word", overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}
+                      className="font-normal break-words break-all min-w-0 text-[#111827] dark:text-[#E9EDEF]"
+                    >
                       {msg.message}
                     </p>
                   </div>

@@ -300,7 +300,8 @@ export function TicketConversationModal({
                   className={`flex flex-col w-full min-w-0 ${isOutgoing ? "items-end" : "items-start"}`}
                 >
                   <div
-                    className={`relative max-w-[85%] min-w-0 break-words break-all [word-break:break-word] [overflow-wrap:anywhere] px-3.5 py-2.5 shadow-xs transition-all ${
+                    style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                    className={`relative max-w-[85%] min-w-0 break-words break-all px-3.5 py-2.5 shadow-xs transition-all ${
                       isOutgoing
                         ? "rounded-2xl rounded-tr-xs bg-[#DCF8C6] dark:bg-[#005C4B] border border-[#BDE5A7] dark:border-transparent text-[#111827] dark:text-[#E9EDEF]"
                         : "rounded-2xl rounded-tl-xs bg-white dark:bg-[#202C33] border border-gray-200 dark:border-gray-700/80 text-[#111827] dark:text-[#E9EDEF]"
@@ -319,7 +320,10 @@ export function TicketConversationModal({
                     ) : null}
 
                     {/* Message Body with guaranteed high-contrast legible text */}
-                    <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed break-words break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 font-normal text-[#111827] dark:text-[#E9EDEF]">
+                    <p
+                      style={{ wordBreak: "break-word", overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}
+                      className="text-[13.5px] leading-relaxed break-words break-all min-w-0 font-normal text-[#111827] dark:text-[#E9EDEF]"
+                    >
                       {msg.message}
                     </p>
 

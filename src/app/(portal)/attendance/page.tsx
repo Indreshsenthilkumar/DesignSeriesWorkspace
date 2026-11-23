@@ -19,7 +19,7 @@ export default async function AttendancePage() {
   const user = await requireUser();
   const today = toDayKey();
 
-  const [summary, userRecords] = await Promise.all([
+  const [summary, userRecords, activeLeaves] = await Promise.all([
     attendanceSummary(user.id, { days: 30, joinedAt: user.createdAt }),
     prisma.attendance.findMany({
       where: { userId: user.id },
@@ -32,6 +32,21 @@ export default async function AttendancePage() {
         createdAt: true,
       },
       take: 500,
+    }),
+    prisma.leaveRequest.findMany({
+      where: {
+        userId: user.id,
+        status: { in: ["APPROVED", "PENDING"] },
+      },
+      select: {
+        id: true,
+        leaveType: true,
+        fromDate: true,
+        toDate: true,
+        status: true,
+        reason: true,
+        duration: true,
+      },
     }),
   ]);
 
@@ -110,6 +125,7 @@ export default async function AttendancePage() {
         closed={closed}
         canManage={canManage}
         userId={user.id}
+        activeLeaves={activeLeaves}
       />
     </div>
   );

@@ -39,6 +39,24 @@ export const POST = handler(async (request: Request) => {
     return fail("Missed OTP Attendance for today closed at 11:30 PM.", 422);
   }
 
+  // Check if user has an active leave covering this date
+  const activeLeave = await prisma.leaveRequest.findFirst({
+    where: {
+      userId: user.id,
+      status: { in: ["APPROVED", "PENDING"] },
+      fromDate: { lte: date },
+      toDate: { gte: date },
+    },
+    select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
+  });
+
+  if (activeLeave) {
+    return fail(
+      `You have an active leave (${activeLeave.leaveType}) from ${activeLeave.fromDate} to ${activeLeave.toDate}. Missed OTP attendance cannot be logged for leave dates.`,
+      400
+    );
+  }
+
   // Enforce one-submission-per-day rule
   const existingSubmissions = await prisma.attendance.findMany({
     where: { userId: user.id, date },
@@ -138,6 +156,25 @@ export const PUT = handler(async (request: Request) => {
   }
 
   if (date > toDayKey()) return fail("You cannot record attendance for a future date.", 422);
+
+  // If user is editing their own attendance, ensure they don't have an active leave on this date
+  if (isSelf) {
+    const activeLeave = await prisma.leaveRequest.findFirst({
+      where: {
+        userId,
+        status: { in: ["APPROVED", "PENDING"] },
+        fromDate: { lte: date },
+        toDate: { gte: date },
+      },
+      select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
+    });
+    if (activeLeave) {
+      return fail(
+        `You have an active leave (${activeLeave.leaveType}) from ${activeLeave.fromDate} to ${activeLeave.toDate}. Attendance cannot be edited for leave dates.`,
+        400
+      );
+    }
+  }
 
   const target = await prisma.user.findUnique({
     where: { id: userId },

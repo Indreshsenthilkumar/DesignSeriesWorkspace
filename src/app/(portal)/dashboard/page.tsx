@@ -773,7 +773,26 @@ async function StudentDashboard({
   user: Awaited<ReturnType<typeof requireUser>>;
 }) {
   const today = toDayKey();
-  const data = await studentDashboard(user);
+  const [data, todayActiveLeave] = await Promise.all([
+    studentDashboard(user),
+    prisma.leaveRequest.findFirst({
+      where: {
+        userId: user.id,
+        status: { in: ["APPROVED", "PENDING"] },
+        fromDate: { lte: today },
+        toDate: { gte: today },
+      },
+      select: {
+        id: true,
+        leaveType: true,
+        fromDate: true,
+        toDate: true,
+        status: true,
+        reason: true,
+        duration: true,
+      },
+    }),
+  ]);
 
   const closed = minutesSinceMidnight() > ATTENDANCE_CUTOFF_MINUTES;
   const attendanceDelta =
@@ -907,6 +926,7 @@ async function StudentDashboard({
               loggedReason={data.attendance.todayReason}
               closed={closed}
               compact
+              activeLeave={todayActiveLeave}
             />
           </Card>
 

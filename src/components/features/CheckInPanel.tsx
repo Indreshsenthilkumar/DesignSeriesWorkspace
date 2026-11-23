@@ -7,10 +7,21 @@ import { Button } from "@/components/ui/Button";
 import { Field, Textarea } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/constants";
 import { formatDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+
+export interface ActiveLeaveInfo {
+  id: string;
+  leaveType: string;
+  fromDate: string;
+  toDate: string;
+  status: string;
+  reason?: string | null;
+  duration?: string | null;
+}
 
 interface CheckInPanelProps {
   date: string;
@@ -19,6 +30,7 @@ interface CheckInPanelProps {
   /** True once the 23:30 cutoff has passed. */
   closed: boolean;
   compact?: boolean;
+  activeLeave?: ActiveLeaveInfo | null;
 }
 
 /**
@@ -37,6 +49,7 @@ export function CheckInPanel({
   loggedReason,
   closed,
   compact = false,
+  activeLeave = null,
 }: CheckInPanelProps) {
   const router = useRouter();
   const toast = useToast();
@@ -47,6 +60,7 @@ export function CheckInPanel({
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
   // Track double-tap timing for each hour button
   const lastTapRef = useRef<Record<number, number>>({});
@@ -153,7 +167,11 @@ export function CheckInPanel({
         </div>
 
         <div>
-          {hasAlreadySubmitted ? (
+          {activeLeave ? (
+            <Badge tone="amber" icon="calendar">
+              Active Leave ({activeLeave.leaveType})
+            </Badge>
+          ) : hasAlreadySubmitted ? (
             <Badge tone="green" icon="check-circle">
               {logged.size === ATTENDANCE_HOURS.length
                 ? `Full Day Logged (${logged.size}/7 hrs)`
@@ -171,8 +189,48 @@ export function CheckInPanel({
         </div>
       </div>
 
-      {/* --- State 1: Already Submitted for Today (Permanently Locked) ------ */}
-      {hasAlreadySubmitted ? (
+      {/* --- State 0: Active Leave Applied (Hours Hidden & Locked) ----------- */}
+      {activeLeave ? (
+        <div className="space-y-4">
+          <div
+            onClick={() => setLeaveModalOpen(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") setLeaveModalOpen(true);
+            }}
+            className="group relative cursor-pointer rounded-[14px] border border-amber-300 dark:border-amber-700/60 bg-gradient-to-br from-amber-50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 p-4 transition-all hover:border-amber-400 hover:shadow-md"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                <Icon name="calendar" className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-[14.5px] font-bold text-amber-950 dark:text-amber-100">
+                    Active Leave Applied · {activeLeave.leaveType}
+                  </h4>
+                  <span className="rounded-full bg-amber-200/90 dark:bg-amber-800/70 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-100">
+                    {activeLeave.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed text-amber-900/80 dark:text-amber-200/90">
+                  You have an active leave request covering this date ({formatDay(activeLeave.fromDate, "medium")} – {formatDay(activeLeave.toDate, "medium")}).
+                </p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-amber-200/60 dark:border-amber-800/40">
+                  <span className="text-[12px] font-medium text-amber-800 dark:text-amber-300">
+                    Attendance hours cannot be submitted on leave days
+                  </span>
+                  <div className="flex items-center gap-1 text-[12px] font-bold text-amber-700 dark:text-amber-300 group-hover:underline">
+                    <span>View Leave Details</span>
+                    <Icon name="chevron-right" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : hasAlreadySubmitted ? (
         <div className="space-y-4">
           <div className="rounded-[12px] border border-[var(--color-brand-green-200)] bg-[var(--color-brand-green-050)] p-4 dark:border-[var(--color-brand-green-900)] dark:bg-[var(--color-brand-green-950)]">
             <div className="flex items-start gap-3">
@@ -393,6 +451,69 @@ export function CheckInPanel({
           </div>
         </div>
       )}
+
+      {activeLeave ? (
+        <Modal
+          open={leaveModalOpen}
+          onClose={() => setLeaveModalOpen(false)}
+          title="Active Leave Notice"
+          description="Attendance check-in is disabled during your active leave period."
+          size="md"
+          footer={
+            <div className="flex justify-end w-full">
+              <Button variant="secondary" onClick={() => setLeaveModalOpen(false)}>
+                Close
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 py-1 text-[13px]">
+            <div className="rounded-[10px] border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <div className="flex items-start gap-2.5">
+                <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="font-medium text-[12.5px] leading-relaxed">
+                  You currently have an active leave covering this date. Attendance hours cannot be logged for active leave days.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 rounded-[12px] border border-[var(--line-subtle)] bg-[var(--surface-sunken)] p-3.5">
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Leave Type</span>
+                <p className="mt-0.5 font-bold text-[var(--text-strong)] text-[14px]">{activeLeave.leaveType}</p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Status</span>
+                <p className="mt-0.5 font-bold capitalize text-amber-600 dark:text-amber-400 text-[14px]">
+                  {activeLeave.status.toLowerCase()}
+                </p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">From Date</span>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.fromDate, "medium")}</p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">To Date</span>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(activeLeave.toDate, "medium")}</p>
+              </div>
+              {activeLeave.duration ? (
+                <div className="col-span-2">
+                  <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Duration</span>
+                  <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{activeLeave.duration}</p>
+                </div>
+              ) : null}
+              {activeLeave.reason ? (
+                <div className="col-span-2">
+                  <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Reason</span>
+                  <p className="mt-1 text-[12.5px] text-[var(--text-muted)] bg-[var(--surface-raised)] p-2.5 rounded-[8px] border border-[var(--line-subtle)] whitespace-pre-wrap">
+                    {activeLeave.reason}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 }

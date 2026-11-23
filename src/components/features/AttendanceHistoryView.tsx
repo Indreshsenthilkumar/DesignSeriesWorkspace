@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Table, TableWrap, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { EmptyRow } from "@/components/ui/EmptyState";
-import { CheckInPanel } from "@/components/features/CheckInPanel";
+import { CheckInPanel, type ActiveLeaveInfo } from "@/components/features/CheckInPanel";
 import { BulkImportAttendanceModal } from "@/components/features/BulkImportAttendanceModal";
 
 export interface AttendanceHistoryRecord {
@@ -46,6 +46,7 @@ interface AttendanceHistoryViewProps {
   closed: boolean;
   canManage?: boolean;
   userId?: string;
+  activeLeaves?: ActiveLeaveInfo[];
 }
 
 export function AttendanceHistoryView({
@@ -57,6 +58,7 @@ export function AttendanceHistoryView({
   closed,
   canManage = false,
   userId,
+  activeLeaves = [],
 }: AttendanceHistoryViewProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +69,13 @@ export function AttendanceHistoryView({
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceHistoryRecord | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<ActiveLeaveInfo | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const todayActiveLeave = useMemo(
+    () => activeLeaves.find((l) => l.fromDate <= today && l.toDate >= today) || null,
+    [activeLeaves, today]
+  );
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -371,7 +379,11 @@ export function AttendanceHistoryView({
               {filteredRecords.length === 0 ? (
                 <EmptyRow colSpan={5} message="No attendance logs found." />
               ) : (
-                filteredRecords.map((record) => (
+                filteredRecords.map((record) => {
+                  const recordLeave = activeLeaves.find(
+                    (l) => l.fromDate <= record.date && l.toDate >= record.date
+                  );
+                  return (
                   <TR key={record.date} interactive>
                     {/* Column 1: Date */}
                     <TD>
@@ -454,17 +466,31 @@ export function AttendanceHistoryView({
 
                     {/* Column 5: Action */}
                     <TD className="text-right">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        icon="edit"
-                        onClick={() => setEditingRecord(record)}
-                      >
-                        Edit
-                      </Button>
+                      {recordLeave ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon="calendar"
+                          onClick={() => setSelectedLeave(recordLeave)}
+                          title="Click to view active leave details"
+                          className="!bg-amber-100 !text-amber-900 dark:!bg-amber-900/40 dark:!text-amber-200 !border-amber-300 dark:!border-amber-700 hover:!bg-amber-200"
+                        >
+                          On Leave
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon="edit"
+                          onClick={() => setEditingRecord(record)}
+                        >
+                          Edit
+                        </Button>
+                      )}
                     </TD>
                   </TR>
-                ))
+                );
+              })
               )}
             </TBody>
           </Table>
@@ -488,6 +514,9 @@ export function AttendanceHistoryView({
         ) : (
           filteredRecords.map((record) => {
             const isOneDay = record.absentDays === 1;
+            const recordLeave = activeLeaves.find(
+              (l) => l.fromDate <= record.date && l.toDate >= record.date
+            );
 
             return (
               <div
@@ -578,14 +607,27 @@ export function AttendanceHistoryView({
                     <Icon name="check-circle" className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">Verified log</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    icon="edit"
-                    onClick={() => setEditingRecord(record)}
-                  >
-                    Edit Hours
-                  </Button>
+                  {recordLeave ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon="calendar"
+                      onClick={() => setSelectedLeave(recordLeave)}
+                      title="Click to view active leave details"
+                      className="!bg-amber-100 !text-amber-900 dark:!bg-amber-900/40 dark:!text-amber-200 !border-amber-300 dark:!border-amber-700 hover:!bg-amber-200"
+                    >
+                      On Leave
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon="edit"
+                      onClick={() => setEditingRecord(record)}
+                    >
+                      Edit Hours
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -610,6 +652,7 @@ export function AttendanceHistoryView({
             loggedHours={todayHours}
             loggedReason={todayReason}
             closed={closed}
+            activeLeave={todayActiveLeave}
           />
         </div>
       </Modal>
@@ -631,6 +674,69 @@ export function AttendanceHistoryView({
           }}
         />
       )}
+
+      {selectedLeave ? (
+        <Modal
+          open={Boolean(selectedLeave)}
+          onClose={() => setSelectedLeave(null)}
+          title="Active Leave Notice"
+          description="Attendance records cannot be edited for dates during an active leave."
+          size="md"
+          footer={
+            <div className="flex justify-end w-full">
+              <Button variant="secondary" onClick={() => setSelectedLeave(null)}>
+                Close
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 py-1 text-[13px]">
+            <div className="rounded-[10px] border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <div className="flex items-start gap-2.5">
+                <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="font-medium text-[12.5px] leading-relaxed">
+                  You have an active leave request ({selectedLeave.leaveType}) covering this date. Attendance cannot be logged or modified.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 rounded-[12px] border border-[var(--line-subtle)] bg-[var(--surface-sunken)] p-3.5">
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Leave Type</span>
+                <p className="mt-0.5 font-bold text-[var(--text-strong)] text-[14px]">{selectedLeave.leaveType}</p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Status</span>
+                <p className="mt-0.5 font-bold capitalize text-amber-600 dark:text-amber-400 text-[14px]">
+                  {selectedLeave.status.toLowerCase()}
+                </p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">From Date</span>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.fromDate, "medium")}</p>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">To Date</span>
+                <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{formatDay(selectedLeave.toDate, "medium")}</p>
+              </div>
+              {selectedLeave.duration ? (
+                <div className="col-span-2">
+                  <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Duration</span>
+                  <p className="mt-0.5 font-semibold text-[var(--text-strong)]">{selectedLeave.duration}</p>
+                </div>
+              ) : null}
+              {selectedLeave.reason ? (
+                <div className="col-span-2">
+                  <span className="text-[11px] font-medium text-[var(--text-faint)] uppercase tracking-wider">Reason</span>
+                  <p className="mt-1 text-[12.5px] text-[var(--text-muted)] bg-[var(--surface-raised)] p-2.5 rounded-[8px] border border-[var(--line-subtle)] whitespace-pre-wrap">
+                    {selectedLeave.reason}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 }
