@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { AnalyticsChart } from "@/components/ui/AnalyticsChart";
 import { ProgressRing } from "@/components/ui/Progress";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { PersonCell } from "@/components/ui/Avatar";
 import { requireUser } from "@/lib/auth";
 import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS } from "@/lib/constants";
@@ -257,7 +257,7 @@ async function MentorDashboard({
       {/* ------------------------------------------------------------------ */}
       {/* Stat Tiles: ONLY for enabled admin console features                 */}
       {/* ------------------------------------------------------------------ */}
-      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         {hasLeaveRequests ? (
           <StatTile
             label="Leave Requests"
@@ -350,7 +350,7 @@ async function MentorDashboard({
             caption="No console permissions assigned"
           />
         ) : null}
-      </div>
+      </StatGrid>
 
       {/* ------------------------------------------------------------------ */}
       {/* Main Grid: Active Queues for Enabled Features + Navigation Hub     */}
@@ -863,7 +863,7 @@ async function StudentDashboard({
       {/* ------------------------------------------------------------------ */}
       {/* KPI row                                                             */}
       {/* ------------------------------------------------------------------ */}
-      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Missed OTP Attendance"
           value={`${data.attendance.rate}%`}
@@ -898,7 +898,7 @@ async function StudentDashboard({
           caption={data.openTaskCount === 0 ? "Nothing pending" : "Assigned by your mentor"}
           href="/tasks"
         />
-      </div>
+      </StatGrid>
 
       {/* ------------------------------------------------------------------ */}
       {/* Main grid                                                           */}

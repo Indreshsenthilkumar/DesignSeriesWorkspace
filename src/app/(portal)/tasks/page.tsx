@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
@@ -55,7 +55,7 @@ export default async function TasksPage() {
         description="Sprint deliverables assigned by your mentor. Move a task along as you work on it — submitting it puts it in your mentor's review queue, and they close it out."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 sm:mb-5">
+      <StatGrid>
         <StatTile label="Open" value={open.length} icon="target" tone={open.length > 3 ? "amber" : "blue"} caption="Assigned to you" />
         <StatTile
           label="Overdue"
@@ -66,7 +66,7 @@ export default async function TasksPage() {
         />
         <StatTile label="Completed" value={done.length} icon="check-circle" tone="green" caption="Signed off by a mentor" />
         <StatTile label="Points earned" value={earned} icon="trophy" tone="amber" caption="From completed tasks" />
-      </div>
+      </StatGrid>
 
       <TasksClient tasks={rows} />
     </div>

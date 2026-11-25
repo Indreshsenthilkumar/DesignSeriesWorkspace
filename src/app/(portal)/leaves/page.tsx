@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { markSectionViewed } from "@/lib/badge-tracking";
@@ -66,7 +66,7 @@ export default async function LeavesPage() {
         description="Apply for Leave or OnDuty (OD) permissions, track mentor approval status, and view detailed gate slips."
       />
 
-      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Total Requests"
           value={total}
@@ -95,7 +95,7 @@ export default async function LeavesPage() {
           tone={rejected > 0 ? "red" : "slate"}
           caption={rejected > 0 ? "Check remarks" : "None"}
         />
-      </div>
+      </StatGrid>
 
       <LeavesClient
         initialLeaves={formatted}

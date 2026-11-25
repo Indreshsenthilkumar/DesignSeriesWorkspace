@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
@@ -65,7 +65,7 @@ export default async function PassesPage() {
         description="Request permission to be away from the studio during session hours. An approved request becomes a signed slip with a scannable code you can show at the gate."
       />
 
-      <div className="stagger mb-1 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Active passes"
           value={active}
@@ -88,7 +88,7 @@ export default async function PassesPage() {
           tone={rejected > 0 ? "red" : "slate"}
           caption={rejected > 0 ? "Read the remark before re-requesting" : "None"}
         />
-      </div>
+      </StatGrid>
 
       <div className="mt-4 sm:mt-5">
         <PassesClient

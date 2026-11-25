@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { markSectionViewed } from "@/lib/badge-tracking";
@@ -77,7 +77,7 @@ export default async function SupportPage() {
       />
 
       {/* Overview Stat Tiles */}
-      <div className="stagger mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <StatGrid className="sm:grid-cols-3 lg:grid-cols-5">
         <StatTile
           label="Total Requests"
           value={total}
@@ -113,7 +113,7 @@ export default async function SupportPage() {
           tone="green"
           caption="Solutions delivered"
         />
-      </div>
+      </StatGrid>
 
       <SupportClient
         user={{

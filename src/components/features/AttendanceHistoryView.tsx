@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Field, Textarea } from "@/components/ui/Field";
@@ -230,12 +230,12 @@ export function AttendanceHistoryView({
       <PageHeader
         title="Missed OTP Attendance history"
         actions={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
             {!todayActiveLeave ? (
               <Button
                 onClick={() => setAddModalOpen(true)}
                 icon="plus"
-                className="w-full sm:w-auto justify-center"
+                className="flex-1 sm:flex-initial sm:w-auto justify-center text-xs sm:text-sm py-2 sm:py-2.5"
               >
                 Add attendance hour
               </Button>
@@ -244,7 +244,7 @@ export function AttendanceHistoryView({
                 variant="secondary"
                 onClick={() => setSelectedLeave(todayActiveLeave)}
                 icon="calendar"
-                className="w-full sm:w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200"
+                className="flex-1 sm:flex-initial sm:w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200 text-xs sm:text-sm py-2 sm:py-2.5"
               >
                 Active Leave ({todayActiveLeave.leaveType})
               </Button>
@@ -254,7 +254,7 @@ export function AttendanceHistoryView({
                 variant="secondary"
                 onClick={() => setImportModalOpen(true)}
                 icon="upload"
-                className="w-full sm:w-auto justify-center"
+                className="flex-1 sm:flex-initial sm:w-auto justify-center text-xs sm:text-sm py-2 sm:py-2.5"
               >
                 Import Sheet / CSV
               </Button>
@@ -264,10 +264,9 @@ export function AttendanceHistoryView({
       />
 
       {/* =====================================================================
-          2. Top 4 KPI Cards (Website Theme StatTile with signature accent bar)
-             - Absent Days: 1,2,3,4 = 0.5 day; 5,6,7 = 0.5 day; both = 1.0 day
+          2. Top 4 KPI Cards (Swipeable horizontal ribbon on mobile, 4-col grid on desktop)
           ===================================================================== */}
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 sm:mb-5">
+      <StatGrid>
         <StatTile
           label="Absent Days"
           value={displayedAbsentDays.toFixed(1)}
@@ -301,7 +300,7 @@ export function AttendanceHistoryView({
           delta={stats.approvedDeltaPercent ?? 15}
           caption="from last month"
         />
-      </div>
+      </StatGrid>
 
       {/* =====================================================================
           3. Unified Gmail-Style Advanced Search & Filter Toolbar

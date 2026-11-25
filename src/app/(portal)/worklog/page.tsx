@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { worklogSummary } from "@/lib/queries";
@@ -61,7 +61,7 @@ export default async function WorklogPage() {
         description="A short, honest write-up of each slot. This is the record your mentor reads before a review, and the thing you will be glad to have when you write your portfolio."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 sm:mb-5">
+      <StatGrid>
         <StatTile
           label="This week"
           value={summary.thisWeek}
@@ -91,7 +91,7 @@ export default async function WorklogPage() {
           tone={summary.flagged > 0 ? "red" : "slate"}
           caption={summary.flagged > 0 ? "Open them and add detail" : "Nothing flagged"}
         />
-      </div>
+      </StatGrid>
 
       <WorklogClient logs={logs} tasks={openTasks} todayLog={todayLog} extensions={extensions} />
     </div>
