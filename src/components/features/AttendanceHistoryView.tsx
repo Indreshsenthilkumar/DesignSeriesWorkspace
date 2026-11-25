@@ -490,7 +490,7 @@ export function AttendanceHistoryView({
             return (
               <div
                 key={record.date}
-                className="surface overflow-hidden rounded-[20px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xs"
+                className="surface overflow-hidden rounded-[20px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-card"
               >
                 {/* Card Main Body */}
                 <div className="p-4 sm:p-5 space-y-3">

@@ -112,8 +112,8 @@ export function StatTile({
   );
 
   const classes = cn(
-    "surface group relative block rounded-[20px] p-5 pl-5.5 min-w-0 w-full overflow-hidden transition-all duration-200",
-    href && "hover:-translate-y-0.5 hover:shadow-md cursor-pointer",
+    "surface group relative block rounded-[20px] border border-[var(--line-default)] p-5 pl-5.5 min-w-0 w-full overflow-hidden transition-all duration-200 shadow-card hover:shadow-raised hover:-translate-y-0.5",
+    href && "cursor-pointer",
     className
   );
 
