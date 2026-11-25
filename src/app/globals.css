@@ -119,9 +119,9 @@
   --text-faint: #747775;          /* Captions, subtexts & placeholder hints (Contrast: 6.5:1) */
   --text-inverse: #ffffff;
 
-  --line-soft: #edf2f7;           /* Whisper soft border */
-  --line-default: #e2e8f0;        /* Modern clean subtle border */
-  --line-strong: #9aa0a6;         /* Secondary divider */
+  --line-soft: #edf2fa;           /* Clean soft divider */
+  --line-default: #dadce0;        /* Official Google Workspace border */
+  --line-strong: #747775;         /* High-contrast divider/outline */
 
   --accent: var(--color-brand-blue);
   --accent-contrast: #ffffff;
@@ -129,9 +129,9 @@
 
   --ring: rgba(26, 115, 232, 0.35);
 
-  --shadow-card: 0 1px 3px 0 rgba(60, 64, 67, 0.05), 0 4px 12px 0 rgba(60, 64, 67, 0.03);
-  --shadow-raised: 0 2px 6px 0 rgba(60, 64, 67, 0.08), 0 8px 24px -4px rgba(60, 64, 67, 0.06);
-  --shadow-pop: 0 4px 12px 0 rgba(60, 64, 67, 0.1), 0 16px 32px -4px rgba(60, 64, 67, 0.1);
+  --shadow-card: 0 1px 2px 0 rgba(60, 64, 67, 0.12), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
+  --shadow-raised: 0 1px 3px 0 rgba(60, 64, 67, 0.2), 0 4px 8px 3px rgba(60, 64, 67, 0.1);
+  --shadow-pop: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 8px 16px 6px rgba(60, 64, 67, 0.15);
 
   --radius-sm: 8px;
   --radius: 12px;
@@ -155,9 +155,9 @@
   --text-faint: #8e918f;
   --text-inverse: #1b1c1d;
 
-  --line-soft: #232527;
-  --line-default: #2d3033;
-  --line-strong: #5f6368;
+  --line-soft: #2d2e30;
+  --line-default: #444746;
+  --line-strong: #747775;
 
   --accent: #8ab4f8;
   --accent-contrast: #1b1c1d;
@@ -165,9 +165,9 @@
 
   --ring: rgba(138, 180, 248, 0.45);
 
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 4px 12px 0 rgba(0, 0, 0, 0.3);
-  --shadow-raised: 0 2px 6px 0 rgba(0, 0, 0, 0.5), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
-  --shadow-pop: 0 6px 16px 4px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 2px 6px 2px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 6px 16px 4px rgba(0, 0, 0, 0.7);
 }
 
 /* ---------------------------------------------------------------------------
@@ -279,20 +279,20 @@ p {
 
 @utility surface {
   background: var(--surface-raised);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
 }
 
 @utility surface-flat {
   background: var(--surface-raised);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-lg);
 }
 
 @utility inset-panel {
   background: var(--surface-inset);
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--line-default);
   border-radius: var(--radius);
 }
 

@@ -40,7 +40,7 @@ export function StatTile({
     <>
       <span
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[3px] rounded-t-[20px]"
+        className="absolute inset-y-0 left-0 w-[4.5px] rounded-l-[20px]"
         style={{ background: "var(--tone)" }}
       />
 
@@ -112,8 +112,8 @@ export function StatTile({
   );
 
   const classes = cn(
-    "group relative block rounded-[20px] bg-[var(--surface-raised)] border border-[var(--line-soft)] p-5 min-w-0 w-full overflow-hidden transition-all duration-200 shadow-card hover:-translate-y-0.5 hover:shadow-raised",
-    href && "cursor-pointer",
+    "surface group relative block rounded-[20px] p-5 pl-5.5 min-w-0 w-full overflow-hidden transition-all duration-200",
+    href && "hover:-translate-y-0.5 hover:shadow-md cursor-pointer",
     className
   );
 

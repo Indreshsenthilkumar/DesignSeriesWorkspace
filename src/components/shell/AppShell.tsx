@@ -172,7 +172,7 @@ function TopBar({
     <header
       className="sticky top-0 z-30 border-b backdrop-blur-xl"
       style={{
-        borderColor: "var(--line-soft)",
+        borderColor: "var(--line-default)",
         background: "color-mix(in srgb, var(--surface-raised) 92%, transparent)",
       }}
     >

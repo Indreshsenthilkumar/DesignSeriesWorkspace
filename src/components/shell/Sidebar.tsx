@@ -152,7 +152,7 @@ export function Sidebar({
   return (
     <aside
       className="fixed inset-y-0 left-0 z-40 hidden w-[256px] flex-col border-r lg:flex"
-      style={{ background: "var(--surface-rail)", borderColor: "var(--line-soft)" }}
+      style={{ background: "var(--surface-rail)", borderColor: "var(--line-default)" }}
     >
       {/* Brand Header */}
       <div className="shrink-0 px-5 pb-3 pt-5">
@@ -166,7 +166,7 @@ export function Sidebar({
       </div>
 
       {footer ? (
-        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--line-default)" }}>
           {footer}
         </div>
       ) : null}

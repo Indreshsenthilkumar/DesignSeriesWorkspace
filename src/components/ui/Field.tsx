@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Icon, type IconName } from "./Icon";
 
 const CONTROL =
-  "w-full rounded-[12px] border border-[var(--line-soft)] bg-[var(--surface-raised)] px-3.5 py-2 text-[14px] text-[var(--text-strong)] " +
+  "w-full rounded-[12px] border border-[var(--line-default)] bg-[var(--surface-raised)] px-3.5 py-2 text-[14px] text-[var(--text-strong)] " +
   "placeholder:text-[var(--text-faint)] transition-all duration-150 " +
   "focus:border-[var(--color-brand-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]/20 " +
   "disabled:cursor-not-allowed disabled:opacity-50";
@@ -103,7 +103,7 @@ export function Input({
     return (
       <input
         className={cn(CONTROL, "h-10", className)}
-        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-soft)" }}
+        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-default)" }}
         {...rest}
       />
     );
@@ -118,7 +118,7 @@ export function Input({
       />
       <input
         className={cn(CONTROL, "h-10 pl-9", className)}
-        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-soft)" }}
+        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-default)" }}
         {...rest}
       />
     </div>
@@ -149,7 +149,7 @@ export function Select({
     <div className="relative">
       <select
         className={cn(CONTROL, "h-10 cursor-pointer appearance-none pr-9", className)}
-        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-soft)" }}
+        style={{ borderColor: invalid ? "var(--color-brand-red)" : "var(--line-default)" }}
         {...rest}
       >
         {children}

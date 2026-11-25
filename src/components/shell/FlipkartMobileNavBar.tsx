@@ -79,7 +79,7 @@ export function FlipkartMobileNavBar({
         className="relative flex h-[64px] w-full items-center rounded-full border px-1 shadow-[0_10px_35px_-4px_rgba(0,0,0,0.14),0_2px_8px_-1px_rgba(0,0,0,0.06)]"
         style={{
           backgroundColor: "var(--surface-raised)",
-          borderColor: "var(--line-soft)",
+          borderColor: "var(--line-default)",
         }}
       >
         {/* Dynamic Smooth Moving Active-Tab Background:

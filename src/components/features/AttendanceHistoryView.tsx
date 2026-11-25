@@ -490,7 +490,7 @@ export function AttendanceHistoryView({
             return (
               <div
                 key={record.date}
-                className="overflow-hidden rounded-[20px] border border-[var(--line-soft)] bg-[var(--surface-raised)] shadow-xs transition-shadow hover:shadow-sm"
+                className="surface overflow-hidden rounded-[20px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xs"
               >
                 {/* Card Main Body */}
                 <div className="p-4 sm:p-5 space-y-3">
@@ -547,7 +547,12 @@ export function AttendanceHistoryView({
                             key={hour}
                             data-accent="blue"
                             title={`Hour ${hour} (${HOUR_WINDOW[hour] || ""})`}
-                            className="grid h-7 w-7 place-items-center rounded-full text-[11.5px] font-bold select-none bg-[var(--color-brand-blue-050)] text-[var(--color-brand-blue)]"
+                            className="grid h-7 w-7 place-items-center rounded-full text-[11.5px] font-bold select-none"
+                            style={{
+                              background: "var(--color-brand-blue-050)",
+                              color: "var(--color-brand-blue)",
+                              boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--color-brand-blue) 30%, transparent)",
+                            }}
                           >
                             {hour}
                           </span>
