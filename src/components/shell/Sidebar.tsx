@@ -29,27 +29,33 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       title={item.description}
       className={cn(
-        "group relative flex h-[38px] items-center gap-3 rounded-[10px] px-3",
-        "text-[13.5px] font-medium transition-colors duration-150"
+        "group relative flex h-10 items-center gap-3.5 rounded-full px-4",
+        "text-[13.5px] font-medium transition-all duration-150",
+        active
+          ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold"
+          : "text-[#444746] dark:text-[#c4c7c5] hover:bg-[#eaebef]/80 dark:hover:bg-[#282a2c] hover:text-[#1f1f1f] dark:hover:text-white"
       )}
-      style={{
-        background: active ? "var(--accent-soft)" : "transparent",
-        color: active ? "var(--accent)" : "var(--text-default)",
-        fontWeight: active ? 650 : 500,
-      }}
     >
-      {/* Active marker — a short brand-blue bar, not a full-width fill. */}
-      <span
-        aria-hidden
-        className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full transition-transform duration-200"
-        style={{
-          background: "var(--accent)",
-          transform: active ? "translateY(-50%) scaleY(1)" : "translateY(-50%) scaleY(0)",
-        }}
+      <Icon
+        name={item.icon}
+        className={cn(
+          "h-[18px] w-[18px] shrink-0 transition-colors",
+          active ? "text-[#001d35] dark:text-[#c2e7ff]" : "text-[#444746] dark:text-[#c4c7c5]"
+        )}
       />
-      <Icon name={item.icon} className="h-[17px] w-[17px] shrink-0" />
-      <span className="truncate">{item.label}</span>
-      {!active && badge ? <Counter value={badge} tone="red" /> : null}
+      <span className="truncate flex-1">{item.label}</span>
+      {badge && badge > 0 ? (
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+            active
+              ? "bg-[#001d35] text-white dark:bg-[#c2e7ff] dark:text-[#001d35]"
+              : "bg-[#c5221f] text-white"
+          )}
+        >
+          {badge}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -57,8 +63,7 @@ function NavLink({
 function SectionLabel({ children }: { children: string }) {
   return (
     <p
-      className="mb-1.5 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] first:mt-0"
-      style={{ color: "var(--text-faint)" }}
+      className="mb-1.5 mt-5 px-4 text-[11px] font-bold uppercase tracking-[0.08em] first:mt-0 text-[#747775] dark:text-[#8e918f]"
     >
       {children}
     </p>
@@ -79,11 +84,11 @@ export function SidebarNav({
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col px-2.5 pb-4" aria-label="Main">
+    <nav className="flex flex-col px-3 pb-4" aria-label="Main">
       {studentNav.length > 0 ? (
         <>
           <SectionLabel>My portal</SectionLabel>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {studentNav.map((item) => (
               <NavLink
                 key={item.href}
@@ -98,7 +103,7 @@ export function SidebarNav({
       ) : (
         <>
           <SectionLabel>Overview</SectionLabel>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             <NavLink
               item={{
                 href: "/dashboard",
@@ -116,7 +121,7 @@ export function SidebarNav({
       {consoleNav.length > 0 ? (
         <>
           <SectionLabel>Admin console</SectionLabel>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {consoleNav.map((item) => (
               <NavLink
                 key={item.href}
@@ -146,12 +151,26 @@ export function Sidebar({
 }) {
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-40 hidden w-[252px] flex-col border-r lg:flex"
-      style={{ background: "var(--surface-rail)", borderColor: "var(--line-soft)" }}
+      className="fixed inset-y-0 left-0 z-40 hidden w-[256px] flex-col border-r lg:flex"
+      style={{ background: "var(--surface-rail)", borderColor: "var(--line-default)" }}
     >
-      <div className="shrink-0 px-4 pb-3 pt-4">
-        <Link href="/dashboard" className="inline-block rounded-[10px]">
-          <LogoLockup height={22} />
+      {/* Brand Header */}
+      <div className="shrink-0 px-5 pb-2 pt-4">
+        <Link href="/dashboard" className="inline-block rounded-[12px] p-1 -ml-1 transition-opacity hover:opacity-85">
+          <LogoLockup height={24} />
+        </Link>
+      </div>
+
+      {/* Google "+ Quick Action" Button */}
+      <div className="px-3 py-3">
+        <Link
+          href="/attendance"
+          className="flex h-12 w-full items-center gap-3.5 rounded-full bg-white dark:bg-[#282a2c] border border-[#dadce0] dark:border-[#444746] px-4 shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] hover:shadow-[0_2px_6px_0_rgba(60,64,67,0.3),0_6px_12px_4px_rgba(60,64,67,0.15)] hover:bg-[#f8fafd] transition-all text-[14px] font-semibold text-[#1f1f1f] dark:text-white select-none active:scale-[0.98]"
+        >
+          <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-brand-blue-050)] text-[var(--color-brand-blue)]">
+            <Icon name="plus" className="h-4 w-4" />
+          </div>
+          <span>Log Attendance</span>
         </Link>
       </div>
 
@@ -160,7 +179,7 @@ export function Sidebar({
       </div>
 
       {footer ? (
-        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--line-soft)" }}>
+        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--line-default)" }}>
           {footer}
         </div>
       ) : null}

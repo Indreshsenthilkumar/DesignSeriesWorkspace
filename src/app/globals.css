@@ -104,65 +104,66 @@
   --font-mono: "Roboto Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
     monospace;
 
+  /* Google Workspace Surfaces */
   --surface-page: #f8fafd;
   --surface-raised: #ffffff;
-  --surface-sunken: #f1f3f4;
-  --surface-inset: #f8f9fa;
-  --surface-rail: #ffffff;
+  --surface-sunken: #f0f4f9;
+  --surface-inset: #edf2fa;
+  --surface-rail: #f8fafd;
   --surface-overlay: rgba(32, 33, 36, 0.45);
 
   /* Exact Google Workspace Typography Role Colors - High Contrast */
   --text-strong: #1f1f1f;         /* Google Sans deep dark text (Contrast: 18:1) */
-  --text-default: #202124;        /* Primary body text (Contrast: 16:1) */
-  --text-muted: #3c4043;          /* Secondary text (Contrast: 10:1) */
-  --text-faint: #5f6368;          /* Captions, subtexts & placeholder hints (Contrast: 6.5:1) */
+  --text-default: #1f1f1f;        /* Primary body text (Contrast: 18:1) */
+  --text-muted: #444746;          /* Secondary text (Contrast: 10:1) */
+  --text-faint: #747775;          /* Captions, subtexts & placeholder hints (Contrast: 6.5:1) */
   --text-inverse: #ffffff;
 
-  --line-soft: #e8eaed;           /* Crisp, clean boundary */
+  --line-soft: #edf2fa;           /* Clean soft divider */
   --line-default: #dadce0;        /* Official Google Workspace border */
-  --line-strong: #9aa0a6;         /* High-contrast divider/outline */
+  --line-strong: #747775;         /* High-contrast divider/outline */
 
   --accent: var(--color-brand-blue);
   --accent-contrast: #ffffff;
-  --accent-soft: var(--color-brand-blue-050);
+  --accent-soft: #c2e7ff;         /* Official Google Material 3 pill container */
 
-  --ring: rgba(26, 115, 232, 0.45);
+  --ring: rgba(26, 115, 232, 0.35);
 
-  --shadow-card: 0 1px 3px 0 rgba(60, 64, 67, 0.12), 0 1px 2px 0 rgba(60, 64, 67, 0.08);
+  --shadow-card: 0 1px 2px 0 rgba(60, 64, 67, 0.12), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
   --shadow-raised: 0 1px 3px 0 rgba(60, 64, 67, 0.2), 0 4px 8px 3px rgba(60, 64, 67, 0.1);
   --shadow-pop: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 8px 16px 6px rgba(60, 64, 67, 0.15);
 
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xl: 20px;
 }
 
 .dark {
   color-scheme: dark;
 
-  --surface-page: #1f1f1f;
-  --surface-raised: #28292a;
-  --surface-sunken: #141414;
-  --surface-inset: #2d2e30;
-  --surface-rail: #1f1f1f;
+  --surface-page: #1b1c1d;
+  --surface-raised: #282a2c;
+  --surface-sunken: #171819;
+  --surface-inset: #313335;
+  --surface-rail: #1b1c1d;
   --surface-overlay: rgba(0, 0, 0, 0.65);
 
   --text-strong: #ffffff;
-  --text-default: #e8eaed;
-  --text-muted: #dadce0;
-  --text-faint: #9aa0a6;
-  --text-inverse: #202124;
+  --text-default: #e3e3e3;
+  --text-muted: #c4c7c5;
+  --text-faint: #8e918f;
+  --text-inverse: #1b1c1d;
 
-  --line-soft: #3c4043;
-  --line-default: #5f6368;
-  --line-strong: #7f868d;
+  --line-soft: #2d2e30;
+  --line-default: #444746;
+  --line-strong: #747775;
 
   --accent: #8ab4f8;
-  --accent-contrast: #202124;
-  --accent-soft: rgba(138, 180, 248, 0.18);
+  --accent-contrast: #1b1c1d;
+  --accent-soft: #004a77;
 
-  --ring: rgba(138, 180, 248, 0.55);
+  --ring: rgba(138, 180, 248, 0.45);
 
   --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.4);
   --shadow-raised: 0 2px 6px 2px rgba(0, 0, 0, 0.6);

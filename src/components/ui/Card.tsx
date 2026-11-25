@@ -20,9 +20,9 @@ export function Card({
   id?: string;
 }) {
   return (
-    <Tag id={id} className={cn("surface overflow-hidden", className)}>
-      {thread ? <span aria-hidden className="brand-thread-bar block h-[3px] w-full" /> : null}
-      <div className={cn(padded && "p-4 sm:p-5")}>{children}</div>
+    <Tag id={id} className={cn("surface rounded-[20px] overflow-hidden shadow-card", className)}>
+      {thread ? <span aria-hidden className="brand-thread-bar block h-[3.5px] w-full" /> : null}
+      <div className={cn(padded && "p-5 sm:p-6")}>{children}</div>
     </Tag>
   );
 }

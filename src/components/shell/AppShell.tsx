@@ -103,7 +103,7 @@ export function AppShell({
         footer={<UserCard user={user} />}
       />
 
-      <div className="lg:pl-[252px]">
+      <div className="lg:pl-[256px]">
         <TopBar
           user={user}
           today={today}
@@ -115,7 +115,7 @@ export function AppShell({
 
         <main
           id="main"
-          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-4 sm:px-6 sm:pt-6 md:pb-[calc(env(safe-area-inset-bottom)+32px)] lg:pb-10"
+          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+76px)] pt-4 sm:px-6 sm:pt-6 md:pb-12"
         >
           {children}
         </main>
@@ -186,41 +186,47 @@ function TopBar({
           />
         </div>
 
-        {/* Desktop View: Title + Search + Actions */}
-        <div className="hidden w-full items-center justify-between gap-3 lg:flex">
-          <div className="min-w-0">
-            <h1 className="truncate text-[17px] font-semibold leading-tight">{title}</h1>
-            <p className="text-[11.5px]" style={{ color: "var(--text-muted)" }}>
+        {/* Desktop View: Title + Central Google Search Pill + Actions */}
+        <div className="hidden w-full items-center justify-between gap-4 lg:flex">
+          <div className="min-w-0 w-48 shrink-0">
+            <h1 className="truncate text-[18px] font-bold leading-tight text-[var(--text-strong)]">{title}</h1>
+            <p className="text-[12px] font-medium text-[var(--text-muted)]">
               {formatDay(today, "long")}
             </p>
           </div>
 
-          <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+          {/* Central Google Search Bar Pill */}
+          <div className="flex-1 max-w-[620px]">
             <button
               onClick={onOpenPalette}
-              className="flex h-9 w-56 items-center gap-2 rounded-[10px] border px-3 text-left text-[13px] transition-colors hover:border-[var(--accent)] xl:w-72"
-              style={{ borderColor: "var(--line-default)", color: "var(--text-faint)", background: "var(--surface-raised)" }}
+              className="flex h-11 w-full items-center gap-3 rounded-full border border-transparent bg-[var(--surface-inset)] hover:bg-[var(--surface-sunken)] hover:shadow-xs px-4 text-left text-[14px] text-[var(--text-muted)] transition-all cursor-pointer select-none"
             >
-              <Icon name="search" className="h-4 w-4 shrink-0" />
-              <span className="truncate">Search…</span>
-              <kbd
-                className="ml-auto shrink-0 rounded-[5px] border px-1.5 py-px text-[10px] font-semibold"
-                style={{ borderColor: "var(--line-default)" }}
-              >
+              <Icon name="search" className="h-4 w-4 text-[var(--text-faint)] shrink-0" />
+              <span className="flex-1 truncate">Search in DesignSeries portal, students, logs...</span>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-[6px] border border-[var(--line-default)] bg-[var(--surface-raised)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-faint)]">
                 ⌘K
               </kbd>
             </button>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
+            <Link
+              href="/notes"
+              title="My Notes"
+              className="grid h-10 w-10 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-inset)]"
+            >
+              <Icon name="note" className="h-[18px] w-[18px]" />
+            </Link>
 
             <Link
               href="/announcements"
               aria-label={unread ? `Announcements, ${unread} unread` : "Announcements"}
-              className="relative grid h-9 w-9 place-items-center rounded-[10px] transition-colors hover:bg-[var(--surface-inset)]"
-              style={{ color: "var(--text-muted)" }}
+              className="relative grid h-10 w-10 place-items-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-inset)]"
             >
               <Icon name="bell" className="h-[18px] w-[18px]" />
               {unread > 0 ? (
                 <span
-                  className="absolute right-1.5 top-1.5 grid h-[15px] min-w-[15px] place-items-center rounded-full px-[3px] text-[9px] font-bold text-white"
+                  className="absolute right-2 top-2 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-bold text-white"
                   style={{ background: "var(--color-brand-red)" }}
                 >
                   {unread > 9 ? "9+" : unread}

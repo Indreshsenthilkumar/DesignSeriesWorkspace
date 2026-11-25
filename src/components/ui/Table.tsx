@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function TableWrap({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={cn("overflow-x-auto rounded-[12px] border", className)}
+      className={cn("overflow-x-auto rounded-[16px] border bg-[var(--surface-raised)] shadow-xs", className)}
       style={{ borderColor: "var(--line-default)" }}
     >
       {children}

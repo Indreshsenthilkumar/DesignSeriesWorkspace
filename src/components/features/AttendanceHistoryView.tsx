@@ -487,10 +487,10 @@ export function AttendanceHistoryView({
             return (
               <div
                 key={record.date}
-                className="surface overflow-hidden rounded-[14px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xs"
+                className="surface overflow-hidden rounded-[20px] border border-[var(--line-default)] bg-[var(--surface-raised)] shadow-xs"
               >
                 {/* Card Main Body */}
-                <div className="p-4 space-y-3">
+                <div className="p-4 sm:p-5 space-y-3">
                   {/* Top Row: Date & Badges */}
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="min-w-0 flex-1">
@@ -506,7 +506,7 @@ export function AttendanceHistoryView({
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       {/* Blue Hours Pill */}
                       <span
-                        className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--color-brand-blue)] px-2.5 py-1 text-[11.5px] font-bold text-white shadow-2xs"
+                        className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-blue)] px-3 py-1 text-[12px] font-bold text-white shadow-xs"
                       >
                         <Icon name="sparkle" className="h-3 w-3" />
                         {record.hours.length} {record.hours.length === 1 ? "Hr" : "Hrs"}

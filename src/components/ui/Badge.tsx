@@ -75,8 +75,8 @@ export function Badge({
     <span
       data-accent={tone}
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-[3px]",
-        "text-[11px] font-semibold leading-[1.45] tracking-[0.01em]",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-0.5",
+        "text-[11.5px] font-semibold leading-[1.45]",
         className
       )}
       style={
@@ -85,7 +85,7 @@ export function Badge({
           : {
               background: "var(--tone-soft)",
               color: "var(--tone)",
-              boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--tone) 22%, transparent)",
+              boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--tone) 28%, transparent)",
             }
       }
     >

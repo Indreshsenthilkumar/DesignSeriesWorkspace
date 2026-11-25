@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
 import { Icon, type IconName } from "./Icon";
 
 const CONTROL =
-  "w-full rounded-[10px] border bg-[var(--surface-raised)] px-3 text-[13.5px] text-[var(--text-strong)] " +
-  "placeholder:text-[var(--text-faint)] transition-[border-color,box-shadow] duration-150 " +
-  "focus:border-[var(--accent)] focus:outline-none focus:ring-4 focus:ring-[var(--ring)]/25 " +
-  "disabled:cursor-not-allowed disabled:opacity-60";
+  "w-full rounded-[12px] border border-[var(--line-default)] bg-[var(--surface-raised)] px-3.5 py-2 text-[14px] text-[var(--text-strong)] " +
+  "placeholder:text-[var(--text-faint)] transition-all duration-150 " +
+  "focus:border-[var(--color-brand-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]/20 " +
+  "disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Label({
   htmlFor,

@@ -40,47 +40,47 @@ export function StatTile({
     <>
       <span
         aria-hidden
-        className="absolute inset-y-0 left-0 w-[4px] rounded-l-[15px]"
+        className="absolute inset-y-0 left-0 w-[4.5px] rounded-l-[20px]"
         style={{ background: "var(--tone)" }}
       />
 
       <div className="flex items-start justify-between gap-3">
         <p
-          className="text-[11px] font-bold uppercase tracking-[0.09em]"
+          className="text-[12px] font-bold uppercase tracking-[0.06em]"
           style={{ color: "var(--text-muted)" }}
         >
           {label}
         </p>
         {icon ? (
           <span
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
             style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
           >
-            <Icon name={icon} className="h-[15px] w-[15px]" />
+            <Icon name={icon} className="h-4 w-4" />
           </span>
         ) : null}
       </div>
 
-      <div className="mt-2 flex items-baseline gap-1.5">
+      <div className="mt-2.5 flex items-baseline gap-1.5">
         <span
-          className="text-[30px] font-extrabold leading-none tabular-nums"
+          className="text-[32px] sm:text-[34px] font-extrabold leading-none tabular-nums"
           style={{ color: "var(--text-strong)", letterSpacing: "-0.035em" }}
         >
           {value}
         </span>
         {unit ? (
-          <span className="text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
             {unit}
           </span>
         ) : null}
       </div>
 
       {(caption || delta !== undefined) && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 min-w-0">
           {delta !== undefined && delta !== null ? (
             <span
               data-accent={delta >= 0 ? "green" : "red"}
-              className="inline-flex items-center gap-1 rounded-full px-1.5 py-[2px] text-[10.5px] sm:text-[11px] font-bold tabular-nums shrink-0"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums shrink-0"
               style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
             >
               <Icon
@@ -92,7 +92,7 @@ export function StatTile({
             </span>
           ) : null}
           {caption ? (
-            <span className="truncate text-[10.5px] sm:text-[11.5px] min-w-0" style={{ color: "var(--text-muted)" }}>
+            <span className="truncate text-[11.5px] font-medium min-w-0" style={{ color: "var(--text-muted)" }}>
               {caption}
             </span>
           ) : null}
@@ -112,8 +112,8 @@ export function StatTile({
   );
 
   const classes = cn(
-    "surface group relative block overflow-hidden p-4 pl-5 min-w-0 w-full",
-    href && "transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)]",
+    "surface group relative block rounded-[20px] p-5 pl-5.5 min-w-0 w-full overflow-hidden transition-all duration-200",
+    href && "hover:-translate-y-0.5 hover:shadow-md cursor-pointer",
     className
   );
 

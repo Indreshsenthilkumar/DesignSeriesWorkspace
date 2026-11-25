@@ -8,31 +8,31 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "success" | "outli
 type Size = "sm" | "md" | "lg";
 
 const BASE =
-  "relative inline-flex select-none items-center justify-center gap-2 rounded-[10px] font-semibold " +
-  "transition-[background,color,box-shadow,transform] duration-150 " +
+  "relative inline-flex select-none items-center justify-center gap-2 rounded-full font-medium " +
+  "transition-[background,color,box-shadow,border-color,transform] duration-150 " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 " +
-  "disabled:pointer-events-none disabled:opacity-50 active:translate-y-[0.5px]";
+  "disabled:pointer-events-none disabled:opacity-45 active:scale-[0.98]";
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 px-3 text-[12.5px]",
-  md: "h-10 px-4 text-[13.5px]",
+  sm: "h-8 px-3.5 text-[12.5px]",
+  md: "h-10 px-5 text-[13.5px]",
   lg: "h-12 px-6 text-[15px]",
 };
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-[var(--color-brand-blue)] text-white shadow-[0_1px_2px_rgba(15,27,51,0.14)] " +
-    "hover:bg-[var(--color-brand-blue-600)] active:bg-[var(--color-brand-blue-700)]",
+    "bg-[var(--color-brand-blue)] text-white shadow-[0_1px_2px_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] " +
+    "hover:bg-[var(--color-brand-blue-600)] hover:shadow-xs active:bg-[var(--color-brand-blue-700)] active:shadow-none",
   success:
-    "bg-[var(--color-brand-green)] text-white hover:bg-[var(--color-brand-green-600)]",
+    "bg-[var(--color-brand-green)] text-white hover:bg-[var(--color-brand-green-600)] shadow-xs",
   danger:
-    "bg-[var(--color-brand-red)] text-white hover:bg-[var(--color-brand-red-600)]",
+    "bg-[var(--color-brand-red)] text-white hover:bg-[var(--color-brand-red-600)] shadow-xs",
   secondary:
-    "bg-[var(--surface-inset)] text-[var(--text-strong)] border border-[var(--line-default)] " +
-    "hover:bg-[var(--surface-sunken)]",
+    "bg-[var(--surface-raised)] text-[var(--text-strong)] border border-[var(--line-default)] " +
+    "hover:bg-[var(--surface-inset)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)]",
   outline:
     "bg-transparent text-[var(--text-strong)] border border-[var(--line-default)] " +
-    "hover:border-[var(--accent)] hover:text-[var(--accent)]",
+    "hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] hover:bg-[var(--surface-inset)]",
   ghost:
     "bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-inset)] hover:text-[var(--text-strong)]",
 };
