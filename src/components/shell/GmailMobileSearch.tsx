@@ -215,7 +215,7 @@ export function GmailMobileSearch({
         <div
           className={cn(
             "flex h-12 w-full items-center gap-2 rounded-full border px-2 shadow-xs transition-all",
-            "border-[var(--line-default)] bg-[var(--surface-raised)] hover:border-[var(--line-strong)]"
+            "border-[var(--line-soft)] bg-[var(--surface-sunken)] hover:bg-[var(--surface-raised)]"
           )}
         >
           {/* Hamburger Menu Icon */}
@@ -413,7 +413,7 @@ export function GmailMobileSearch({
                     "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-colors",
                     isSelected
                       ? "bg-[var(--color-brand-blue)] text-white shadow-xs"
-                      : "bg-[var(--surface-raised)] text-[var(--text-muted)] border border-[var(--line-default)] hover:bg-[var(--surface-inset)]"
+                      : "bg-[var(--surface-raised)] text-[var(--text-muted)] border border-[var(--line-soft)] hover:bg-[var(--surface-inset)]"
                   )}
                 >
                   <Icon name={chip.icon} className="h-3.5 w-3.5" />

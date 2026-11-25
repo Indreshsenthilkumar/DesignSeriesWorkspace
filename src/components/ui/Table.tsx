@@ -13,7 +13,7 @@ export function TableWrap({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn("overflow-x-auto rounded-[16px] border bg-[var(--surface-raised)] shadow-xs", className)}
-      style={{ borderColor: "var(--line-default)" }}
+      style={{ borderColor: "var(--line-soft)" }}
     >
       {children}
     </div>
@@ -46,7 +46,7 @@ export function TH({
         numeric && "text-right",
         className
       )}
-      style={{ color: "var(--text-strong)", borderColor: "var(--line-default)" }}
+      style={{ color: "var(--text-strong)", borderColor: "var(--line-soft)" }}
       {...rest}
     >
       {children}
@@ -74,7 +74,7 @@ export function TR({
         interactive && "hover:bg-[var(--surface-inset)]",
         className
       )}
-      style={{ borderColor: "var(--line-default)" }}
+      style={{ borderColor: "var(--line-soft)" }}
     >
       {children}
     </tr>

@@ -66,7 +66,7 @@ export function GmailSectionSearch({
         <div
           className={cn(
             "flex h-11 w-full items-center gap-2 rounded-full border px-3 shadow-xs transition-all",
-            "border-[var(--line-default)] bg-[var(--surface-raised)] focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--ring)]/20"
+            "border-[var(--line-soft)] bg-[var(--surface-sunken)] focus-within:bg-[var(--surface-raised)] focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--ring)]/20"
           )}
         >
           <Icon name="search" className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
@@ -125,7 +125,7 @@ export function GmailSectionSearch({
                       "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all select-none",
                       !isDefault
                         ? "bg-[var(--color-brand-blue)] text-white shadow-xs"
-                        : "bg-[var(--surface-raised)] text-[var(--text-default)] border border-[var(--line-default)] hover:bg-[var(--surface-inset)]"
+                        : "bg-[var(--surface-sunken)] text-[var(--text-default)] border border-[var(--line-soft)] hover:bg-[var(--surface-inset)]"
                     )}
                   >
                     {filter.icon ? (
@@ -192,7 +192,7 @@ export function GmailSectionSearch({
       {/* =================================================================== */}
       {/* 2. DESKTOP TOOLBAR (md:flex)                                        */}
       {/* =================================================================== */}
-      <div className="hidden md:flex surface p-3.5 sm:p-4 rounded-[14px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+      <div className="hidden md:flex bg-[var(--surface-raised)] border border-[var(--line-soft)] p-3.5 sm:p-4 rounded-[16px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shadow-card">
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Input */}
           <div className="relative min-w-[220px] lg:min-w-[260px]">
@@ -205,7 +205,7 @@ export function GmailSectionSearch({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={placeholder}
-              className="w-full rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-8 pr-3 text-[12.5px] text-[var(--text-strong)] placeholder-[var(--text-faint)] transition-colors focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:outline-none"
+              className="w-full rounded-[10px] border border-[var(--line-soft)] bg-[var(--surface-inset)] py-1.5 pl-8 pr-3 text-[12.5px] text-[var(--text-strong)] placeholder-[var(--text-faint)] transition-colors focus:border-[var(--accent)] focus:bg-[var(--surface-raised)] focus:outline-none"
             />
           </div>
 
@@ -215,7 +215,7 @@ export function GmailSectionSearch({
               <select
                 value={filter.value}
                 onChange={(e) => filter.onChange(e.target.value)}
-                className="appearance-none rounded-[8px] border border-[var(--line-default)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none cursor-pointer max-w-[190px] truncate"
+                className="appearance-none rounded-[10px] border border-[var(--line-soft)] bg-[var(--surface-inset)] py-1.5 pl-3 pr-7 text-[12.5px] font-medium text-[var(--text-default)] transition-colors hover:border-[var(--line-default)] focus:border-[var(--accent)] focus:outline-none cursor-pointer max-w-[190px] truncate"
               >
                 {filter.options.map((opt) => (
                   <option key={opt.value} value={opt.value}>

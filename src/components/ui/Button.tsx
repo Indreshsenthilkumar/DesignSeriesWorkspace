@@ -28,10 +28,10 @@ const VARIANTS: Record<Variant, string> = {
   danger:
     "bg-[var(--color-brand-red)] text-white hover:bg-[var(--color-brand-red-600)] shadow-xs",
   secondary:
-    "bg-[var(--surface-raised)] text-[var(--text-strong)] border border-[var(--line-default)] " +
+    "bg-[var(--surface-raised)] text-[var(--text-strong)] border border-[var(--line-soft)] " +
     "hover:bg-[var(--surface-inset)] hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)]",
   outline:
-    "bg-transparent text-[var(--text-strong)] border border-[var(--line-default)] " +
+    "bg-transparent text-[var(--text-strong)] border border-[var(--line-soft)] " +
     "hover:border-[var(--color-brand-blue)] hover:text-[var(--color-brand-blue)] hover:bg-[var(--surface-inset)]",
   ghost:
     "bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-inset)] hover:text-[var(--text-strong)]",
