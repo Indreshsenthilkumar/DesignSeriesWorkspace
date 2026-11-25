@@ -104,7 +104,7 @@ export function LeavesClient({
         {/* Apply Leave Button (Desktop) */}
         <button
           onClick={() => setIsApplyOpen(true)}
-          className="hidden sm:inline-flex w-auto items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all select-none cursor-pointer"
+          className="hidden md:inline-flex w-auto items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all select-none cursor-pointer"
         >
           <Icon name="plus" className="h-4 w-4" />
           Apply Leave

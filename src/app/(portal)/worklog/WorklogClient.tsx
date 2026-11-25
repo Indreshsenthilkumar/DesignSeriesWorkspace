@@ -112,6 +112,7 @@ export function WorklogClient({
             onClick={() => openFor(todayLog)}
             icon={todayLog ? "edit" : "plus"}
             variant={todayLog ? "secondary" : "primary"}
+            className="hidden md:inline-flex shrink-0"
           >
             {todayLog ? "Edit today's log" : "Write today's log"}
           </Button>

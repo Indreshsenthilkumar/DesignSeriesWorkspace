@@ -9,7 +9,7 @@ const createTicketSchema = z.object({
   category: z.string().min(1, "Category is required"),
   subcategory: z.string().default(""),
   subject: z.string().trim().min(4, "Subject must be at least 4 characters").max(160),
-  description: z.string().trim().min(15, "Please provide a detailed description (at least 15 characters)").max(4000),
+  description: z.string().trim().min(5, "Please provide a detailed description (at least 5 characters)").max(4000),
   module: z.string().default("GENERAL"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).default("MEDIUM"),
 });
@@ -130,10 +130,29 @@ export const POST = handler(async (request: Request) => {
   const body = await request.json();
   const data = createTicketSchema.parse(body);
 
-  // Generate sequential/formatted ticket number e.g. TKT-2026-0042
-  const count = await prisma.supportTicket.count();
+  // Generate unique sequential ticket number e.g. TKT-2026-0042 without collisions
   const year = new Date().getFullYear();
-  const ticketNumber = `TKT-${year}-${String(count + 1).padStart(4, "0")}`;
+  const prefix = `TKT-${year}-`;
+  const existingTickets = await prisma.supportTicket.findMany({
+    where: { ticketNumber: { startsWith: prefix } },
+    select: { ticketNumber: true },
+  });
+
+  let maxSeq = 0;
+  for (const t of existingTickets) {
+    const numPart = t.ticketNumber.replace(prefix, "");
+    const parsed = parseInt(numPart, 10);
+    if (!isNaN(parsed) && parsed > maxSeq) {
+      maxSeq = parsed;
+    }
+  }
+
+  let nextSeq = maxSeq + 1;
+  let ticketNumber = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+  while (await prisma.supportTicket.findUnique({ where: { ticketNumber } })) {
+    nextSeq++;
+    ticketNumber = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+  }
 
   // Calculate SLA deadline
   const priorityConfig = PRIORITY_CONFIG[data.priority as TicketPriority] || PRIORITY_CONFIG.MEDIUM;

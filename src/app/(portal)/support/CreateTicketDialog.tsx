@@ -71,8 +71,8 @@ export function CreateTicketDialog({
       toast.warning("Subject is too short", "Please enter at least 4 characters.");
       return;
     }
-    if (!description.trim() || description.trim().length < 10) {
-      toast.warning("Description is too brief", "Please enter at least 10 characters.");
+    if (!description.trim() || description.trim().length < 5) {
+      toast.warning("Description is too brief", "Please enter at least 5 characters.");
       return;
     }
 
@@ -128,7 +128,7 @@ export function CreateTicketDialog({
             variant="primary"
             icon="arrow-right"
             loading={submitting}
-            disabled={subject.trim().length < 4 || description.trim().length < 10}
+            disabled={subject.trim().length < 4 || description.trim().length < 5}
             onClick={handleSubmit}
             className="flex-1 sm:flex-initial"
           >

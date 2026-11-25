@@ -231,21 +231,22 @@ export function AttendanceHistoryView({
       <PageHeader
         title="Missed OTP Attendance history"
         actions={
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="hidden md:flex items-center gap-2">
             {!todayActiveLeave ? (
               <Button
                 onClick={() => setAddModalOpen(true)}
                 icon="plus"
-                className="hidden sm:inline-flex w-auto justify-center"
+                size="sm"
               >
                 Add attendance hour
               </Button>
             ) : (
               <Button
                 variant="secondary"
+                size="sm"
                 onClick={() => setSelectedLeave(todayActiveLeave)}
                 icon="calendar"
-                className="hidden sm:inline-flex w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200"
+                className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200"
               >
                 Active Leave ({todayActiveLeave.leaveType})
               </Button>
@@ -256,7 +257,6 @@ export function AttendanceHistoryView({
                 size="sm"
                 onClick={() => setImportModalOpen(true)}
                 icon="upload"
-                className="w-auto justify-center"
               >
                 Import Sheet / CSV
               </Button>

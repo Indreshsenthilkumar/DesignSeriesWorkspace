@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { WorklogReview, type ReviewRow } from "./WorklogReview";
 import { WorklogMonthlyGrid, type GridRow } from "./WorklogMonthlyGrid";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 
 export function WorklogConsoleShell({
   view,
@@ -57,6 +58,9 @@ export function WorklogConsoleShell({
       ) : (
         <WorklogReview logs={reviewLogs} options={options} filters={filters} />
       )}
+
+      {/* Floating Action Button (FAB) for mobile view */}
+      <MobileFAB href="/worklog" label="Write today's log" />
     </div>
   );
 }

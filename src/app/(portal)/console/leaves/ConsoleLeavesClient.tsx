@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { formatLeaveDateTime, isLeaveTypeOnDuty } from "@/lib/leaves";
 import { LeaveDetailsModal, type LeaveRecord } from "@/components/leaves/LeaveDetailsModal";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 
 export function ConsoleLeavesClient({
   initialLeaves,
@@ -255,6 +256,9 @@ export function ConsoleLeavesClient({
           }}
         />
       )}
+
+      {/* Floating Action Button (FAB) for mobile view */}
+      <MobileFAB href="/leaves" label="Apply Leave" />
     </div>
   );
 }
