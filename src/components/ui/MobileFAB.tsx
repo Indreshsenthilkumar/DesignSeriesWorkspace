@@ -31,7 +31,7 @@ export function MobileFAB({
   );
 
   const baseClasses =
-    "fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] right-4 z-[45] md:hidden " +
+    "fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] right-4 z-50 md:hidden " +
     "group flex h-14 w-14 items-center justify-center rounded-[20px] " +
     "bg-[var(--color-brand-blue,#1a73e8)] text-white " +
     "shadow-[0_8px_24px_rgba(26,115,232,0.45),0_2px_8px_rgba(0,0,0,0.15)] " +

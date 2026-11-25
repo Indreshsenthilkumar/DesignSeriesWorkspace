@@ -115,7 +115,8 @@ export default async function AttendancePage() {
   const canManage = isStaff(user) || can(user, "permAttendanceLogs");
 
   return (
-    <div className="py-2">
+    <div className="py-2 min-h-screen">
+      {/* Missed OTP Attendance History View — with compact swipeable stats ribbon and mobile FAB */}
       <AttendanceHistoryView
         stats={stats}
         records={records}
