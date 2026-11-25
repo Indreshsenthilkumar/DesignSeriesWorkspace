@@ -12,6 +12,7 @@ import { Checkbox, Field, Input, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { TBody, TD, TH, THead, TR, Table, TableWrap } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -177,6 +178,7 @@ export function PeopleClient({
                 icon="plus"
                 size="sm"
                 onClick={() => setCreating(true)}
+                className="hidden sm:inline-flex"
               >
                 Add Person
               </Button>
@@ -399,6 +401,8 @@ export function PeopleClient({
         message="They will be signed out and unable to log in. Attendance, worklogs and passes are kept — this is a deactivation, not a deletion, so the programme record stays intact."
         confirmLabel="Suspend account"
       />
+
+      {canManage && <MobileFAB onClick={() => setCreating(true)} label="Add Person" />}
     </>
   );
 }

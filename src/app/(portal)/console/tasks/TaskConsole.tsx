@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { TBody, TD, TH, THead, TR, Table, TableWrap } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { TASK_PRIORITY, TASK_STATUS, TASK_STATUS_LABEL, type TaskStatus } from "@/lib/constants";
@@ -136,7 +137,7 @@ export function TaskConsole({
             ))}
             <option value="ALL">Every status</option>
           </Select>
-          <Button icon="plus" onClick={() => setCreating(true)} className="ml-auto">
+          <Button icon="plus" onClick={() => setCreating(true)} className="ml-auto hidden sm:inline-flex">
             Assign task
           </Button>
         </div>
@@ -292,6 +293,8 @@ export function TaskConsole({
         message="The task disappears from the student's board. Any points already awarded for it stay on their ledger."
         confirmLabel="Delete task"
       />
+
+      <MobileFAB onClick={() => setCreating(true)} label="Assign task" />
     </>
   );
 }

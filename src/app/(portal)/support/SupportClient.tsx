@@ -19,6 +19,7 @@ import {
 import { CreateTicketDialog, type StudentProfile, type FaqItem } from "./CreateTicketDialog";
 import { TicketConversationModal, type TicketDetail } from "./TicketConversationModal";
 import { GmailSectionSearch, type SectionFilter } from "@/components/ui/GmailSectionSearch";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 
 export function SupportClient({
   user,
@@ -218,7 +219,7 @@ export function SupportClient({
               variant="primary"
               icon="plus"
               onClick={() => setCreateOpen(true)}
-              className="flex-1 sm:flex-initial"
+              className="hidden sm:inline-flex"
             >
               Raise Request
             </Button>
@@ -444,6 +445,9 @@ export function SupportClient({
           onTicketUpdated={() => router.refresh()}
         />
       ) : null}
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB onClick={() => setCreateOpen(true)} label="Raise Support Request" />
     </>
   );
 }

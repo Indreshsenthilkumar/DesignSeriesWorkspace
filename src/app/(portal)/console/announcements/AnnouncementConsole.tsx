@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { useToast } from "@/components/ui/Toast";
 import { NOTIFICATION_CATEGORY, ROLES, ROLE_LABEL } from "@/lib/constants";
 import { relativeTime } from "@/lib/dates";
@@ -87,7 +88,7 @@ export function AnnouncementConsole({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 hidden sm:flex justify-end">
         <Button icon="plus" onClick={() => setComposing(true)}>
           New announcement
         </Button>
@@ -190,6 +191,8 @@ export function AnnouncementConsole({
         message="It disappears from everyone's feed immediately, along with its read receipts. This cannot be undone."
         confirmLabel="Delete announcement"
       />
+
+      <MobileFAB onClick={() => setComposing(true)} label="New announcement" />
     </>
   );
 }

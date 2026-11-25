@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
@@ -370,6 +371,9 @@ export function WorklogClient({
       {extensionFor ? (
         <ExtensionDialog date={extensionFor} onClose={() => setExtensionFor(null)} />
       ) : null}
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB onClick={() => openFor(todayLog)} label={todayLog ? "Edit today's log" : "Write today's log"} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button, IconButton } from "@/components/ui/Button";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
@@ -161,7 +162,7 @@ export function NotesClient({ notes }: { notes: NoteRow[] }) {
             aria-label="Search notes"
           />
         </div>
-        <Button icon="plus" onClick={openNew} className="ml-auto">
+        <Button icon="plus" onClick={openNew} className="hidden sm:inline-flex ml-auto">
           New note
         </Button>
       </div>
@@ -260,6 +261,9 @@ export function NotesClient({ notes }: { notes: NoteRow[] }) {
         message="This cannot be undone. The note is only stored here."
         confirmLabel="Delete note"
       />
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB onClick={openNew} label="New note" />
     </>
   );
 }

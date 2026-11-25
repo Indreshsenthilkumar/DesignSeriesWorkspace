@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StatGrid, StatTile } from "@/components/ui/StatTile";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Field, Textarea } from "@/components/ui/Field";
@@ -230,12 +231,12 @@ export function AttendanceHistoryView({
       <PageHeader
         title="Missed OTP Attendance history"
         actions={
-          <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {!todayActiveLeave ? (
               <Button
                 onClick={() => setAddModalOpen(true)}
                 icon="plus"
-                className="flex-1 sm:flex-initial sm:w-auto justify-center text-xs sm:text-sm py-2 sm:py-2.5"
+                className="hidden sm:inline-flex w-auto justify-center"
               >
                 Add attendance hour
               </Button>
@@ -244,7 +245,7 @@ export function AttendanceHistoryView({
                 variant="secondary"
                 onClick={() => setSelectedLeave(todayActiveLeave)}
                 icon="calendar"
-                className="flex-1 sm:flex-initial sm:w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200 text-xs sm:text-sm py-2 sm:py-2.5"
+                className="hidden sm:inline-flex w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200"
               >
                 Active Leave ({todayActiveLeave.leaveType})
               </Button>
@@ -252,9 +253,10 @@ export function AttendanceHistoryView({
             {canManage && (
               <Button
                 variant="secondary"
+                size="sm"
                 onClick={() => setImportModalOpen(true)}
                 icon="upload"
-                className="flex-1 sm:flex-initial sm:w-auto justify-center text-xs sm:text-sm py-2 sm:py-2.5"
+                className="w-auto justify-center"
               >
                 Import Sheet / CSV
               </Button>
@@ -716,6 +718,18 @@ export function AttendanceHistoryView({
           </div>
         </Modal>
       ) : null}
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB
+        onClick={() => {
+          if (!todayActiveLeave) {
+            setAddModalOpen(true);
+          } else {
+            setSelectedLeave(todayActiveLeave);
+          }
+        }}
+        label={!todayActiveLeave ? "Add attendance hour" : "Active Leave Details"}
+      />
     </div>
   );
 }

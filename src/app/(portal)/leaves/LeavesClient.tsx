@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { formatLeaveDateTime, isLeaveTypeOnDuty } from "@/lib/leaves";
 import { LeaveDetailsModal, type LeaveRecord } from "@/components/leaves/LeaveDetailsModal";
 import { ApplyLeaveModal } from "@/components/leaves/ApplyLeaveModal";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 
 export function LeavesClient({
   initialLeaves,
@@ -100,10 +101,10 @@ export function LeavesClient({
           ))}
         </div>
 
-        {/* Apply Leave Button */}
+        {/* Apply Leave Button (Desktop) */}
         <button
           onClick={() => setIsApplyOpen(true)}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all select-none cursor-pointer"
+          className="hidden sm:inline-flex w-auto items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-blue)] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:opacity-95 transition-all select-none cursor-pointer"
         >
           <Icon name="plus" className="h-4 w-4" />
           Apply Leave
@@ -239,6 +240,9 @@ export function LeavesClient({
           }}
         />
       )}
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB onClick={() => setIsApplyOpen(true)} label="Apply Leave" />
     </div>
   );
 }

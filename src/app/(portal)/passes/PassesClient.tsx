@@ -7,6 +7,7 @@ import { LogoLockup } from "@/components/brand/Logo";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Barcode } from "@/components/ui/Barcode";
 import { Button } from "@/components/ui/Button";
+import { MobileFAB } from "@/components/ui/MobileFAB";
 import { Card, CardHeader, DataRow } from "@/components/ui/Card";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -123,7 +124,7 @@ export function PassesClient({ passes, holder }: { passes: PassRow[]; holder: Pa
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 hidden sm:flex justify-end">
         <Button icon="plus" onClick={() => setRequestOpen(true)}>
           Request a pass
         </Button>
@@ -286,6 +287,9 @@ export function PassesClient({ passes, holder }: { passes: PassRow[]; holder: Pa
         message="The request will be marked cancelled and removed from your mentor's queue. You can submit a new one for the same date afterwards."
         confirmLabel="Withdraw request"
       />
+
+      {/* Floating Action Button (FAB) for mobile view — sits above the bottom navigation bar */}
+      <MobileFAB onClick={() => setRequestOpen(true)} label="Request a pass" />
     </>
   );
 }
