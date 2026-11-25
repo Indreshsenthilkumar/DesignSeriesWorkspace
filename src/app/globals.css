@@ -175,7 +175,7 @@
    --------------------------------------------------------------------------- */
 
 * {
-  border-color: var(--line-default);
+  border-color: var(--line-soft);
   -webkit-tap-highlight-color: transparent;
 }
 

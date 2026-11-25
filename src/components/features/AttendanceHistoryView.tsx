@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDay } from "@/lib/dates";
+import { formatDay, isDayWithinRange } from "@/lib/dates";
 import { ATTENDANCE_HOURS, HOUR_WINDOW } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
@@ -75,11 +75,7 @@ export function AttendanceHistoryView({
 
   const todayActiveLeave = useMemo(
     () =>
-      activeLeaves.find((l) => {
-        const fromDay = l.fromDate.slice(0, 10);
-        const toDay = l.toDate.slice(0, 10);
-        return fromDay <= today && toDay >= today;
-      }) || null,
+      activeLeaves.find((l) => isDayWithinRange(today, l.fromDate, l.toDate)) || null,
     [activeLeaves, today]
   );
 
@@ -235,13 +231,24 @@ export function AttendanceHistoryView({
         title="Missed OTP Attendance history"
         actions={
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <Button
-              onClick={() => setAddModalOpen(true)}
-              icon="plus"
-              className="w-full sm:w-auto justify-center"
-            >
-              Add attendance hour
-            </Button>
+            {!todayActiveLeave ? (
+              <Button
+                onClick={() => setAddModalOpen(true)}
+                icon="plus"
+                className="w-full sm:w-auto justify-center"
+              >
+                Add attendance hour
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                onClick={() => setSelectedLeave(todayActiveLeave)}
+                icon="calendar"
+                className="w-full sm:w-auto justify-center border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200"
+              >
+                Active Leave ({todayActiveLeave.leaveType})
+              </Button>
+            )}
             {canManage && (
               <Button
                 variant="secondary"
@@ -331,11 +338,9 @@ export function AttendanceHistoryView({
                 <EmptyRow colSpan={5} message="No attendance logs found." />
               ) : (
                 filteredRecords.map((record) => {
-                  const recordLeave = activeLeaves.find((l) => {
-                    const fromDay = l.fromDate.slice(0, 10);
-                    const toDay = l.toDate.slice(0, 10);
-                    return fromDay <= record.date && toDay >= record.date;
-                  });
+                  const recordLeave = activeLeaves.find((l) =>
+                    isDayWithinRange(record.date, l.fromDate, l.toDate)
+                  );
                   return (
                   <TR key={record.date} interactive>
                     {/* Column 1: Date */}
@@ -478,11 +483,9 @@ export function AttendanceHistoryView({
         ) : (
           filteredRecords.map((record) => {
             const isOneDay = record.absentDays === 1;
-            const recordLeave = activeLeaves.find((l) => {
-              const fromDay = l.fromDate.slice(0, 10);
-              const toDay = l.toDate.slice(0, 10);
-              return fromDay <= record.date && toDay >= record.date;
-            });
+            const recordLeave = activeLeaves.find((l) =>
+              isDayWithinRange(record.date, l.fromDate, l.toDate)
+            );
 
             return (
               <div

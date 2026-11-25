@@ -155,22 +155,9 @@ export function Sidebar({
       style={{ background: "var(--surface-rail)", borderColor: "var(--line-default)" }}
     >
       {/* Brand Header */}
-      <div className="shrink-0 px-5 pb-2 pt-4">
+      <div className="shrink-0 px-5 pb-3 pt-5">
         <Link href="/dashboard" className="inline-block rounded-[12px] p-1 -ml-1 transition-opacity hover:opacity-85">
-          <LogoLockup height={24} />
-        </Link>
-      </div>
-
-      {/* Google "+ Quick Action" Button */}
-      <div className="px-3 py-3">
-        <Link
-          href="/attendance"
-          className="flex h-12 w-full items-center gap-3.5 rounded-full bg-white dark:bg-[#282a2c] border border-[#dadce0] dark:border-[#444746] px-4 shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] hover:shadow-[0_2px_6px_0_rgba(60,64,67,0.3),0_6px_12px_4px_rgba(60,64,67,0.15)] hover:bg-[#f8fafd] transition-all text-[14px] font-semibold text-[#1f1f1f] dark:text-white select-none active:scale-[0.98]"
-        >
-          <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-brand-blue-050)] text-[var(--color-brand-blue)]">
-            <Icon name="plus" className="h-4 w-4" />
-          </div>
-          <span>Log Attendance</span>
+          <LogoLockup height={26} />
         </Link>
       </div>
 

@@ -38,12 +38,10 @@ export function LogoMark({
 }) {
   return (
     <div
-      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] p-0.5 ${className ?? ""}`}
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${className ?? ""}`}
       style={{
         width: size,
         height: size,
-        background: "var(--surface-sunken)",
-        border: "1px solid var(--line-default)",
       }}
     >
       <Image
@@ -52,7 +50,7 @@ export function LogoMark({
         width={size}
         height={size}
         priority
-        className="h-full w-full object-contain rounded-md"
+        className="h-full w-full object-contain"
       />
     </div>
   );
@@ -60,7 +58,7 @@ export function LogoMark({
 
 /** Mark + product name lockup. */
 export function LogoLockup({
-  height = 28,
+  height = 30,
   subtitle = "Portal",
   className,
 }: {
@@ -69,28 +67,25 @@ export function LogoLockup({
   className?: string;
 }) {
   return (
-    <span className={`inline-flex items-center gap-3 ${className ?? ""}`}>
+    <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
       <div
-        className="relative shrink-0 overflow-hidden rounded-lg"
+        className="relative shrink-0 overflow-hidden"
         style={{
-          width: height + 6,
-          height: height + 6,
-          background: "var(--surface-sunken)",
-          border: "1px solid var(--line-default)",
-          padding: 2,
+          width: height + 8,
+          height: height,
         }}
       >
         <Image
           src="/brand/designseries-logo.png"
           alt="DesignSeries"
-          width={height + 6}
-          height={height + 6}
+          width={height + 8}
+          height={height}
           priority
           className="h-full w-full object-contain"
         />
       </div>
       <div className="flex flex-col">
-        <span className="font-bold leading-tight tracking-tight text-foreground text-[16px]">
+        <span className="font-bold leading-tight tracking-tight text-[var(--text-strong)] text-[16px]">
           Design<span className="text-[var(--color-brand-blue)]">Series</span>
         </span>
         {subtitle ? (

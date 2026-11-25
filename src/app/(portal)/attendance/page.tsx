@@ -36,7 +36,7 @@ export default async function AttendancePage() {
     prisma.leaveRequest.findMany({
       where: {
         userId: user.id,
-        status: "APPROVED",
+        status: { in: ["APPROVED", "Approved", "approved"] },
       },
       select: {
         id: true,

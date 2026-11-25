@@ -170,7 +170,7 @@ export const STATUS_CONFIG: Record<
   ASSIGNED: { label: "Assigned", tone: "amber", description: "Assigned to an administrator." },
   IN_PROGRESS: { label: "In Progress", tone: "amber", description: "Currently under active investigation." },
   WAITING_STUDENT: { label: "Waiting for Student", tone: "amber", description: "Staff requested additional information from you." },
-  RESOLVED: { label: "Resolved", tone: "green", description: "Issue resolved. Awaiting your rating and confirmation." },
+  RESOLVED: { label: "Resolved", tone: "green", description: "Issue resolved." },
   CLOSED: { label: "Closed", tone: "slate", description: "Request finalized and completed." },
 };
 

@@ -72,79 +72,105 @@ export function FlipkartMobileNavBar({
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)] bg-[var(--surface-raised)] border-t border-[var(--line-default)] md:hidden shadow-[0_-1px_3px_0_rgba(60,64,67,0.08)] pointer-events-auto"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-0 right-0 z-40 mx-auto w-[calc(100%-28px)] max-w-[420px] md:hidden pointer-events-auto"
     >
-      <div className="grid h-[64px] grid-cols-5 items-center px-1">
-        {TABS.map((tab, idx) => {
-          const isActive = activeIndex === idx;
-          const IconComponent = tab.icon;
-          const badgeCount = tab.href ? badges[tab.href] : undefined;
+      {/* Floating Pill Container: White background, fully rounded, soft elegant shadow */}
+      <div
+        className="relative flex h-[64px] w-full items-center rounded-full border px-1 shadow-[0_10px_35px_-4px_rgba(0,0,0,0.14),0_2px_8px_-1px_rgba(0,0,0,0.06)]"
+        style={{
+          backgroundColor: "var(--surface-raised)",
+          borderColor: "var(--line-default)",
+        }}
+      >
+        {/* Dynamic Smooth Moving Active-Tab Background:
+            Occurs smoothly behind selected navigation item with large rounded background */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-1.5 left-0 z-0 transition-transform duration-300 ease-in-out"
+          style={{
+            width: "20%",
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+        >
+          <div
+            className="mx-auto h-full w-[calc(100%-6px)] rounded-[20px] transition-colors"
+            style={{
+              backgroundColor: "var(--surface-sunken)",
+            }}
+          />
+        </div>
 
-          const content = (
-            <div className="flex flex-col items-center justify-center gap-0.5">
-              {/* Google Material 3 Active Pill Container */}
-              <div
-                className={`relative flex h-8 w-14 items-center justify-center rounded-full transition-all duration-200 ${
-                  isActive
-                    ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
-                    : "text-[#444746] dark:text-[#c4c7c5] hover:bg-[#eaebef]/50"
-                }`}
-              >
-                <IconComponent
-                  className="h-5 w-5"
-                  strokeWidth={isActive ? 2.4 : 1.8}
-                />
+        {/* Five Equally Distributed Navigation Items */}
+        <div className="relative z-10 grid h-full w-full grid-cols-5 items-center">
+          {TABS.map((tab, idx) => {
+            const isActive = activeIndex === idx;
+            const IconComponent = tab.icon;
+            const badgeCount = tab.href ? badges[tab.href] : undefined;
 
-                {/* Badge indicator */}
-                {!isActive && badgeCount && badgeCount > 0 ? (
-                  <span
-                    aria-label={`${badgeCount} unread`}
-                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ea4335] px-1 text-[9px] font-bold text-white"
-                  >
-                    {badgeCount > 9 ? "9+" : badgeCount}
-                  </span>
-                ) : null}
+            const content = (
+              <div className="relative flex flex-col items-center justify-center gap-1">
+                {/* Icon */}
+                <div className="relative flex items-center justify-center">
+                  <IconComponent
+                    className={`h-[22px] w-[22px] transition-all duration-200 ${
+                      isActive ? "scale-105" : "scale-100"
+                    }`}
+                    style={{
+                      color: isActive ? "var(--color-brand-blue)" : "var(--text-default)",
+                      strokeWidth: isActive ? 2.3 : 1.85,
+                    }}
+                  />
+
+                  {/* Badge indicator */}
+                  {!isActive && badgeCount && badgeCount > 0 ? (
+                    <span
+                      aria-label={`${badgeCount} unread`}
+                      className="absolute -right-1.5 -top-1 flex h-[7px] w-[7px] rounded-full"
+                      style={{ backgroundColor: "var(--color-brand-red)" }}
+                    />
+                  ) : null}
+                </div>
+
+                {/* Text Label */}
+                <span
+                  className="truncate text-[10px] leading-tight transition-all duration-200"
+                  style={{
+                    color: isActive ? "var(--color-brand-blue)" : "var(--text-default)",
+                    fontWeight: isActive ? 600 : 450,
+                  }}
+                >
+                  {tab.label}
+                </span>
               </div>
+            );
 
-              {/* Text Label */}
-              <span
-                className={`truncate text-[11px] leading-tight transition-colors duration-150 ${
-                  isActive
-                    ? "font-bold text-[#1f1f1f] dark:text-white"
-                    : "font-medium text-[#444746] dark:text-[#8e918f]"
-                }`}
-              >
-                {tab.label}
-              </span>
-            </div>
-          );
+            if (tab.isAction) {
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={onMore}
+                  aria-label="Open More Menu"
+                  aria-pressed={isActive}
+                  className="flex h-full w-full flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
+                >
+                  {content}
+                </button>
+              );
+            }
 
-          if (tab.isAction) {
             return (
-              <button
+              <Link
                 key={tab.id}
-                type="button"
-                onClick={onMore}
-                aria-label="Open More Menu"
-                aria-pressed={isActive}
+                href={tab.href!}
+                aria-current={isActive ? "page" : undefined}
                 className="flex h-full w-full flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
               >
                 {content}
-              </button>
+              </Link>
             );
-          }
-
-          return (
-            <Link
-              key={tab.id}
-              href={tab.href!}
-              aria-current={isActive ? "page" : undefined}
-              className="flex h-full w-full flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
-            >
-              {content}
-            </Link>
-          );
-        })}
+          })}
+        </div>
       </div>
     </nav>
   );

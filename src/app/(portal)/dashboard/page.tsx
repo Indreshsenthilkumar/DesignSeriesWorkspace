@@ -13,7 +13,7 @@ import { StatTile } from "@/components/ui/StatTile";
 import { PersonCell } from "@/components/ui/Avatar";
 import { requireUser } from "@/lib/auth";
 import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS } from "@/lib/constants";
-import { formatDay, greeting, minutesSinceMidnight, relativeTime, toDayKey, weekdayShort } from "@/lib/dates";
+import { formatDay, greeting, isDayWithinRange, minutesSinceMidnight, relativeTime, toDayKey, weekdayShort } from "@/lib/dates";
 import { studentDashboard, visibleNotifications } from "@/lib/queries";
 import { shortYear, truncate } from "@/lib/utils";
 import { can, canOpenConsole, isAdminLike, type PermissionSubject } from "@/lib/permissions";
@@ -778,7 +778,7 @@ async function StudentDashboard({
     prisma.leaveRequest.findMany({
       where: {
         userId: user.id,
-        status: "APPROVED",
+        status: { in: ["APPROVED", "Approved", "approved"] },
       },
       select: {
         id: true,
@@ -792,11 +792,8 @@ async function StudentDashboard({
     }),
   ]);
 
-  const todayActiveLeave = userApprovedLeaves.find((l) => {
-    const fromDay = l.fromDate.slice(0, 10);
-    const toDay = l.toDate.slice(0, 10);
-    return fromDay <= today && toDay >= today;
-  }) || null;
+  const todayActiveLeave =
+    userApprovedLeaves.find((l) => isDayWithinRange(today, l.fromDate, l.toDate)) || null;
 
   const closed = minutesSinceMidnight() > ATTENDANCE_CUTOFF_MINUTES;
   const attendanceDelta =

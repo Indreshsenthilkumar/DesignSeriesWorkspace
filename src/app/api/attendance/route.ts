@@ -5,7 +5,7 @@ import { requireApiPermission, requireApiUser } from "@/lib/auth";
 import { can, isStaff } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { ATTENDANCE_CUTOFF_MINUTES, ATTENDANCE_HOURS, REWARD_RULES } from "@/lib/constants";
-import { minutesSinceMidnight, toDayKey } from "@/lib/dates";
+import { isDayWithinRange, minutesSinceMidnight, toDayKey } from "@/lib/dates";
 
 const checkInSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format."),
@@ -45,20 +45,16 @@ export const POST = handler(async (request: Request) => {
     const userLeaves = await prisma.leaveRequest.findMany({
       where: {
         userId: user.id,
-        status: "APPROVED",
+        status: { in: ["APPROVED", "Approved", "approved"] },
       },
       select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
     });
 
-    const activeLeave = userLeaves.find((l) => {
-      const fromDay = l.fromDate.slice(0, 10);
-      const toDay = l.toDate.slice(0, 10);
-      return fromDay <= date && toDay >= date;
-    });
+    const activeLeave = userLeaves.find((l) => isDayWithinRange(date, l.fromDate, l.toDate));
 
     if (activeLeave) {
       return fail(
-        `You have an approved leave (${activeLeave.leaveType}) from ${activeLeave.fromDate.slice(0, 10)} to ${activeLeave.toDate.slice(0, 10)}. Missed OTP attendance cannot be logged for approved leave dates.`,
+        `You have an approved leave (${activeLeave.leaveType}) covering this date. Missed OTP attendance cannot be logged for approved leave dates.`,
         400
       );
     }
@@ -171,18 +167,14 @@ export const PUT = handler(async (request: Request) => {
     const userLeaves = await prisma.leaveRequest.findMany({
       where: {
         userId,
-        status: "APPROVED",
+        status: { in: ["APPROVED", "Approved", "approved"] },
       },
       select: { id: true, leaveType: true, fromDate: true, toDate: true, status: true, reason: true },
     });
-    const activeLeave = userLeaves.find((l) => {
-      const fromDay = l.fromDate.slice(0, 10);
-      const toDay = l.toDate.slice(0, 10);
-      return fromDay <= date && toDay >= date;
-    });
+    const activeLeave = userLeaves.find((l) => isDayWithinRange(date, l.fromDate, l.toDate));
     if (activeLeave) {
       return fail(
-        `You have an approved leave (${activeLeave.leaveType}) from ${activeLeave.fromDate.slice(0, 10)} to ${activeLeave.toDate.slice(0, 10)}. Attendance cannot be edited for approved leave dates.`,
+        `You have an approved leave (${activeLeave.leaveType}) covering this date. Attendance cannot be edited for approved leave dates.`,
         400
       );
     }

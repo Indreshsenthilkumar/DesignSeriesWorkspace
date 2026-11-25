@@ -14,6 +14,31 @@ export function toDayKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Robust converter to YYYY-MM-DD from ISO strings, human dates, or Date instances */
+export function toDayKeyFromAny(val: string | Date | null | undefined): string {
+  if (!val) return "";
+  if (val instanceof Date) return toDayKey(val);
+  const trimmed = String(val).trim();
+  // Check ISO YYYY-MM-DD prefix
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  // Try Date parse
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    return toDayKey(parsed);
+  }
+  return trimmed.slice(0, 10);
+}
+
+/** Checks if a calendar day (YYYY-MM-DD) is within a fromDate - toDate range */
+export function isDayWithinRange(day: string, fromDateStr?: string | null, toDateStr?: string | null): boolean {
+  if (!day || !fromDateStr || !toDateStr) return false;
+  const fromDay = toDayKeyFromAny(fromDateStr);
+  const toDay = toDayKeyFromAny(toDateStr);
+  if (!fromDay || !toDay) return false;
+  return fromDay <= day && toDay >= day;
+}
+
 export function fromDayKey(key: string): Date {
   const [y, m, d] = key.split("-").map(Number);
   return new Date(y, (m ?? 1) - 1, d ?? 1);
