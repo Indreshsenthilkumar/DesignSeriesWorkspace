@@ -315,6 +315,7 @@ export function AttendanceHistoryView({
         totalResults={filteredRecords.length}
         onRefresh={handleRefresh}
         refreshing={refreshing}
+        hideMobileRefresh={true}
         onClearAll={clearAllFilters}
         hasActiveFilters={hasActiveFilters}
       />

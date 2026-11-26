@@ -28,6 +28,7 @@ interface GmailSectionSearchProps {
   totalResults?: number;
   onRefresh?: () => void;
   refreshing?: boolean;
+  hideMobileRefresh?: boolean;
   onClearAll?: () => void;
   hasActiveFilters?: boolean;
   className?: string;
@@ -48,6 +49,7 @@ export function GmailSectionSearch({
   totalResults,
   onRefresh,
   refreshing = false,
+  hideMobileRefresh = false,
   onClearAll,
   hasActiveFilters = false,
   className,
@@ -90,7 +92,7 @@ export function GmailSectionSearch({
             </button>
           ) : null}
 
-          {onRefresh ? (
+          {onRefresh && !hideMobileRefresh ? (
             <button
               type="button"
               onClick={onRefresh}
