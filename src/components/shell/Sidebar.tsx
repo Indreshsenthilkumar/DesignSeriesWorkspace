@@ -16,11 +16,13 @@ function NavLink({
   active,
   badge,
   onNavigate,
+  mobile,
 }: {
   item: NavItem;
   active: boolean;
   badge?: number;
   onNavigate?: () => void;
+  mobile?: boolean;
 }) {
   return (
     <Link
@@ -29,20 +31,39 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       title={item.description}
       className={cn(
-        "group relative flex h-10 items-center gap-3.5 rounded-full px-4",
-        "text-[13.5px] font-medium transition-all duration-150",
-        active
-          ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold"
-          : "text-[#444746] dark:text-[#c4c7c5] hover:bg-[#eaebef]/80 dark:hover:bg-[#282a2c] hover:text-[#1f1f1f] dark:hover:text-white"
+        "group relative flex items-center transition-all duration-150 select-none",
+        mobile
+          ? cn(
+              "h-11 gap-3 rounded-2xl px-3.5 text-[14px]",
+              active
+                ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-bold shadow-xs"
+                : "text-[var(--text-default)] hover:bg-[var(--surface-inset)] hover:text-[var(--text-strong)] font-medium"
+            )
+          : cn(
+              "h-10 gap-3.5 rounded-full px-4 text-[13.5px]",
+              active
+                ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff] font-semibold"
+                : "text-[#444746] dark:text-[#c4c7c5] hover:bg-[#eaebef]/80 dark:hover:bg-[#282a2c] hover:text-[#1f1f1f] dark:hover:text-white font-medium"
+            )
       )}
     >
-      <Icon
-        name={item.icon}
+      <span
         className={cn(
-          "h-[18px] w-[18px] shrink-0 transition-colors",
-          active ? "text-[#001d35] dark:text-[#c2e7ff]" : "text-[#444746] dark:text-[#c4c7c5]"
+          "grid place-items-center shrink-0 transition-colors",
+          mobile ? "h-7 w-7 rounded-xl" : "h-[18px] w-[18px]",
+          mobile && active && "bg-white/40 dark:bg-white/10"
         )}
-      />
+      >
+        <Icon
+          name={item.icon}
+          className={cn(
+            mobile ? "h-4 w-4" : "h-[18px] w-[18px]",
+            active
+              ? "text-[#001d35] dark:text-[#c2e7ff]"
+              : "text-[#444746] dark:text-[#c4c7c5] group-hover:text-[var(--text-strong)]"
+          )}
+        />
+      </span>
       <span className="truncate flex-1">{item.label}</span>
       {badge && badge > 0 ? (
         <span
@@ -50,11 +71,17 @@ function NavLink({
             "rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
             active
               ? "bg-[#001d35] text-white dark:bg-[#c2e7ff] dark:text-[#001d35]"
-              : "bg-[#c5221f] text-white"
+              : "bg-[#c5221f] text-white shadow-xs"
           )}
         >
           {badge}
         </span>
+      ) : null}
+      {mobile && !active ? (
+        <Icon
+          name="chevron-right"
+          className="h-3.5 w-3.5 shrink-0 opacity-20 group-hover:opacity-60 transition-opacity"
+        />
       ) : null}
     </Link>
   );
@@ -75,11 +102,13 @@ export function SidebarNav({
   consoleNav,
   badges = {},
   onNavigate,
+  mobile,
 }: {
   studentNav: NavItem[];
   consoleNav: NavItem[];
   badges?: NavBadges;
   onNavigate?: () => void;
+  mobile?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -96,6 +125,7 @@ export function SidebarNav({
                 active={isActive(pathname, item.href)}
                 badge={badges[item.href]}
                 onNavigate={onNavigate}
+                mobile={mobile}
               />
             ))}
           </div>
@@ -113,6 +143,7 @@ export function SidebarNav({
               }}
               active={isActive(pathname, "/dashboard")}
               onNavigate={onNavigate}
+              mobile={mobile}
             />
           </div>
         </>
@@ -129,6 +160,7 @@ export function SidebarNav({
                 active={isActive(pathname, item.href)}
                 badge={badges[item.href]}
                 onNavigate={onNavigate}
+                mobile={mobile}
               />
             ))}
           </div>

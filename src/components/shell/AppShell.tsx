@@ -20,6 +20,7 @@ import { Sidebar, SidebarNav, type NavBadges } from "./Sidebar";
 import { FlipkartMobileNavBar } from "./FlipkartMobileNavBar";
 import { GmailMobileSearch } from "./GmailMobileSearch";
 import { SupportNotificationListener } from "@/components/features/SupportNotificationListener";
+import { usePwaInstall } from "@/lib/usePwaInstall";
 
 export type ShellUser = {
   id: string;
@@ -468,8 +469,11 @@ function MobileDrawer({
   onClose: () => void;
 }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const { canInstall, isInstalled, isIOS, triggerInstall } = usePwaInstall();
+  const [installing, setInstalling] = useState(false);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -483,65 +487,200 @@ function MobileDrawer({
     }
   };
 
+  const handleInstallClick = async () => {
+    setInstalling(true);
+    const result = await triggerInstall();
+    setInstalling(false);
+
+    if (result === "accepted") {
+      toast.success("App installed successfully!", "You can now open DesignSeries from your home screen.");
+    } else if (result === "ios") {
+      setShowIosGuide(true);
+    } else if (result === "unavailable") {
+      toast.info("Install DesignSeries App", "In your mobile browser menu (⋮), tap 'Install App' or 'Add to Home screen'.");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[70] lg:hidden">
+      {/* Blurred Backdrop */}
       <div
-        className="animate-fade absolute inset-0"
-        style={{ background: "var(--surface-overlay)", backdropFilter: "blur(2px)" }}
+        className="animate-fade absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
+
+      {/* Slide-out Native Sheet */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col border-r shadow-2xl"
+        className="absolute inset-y-0 left-0 flex w-[86%] max-w-[335px] flex-col rounded-r-[26px] border-r shadow-2xl overflow-hidden"
         style={{
           background: "var(--surface-rail)",
           borderColor: "var(--line-default)",
           animation: "kup-rise 0.26s var(--ease-out-quint) both",
         }}
       >
-        <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-4 border-b border-[var(--line-soft)]">
-          <LogoLockup height={21} />
-          <div className="flex items-center gap-1">
-            <ThemeToggle compact />
-            <button
-              onClick={onClose}
-              aria-label="Close navigation"
-              className="grid h-9 w-9 place-items-center rounded-[10px] text-[var(--text-muted)] hover:bg-[var(--surface-inset)]"
-            >
-              <Icon name="close" className="h-[18px] w-[18px]" />
-            </button>
+        {/* ================================================================= */}
+        {/* 1. App Header: User Profile Hero Card                             */}
+        {/* ================================================================= */}
+        <div className="relative shrink-0 border-b border-[var(--line-soft)] bg-[var(--surface-raised)] p-4 pt-5">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            aria-label="Close navigation"
+            className="absolute right-3.5 top-3.5 grid h-8 w-8 place-items-center rounded-full bg-[var(--surface-sunken)] text-[var(--text-muted)] hover:bg-[var(--surface-inset)] active:scale-90 transition-all cursor-pointer"
+          >
+            <Icon name="close" className="h-4 w-4" />
+          </button>
+
+          {/* User Profile Hero */}
+          <Link
+            href="/profile"
+            onClick={onClose}
+            className="group flex items-start gap-3.5 transition-opacity hover:opacity-90"
+          >
+            <div className="relative">
+              <Avatar name={user.name} seed={user.id} size={46} />
+              <span
+                aria-hidden
+                className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--surface-raised)] bg-emerald-500 shadow-xs"
+              />
+            </div>
+
+            <div className="min-w-0 flex-1 pr-6">
+              <div className="flex items-center gap-1.5">
+                <p className="truncate text-[15px] font-bold text-[var(--text-strong)] leading-snug">
+                  {user.name}
+                </p>
+                <Icon
+                  name="chevron-right"
+                  className="h-3.5 w-3.5 text-[var(--text-faint)] group-hover:text-[var(--text-strong)] transition-colors shrink-0"
+                />
+              </div>
+
+              <p className="truncate text-[11.5px] text-[var(--text-muted)] font-medium mt-0.5">
+                {user.email || user.rollNo}
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center rounded-full bg-[var(--surface-sunken)] px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--text-strong)] border border-[var(--line-soft)]">
+                  {ROLE_LABEL[user.role as Role] ?? user.role}
+                </span>
+
+                {user.rewardPoints !== undefined ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-extrabold text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                    <Icon name="trophy" className="h-3 w-3" />
+                    {user.rewardPoints} pts
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* ================================================================= */}
+        {/* 2. Download / Install App Action Banner                            */}
+        {/* ================================================================= */}
+        <div className="px-3 pt-3 shrink-0">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--line-default)] bg-[var(--surface-inset)] p-3 shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--color-brand-blue)] text-white shadow-xs">
+                <Icon name={isInstalled ? "check" : "download"} className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[12.5px] font-bold text-[var(--text-strong)]">
+                  {isInstalled ? "App Installed" : "Download as App"}
+                </p>
+                <p className="truncate text-[11px] text-[var(--text-muted)]">
+                  {isInstalled ? "Running in standalone mode" : "Fast native access on your phone"}
+                </p>
+              </div>
+            </div>
+
+            {!isInstalled ? (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                disabled={installing}
+                className="shrink-0 flex items-center gap-1 rounded-xl bg-[var(--color-brand-blue)] px-3 py-1.5 text-[11.5px] font-bold text-white shadow-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+              >
+                <Icon name="download" className="h-3.5 w-3.5" />
+                Install
+              </button>
+            ) : (
+              <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400">
+                Installed
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* iOS Install Instruction Modal */}
+        {showIosGuide && (
+          <div className="p-3 mx-3 my-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[11.5px] text-blue-900 dark:text-blue-200">
+            <div className="flex items-center justify-between font-bold mb-1">
+              <span>Install on iPhone / iPad:</span>
+              <button
+                type="button"
+                onClick={() => setShowIosGuide(false)}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                <Icon name="close" className="h-3 w-3" />
+              </button>
+            </div>
+            <p>1. Tap the <strong>Share</strong> button (⎋) in Safari toolbar.</p>
+            <p>2. Scroll down and tap <strong>Add to Home Screen</strong>.</p>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* 3. Navigation Links List                                           */}
+        {/* ================================================================= */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
           <SidebarNav
             studentNav={studentNav}
             consoleNav={consoleNav}
             badges={badges}
             onNavigate={onClose}
+            mobile={true}
           />
         </div>
 
-        <div className="shrink-0 border-t p-3 space-y-2.5 bg-[var(--surface-raised)]" style={{ borderColor: "var(--line-default)" }}>
-          <div className="flex items-center justify-between rounded-[10px] bg-[var(--surface-inset)] px-2.5 py-1.5 border border-[var(--line-soft)]">
-            <span className="text-[12px] font-semibold text-[var(--text-default)]">Appearance</span>
-            <ThemeToggle />
+        {/* ================================================================= */}
+        {/* 4. Drawer Footer: Theme & Sign Out                                 */}
+        {/* ================================================================= */}
+        <div
+          className="shrink-0 border-t p-3.5 pb-[calc(env(safe-area-inset-bottom)+16px)] space-y-2.5 bg-[var(--surface-raised)]"
+          style={{ borderColor: "var(--line-default)" }}
+        >
+          {/* Appearance Row */}
+          <div className="flex items-center justify-between rounded-xl bg-[var(--surface-inset)] px-3 py-2 border border-[var(--line-soft)]">
+            <span className="text-[12px] font-semibold text-[var(--text-default)] flex items-center gap-2">
+              <Icon name="moon" className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+              Theme Mode
+            </span>
+            <ThemeToggle compact />
           </div>
 
-          <UserCard user={user} />
-
+          {/* Sign Out Button */}
           <button
             type="button"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-2 text-[13px] font-bold text-[var(--color-brand-red)] transition-all active:scale-95 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-2.5 text-[13px] font-bold text-[var(--color-brand-red)] transition-all active:scale-98 disabled:opacity-50 cursor-pointer shadow-xs"
           >
-            <Icon name={signingOut ? "spinner" : "logout"} className={cn("h-4 w-4", signingOut && "animate-spin")} />
+            <Icon
+              name={signingOut ? "spinner" : "logout"}
+              className={cn("h-4 w-4", signingOut && "animate-spin")}
+            />
             {signingOut ? "Signing out..." : "Sign Out"}
           </button>
+
+          <p className="text-center text-[10px] font-medium text-[var(--text-faint)]">
+            DesignSeries Portal · Native App & PWA
+          </p>
         </div>
       </div>
     </div>

@@ -1,19 +1,40 @@
 {
-  "name": "KreateUp DesignSeries Portal",
+  "id": "/",
+  "name": "DesignSeries Portal",
   "short_name": "DesignSeries",
-  "description": "Attendance, worklogs, tasks, gate passes and analytics for the KreateUp DesignSeries cohort.",
+  "description": "Attendance, worklogs, sprint tasks, gate passes and programme analytics for the DesignSeries cohort.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f4f6fb",
+  "background_color": "#0b1020",
   "theme_color": "#1a73e8",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
