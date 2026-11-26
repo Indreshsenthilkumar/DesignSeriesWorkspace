@@ -123,7 +123,7 @@ export function AppShell({
 
         <main
           id="main"
-          className="mx-auto w-full max-w-[1420px] px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-4 sm:px-6 sm:pt-6 md:pb-12"
+          className="mx-auto w-full max-w-[1420px] px-3.5 sm:px-6 pt-3 sm:pt-6 pb-[calc(env(safe-area-inset-bottom)+80px)] md:pb-12"
         >
           {children}
         </main>

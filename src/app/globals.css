@@ -105,33 +105,33 @@
     monospace;
 
   /* Google Workspace Surfaces */
-  --surface-page: #f8fafd;
+  --surface-page: #f8fafc;
   --surface-raised: #ffffff;
-  --surface-sunken: #f0f4f9;
-  --surface-inset: #edf2fa;
-  --surface-rail: #f8fafd;
-  --surface-overlay: rgba(32, 33, 36, 0.45);
+  --surface-sunken: #f1f5f9;
+  --surface-inset: #f8fafc;
+  --surface-rail: #ffffff;
+  --surface-overlay: rgba(15, 23, 42, 0.45);
 
-  /* Exact Google Workspace Typography Role Colors - High Contrast */
-  --text-strong: #1f1f1f;         /* Google Sans deep dark text (Contrast: 18:1) */
-  --text-default: #1f1f1f;        /* Primary body text (Contrast: 18:1) */
-  --text-muted: #444746;          /* Secondary text (Contrast: 10:1) */
-  --text-faint: #747775;          /* Captions, subtexts & placeholder hints (Contrast: 6.5:1) */
+  /* Exact Google Workspace & Modern Typography Role Colors - High Contrast */
+  --text-strong: #0f172a;         /* High-contrast deep slate text */
+  --text-default: #1e293b;        /* Primary body text */
+  --text-muted: #475569;          /* Secondary text */
+  --text-faint: #64748b;          /* Captions, subtexts & placeholder hints */
   --text-inverse: #ffffff;
 
-  --line-soft: #edf2fa;           /* Clean soft divider */
-  --line-default: #dadce0;        /* Official Google Workspace border */
-  --line-strong: #747775;         /* High-contrast divider/outline */
+  --line-soft: #f1f5f9;           /* Ultra-soft clean divider */
+  --line-default: #e2e8f0;        /* Sleek modern Slate-200 border, eliminating harsh wireframe strokes */
+  --line-strong: #94a3b8;         /* Defined boundary */
 
-  --accent: var(--color-brand-blue);
+  --accent: #2563eb;              /* Vibrant Royal Blue */
   --accent-contrast: #ffffff;
-  --accent-soft: #c2e7ff;         /* Official Google Material 3 pill container */
+  --accent-soft: #dbeafe;         /* Modern soft blue container */
 
-  --ring: rgba(26, 115, 232, 0.35);
+  --ring: rgba(37, 99, 235, 0.25);
 
-  --shadow-card: 0 1px 2px 0 rgba(60, 64, 67, 0.12), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
-  --shadow-raised: 0 1px 3px 0 rgba(60, 64, 67, 0.2), 0 4px 8px 3px rgba(60, 64, 67, 0.1);
-  --shadow-pop: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 8px 16px 6px rgba(60, 64, 67, 0.15);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  --shadow-pop: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 
   --radius-sm: 8px;
   --radius: 12px;
@@ -142,32 +142,32 @@
 .dark {
   color-scheme: dark;
 
-  --surface-page: #1b1c1d;
-  --surface-raised: #282a2c;
-  --surface-sunken: #171819;
-  --surface-inset: #313335;
-  --surface-rail: #1b1c1d;
-  --surface-overlay: rgba(0, 0, 0, 0.65);
+  --surface-page: #0b0f19;
+  --surface-raised: #111827;
+  --surface-sunken: #080c14;
+  --surface-inset: #1a2236;
+  --surface-rail: #111827;
+  --surface-overlay: rgba(0, 0, 0, 0.7);
 
-  --text-strong: #ffffff;
-  --text-default: #e3e3e3;
-  --text-muted: #c4c7c5;
-  --text-faint: #8e918f;
-  --text-inverse: #1b1c1d;
+  --text-strong: #f8fafc;
+  --text-default: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --text-inverse: #0b0f19;
 
-  --line-soft: #2d2e30;
-  --line-default: #444746;
-  --line-strong: #747775;
+  --line-soft: rgba(255, 255, 255, 0.05);
+  --line-default: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
 
-  --accent: #8ab4f8;
-  --accent-contrast: #1b1c1d;
-  --accent-soft: #004a77;
+  --accent: #3b82f6;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(59, 130, 246, 0.16);
 
-  --ring: rgba(138, 180, 248, 0.45);
+  --ring: rgba(59, 130, 246, 0.35);
 
-  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.4);
-  --shadow-raised: 0 2px 6px 2px rgba(0, 0, 0, 0.6);
-  --shadow-pop: 0 6px 16px 4px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 12px 28px -4px rgba(0, 0, 0, 0.65);
 }
 
 /* ---------------------------------------------------------------------------

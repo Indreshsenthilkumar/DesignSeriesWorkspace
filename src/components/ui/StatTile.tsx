@@ -21,7 +21,7 @@ export function StatGrid({
   return (
     <div
       className={cn(
-        "stagger mb-3.5 sm:mb-5 flex overflow-x-auto sm:overflow-visible sm:grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4 scrollbar-none snap-x snap-mandatory pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0",
+        "stagger mb-3 sm:mb-5 flex overflow-x-auto sm:overflow-visible sm:grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4 scrollbar-none snap-x snap-mandatory pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0",
         className
       )}
     >
@@ -31,11 +31,12 @@ export function StatGrid({
 }
 
 /**
- * The KPI tile used across the dashboard and the admin console.
+ * The KPI tile used across the dashboard and all portal sections.
  *
- * A tile always answers three things: what the number is, what it means, and
- * which way it is moving. The accent bar on the left is the only colour, so a
- * row of tiles reads as a set rather than as four competing blocks.
+ * Responsive by design:
+ * - Mobile (<640px): Ultra-compact 54px horizontal glance pill, saving screen space so
+ *   the page content is immediately visible without scrolling.
+ * - Desktop (>=640px): Spacious, rich card with clear visual hierarchy, trend delta, and subtle accent.
  */
 export function StatTile({
   label,
@@ -65,81 +66,130 @@ export function StatTile({
     <>
       <span
         aria-hidden
-        className="absolute inset-y-0 left-0 w-[3.5px] sm:w-[4.5px] rounded-l-[18px] sm:rounded-l-[20px]"
+        className="absolute inset-y-0 left-0 w-[3px] sm:w-[4px] rounded-l-[14px] sm:rounded-l-[20px]"
         style={{ background: "var(--tone)" }}
       />
 
-      <div className="flex items-start justify-between gap-1.5 sm:gap-3">
-        <p
-          className="text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.05em] truncate"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {label}
-        </p>
-        {icon ? (
-          <span
-            className="grid h-6 w-6 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-full"
-            style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
-          >
-            <Icon name={icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      {/* -------------------------------------------------------------
+          1. Mobile View (<640px): Ultra-compact 52px glance tile
+          Prevents stats from hogging half the mobile screen
+          ------------------------------------------------------------- */}
+      <div className="flex sm:hidden flex-col justify-center h-full pl-1.5 py-0.5">
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider truncate text-[var(--text-muted)]">
+            {label}
           </span>
-        ) : null}
-      </div>
-
-      <div className="mt-1.5 sm:mt-2.5 flex items-baseline gap-1 sm:gap-1.5">
-        <span
-          className="text-[22px] sm:text-[34px] font-extrabold leading-none tabular-nums"
-          style={{ color: "var(--text-strong)", letterSpacing: "-0.035em" }}
-        >
-          {value}
-        </span>
-        {unit ? (
-          <span className="text-[11px] sm:text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
-            {unit}
+          {icon ? (
+            <span
+              className="grid h-4 w-4 shrink-0 place-items-center rounded-full"
+              style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
+            >
+              <Icon name={icon} className="h-2.5 w-2.5" />
+            </span>
+          ) : null}
+        </div>
+        <div className="flex items-baseline gap-1 mt-0.5">
+          <span className="text-[17px] font-extrabold tabular-nums leading-none text-[var(--text-strong)] tracking-tight">
+            {value}
           </span>
-        ) : null}
-      </div>
-
-      {(caption || delta !== undefined) && (
-        <div className="mt-1.5 sm:mt-2.5 flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
+          {unit ? (
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">
+              {unit}
+            </span>
+          ) : null}
           {delta !== undefined && delta !== null ? (
             <span
               data-accent={delta >= 0 ? "green" : "red"}
-              className="inline-flex items-center gap-0.5 sm:gap-1 rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold tabular-nums shrink-0"
+              className="ml-auto inline-flex items-center rounded-full px-1 py-0.2 text-[9px] font-bold tabular-nums"
               style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
             >
-              <Icon
-                name="arrow-trend"
-                className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3", delta < 0 && "-scale-y-100")}
-              />
-              {delta >= 0 ? "+" : ""}
-              {delta}%
+              {delta >= 0 ? "+" : ""}{delta}%
             </span>
-          ) : null}
-          {caption ? (
-            <span className="truncate text-[10px] sm:text-[11.5px] font-medium min-w-0" style={{ color: "var(--text-muted)" }}>
+          ) : caption ? (
+            <span className="ml-auto text-[9.5px] font-medium text-[var(--text-faint)] truncate max-w-[70px]">
               {caption}
             </span>
           ) : null}
         </div>
-      )}
+      </div>
 
-      {footer ? <div className="mt-2.5 sm:mt-3">{footer}</div> : null}
+      {/* -------------------------------------------------------------
+          2. Desktop View (>=640px): Spacious, rich KPI tile
+          ------------------------------------------------------------- */}
+      <div className="hidden sm:block">
+        <div className="flex items-start justify-between gap-3">
+          <p
+            className="text-[12px] font-bold uppercase tracking-[0.05em] truncate"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {label}
+          </p>
+          {icon ? (
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
+              style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
+            >
+              <Icon name={icon} className="h-4 w-4" />
+            </span>
+          ) : null}
+        </div>
 
-      {href ? (
-        <Icon
-          name="arrow-up-right"
-          className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-0 transition-opacity group-hover:opacity-100"
-          style={{ color: "var(--tone)" }}
-        />
-      ) : null}
+        <div className="mt-2 flex items-baseline gap-1.5">
+          <span
+            className="text-[30px] font-extrabold leading-none tabular-nums"
+            style={{ color: "var(--text-strong)", letterSpacing: "-0.035em" }}
+          >
+            {value}
+          </span>
+          {unit ? (
+            <span className="text-[13px] font-bold" style={{ color: "var(--text-muted)" }}>
+              {unit}
+            </span>
+          ) : null}
+        </div>
+
+        {(caption || delta !== undefined) && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0">
+            {delta !== undefined && delta !== null ? (
+              <span
+                data-accent={delta >= 0 ? "green" : "red"}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums shrink-0"
+                style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
+              >
+                <Icon
+                  name="arrow-trend"
+                  className={cn("h-3 w-3", delta < 0 && "-scale-y-100")}
+                />
+                {delta >= 0 ? "+" : ""}
+                {delta}%
+              </span>
+            ) : null}
+            {caption ? (
+              <span className="truncate text-[11.5px] font-medium min-w-0" style={{ color: "var(--text-muted)" }}>
+                {caption}
+              </span>
+            ) : null}
+          </div>
+        )}
+
+        {footer ? <div className="mt-3">{footer}</div> : null}
+
+        {href ? (
+          <Icon
+            name="arrow-up-right"
+            className="absolute bottom-4 right-4 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
+            style={{ color: "var(--tone)" }}
+          />
+        ) : null}
+      </div>
     </>
   );
 
   const classes = cn(
-    "surface group relative block rounded-[18px] sm:rounded-[20px] border border-[var(--line-default)]",
-    "p-3 sm:p-5 pl-3.5 sm:pl-5.5",
-    "w-[145px] min-w-[135px] max-w-[160px] shrink-0 sm:w-full sm:max-w-none sm:shrink snap-start",
+    "surface group relative block rounded-[14px] sm:rounded-[20px] border border-[var(--line-default)]",
+    "h-[54px] sm:h-auto",
+    "p-2 sm:p-5 sm:pl-5.5",
+    "w-[132px] min-w-[125px] shrink-0 sm:w-full sm:max-w-none sm:shrink snap-start",
     "overflow-hidden transition-all duration-200 shadow-card hover:shadow-raised hover:-translate-y-0.5",
     href && "cursor-pointer",
     className
