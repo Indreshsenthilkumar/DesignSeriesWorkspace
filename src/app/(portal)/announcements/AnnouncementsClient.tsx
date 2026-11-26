@@ -58,6 +58,11 @@ export function AnnouncementsClient({ items }: { items: AnnouncementRow[] }) {
     [items, filter]
   );
 
+  // Sync server layout badges on mount
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
+
   // Opening an announcement marks it read — no separate "mark as read" click.
   useEffect(() => {
     if (!openId) return;

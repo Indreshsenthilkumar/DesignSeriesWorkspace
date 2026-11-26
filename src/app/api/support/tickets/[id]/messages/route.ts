@@ -73,6 +73,16 @@ export const POST = handler(async (request: Request, { params }: { params: Promi
     data: ticketUpdates,
   });
 
+  // Auto-mark previous incoming unread messages as read upon sending a reply
+  await prisma.ticketMessage.updateMany({
+    where: {
+      ticketId,
+      senderId: { not: user.id },
+      readAt: null,
+    },
+    data: { readAt: new Date() },
+  });
+
   // Activity log
   await prisma.ticketActivity.create({
     data: {

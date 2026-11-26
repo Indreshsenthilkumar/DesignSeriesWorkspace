@@ -113,6 +113,18 @@ export function AdminTicketDrawer({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ticket.messages]);
 
+  // Auto-mark student unread messages as read when staff views the ticket
+  useEffect(() => {
+    const hasUnread = ticket.messages?.some(
+      (m) => m.senderId !== currentUserId && !m.readAt
+    );
+    if (hasUnread) {
+      fetch(`/api/support/tickets/${ticket.id}/read`, { method: "POST" })
+        .then(() => onUpdated())
+        .catch(() => {});
+    }
+  }, [ticket.id, ticket.messages, currentUserId, onUpdated]);
+
   // Send reply or internal note
   const handleSendMessage = async () => {
     if (!messageText.trim() || sendingMessage) return;

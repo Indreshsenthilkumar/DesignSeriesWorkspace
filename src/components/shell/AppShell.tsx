@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { LogoLockup, LogoMark } from "@/components/brand/Logo";
 import { Avatar } from "@/components/ui/Avatar";
@@ -79,6 +79,14 @@ export function AppShell({
     };
   }, [drawerOpen]);
 
+  const activeBadges = useMemo(() => {
+    const next = { ...badges };
+    if (pathname.startsWith("/announcements")) next["/announcements"] = 0;
+    if (pathname.startsWith("/support")) next["/support"] = 0;
+    if (pathname.startsWith("/console/support")) next["/console/support"] = 0;
+    return next;
+  }, [badges, pathname]);
+
   const primary = (
     studentNav.length > 0
       ? [...studentNav.filter((i) => i.primary)]
@@ -99,7 +107,7 @@ export function AppShell({
       <Sidebar
         studentNav={studentNav}
         consoleNav={consoleNav}
-        badges={badges}
+        badges={activeBadges}
         footer={<UserCard user={user} />}
       />
 
@@ -110,7 +118,7 @@ export function AppShell({
           title={titleFor(pathname)}
           onOpenPalette={() => setPaletteOpen(true)}
           onOpenDrawer={() => setDrawerOpen(true)}
-          unread={badges["/announcements"] ?? 0}
+          unread={activeBadges["/announcements"] ?? 0}
         />
 
         <main
@@ -124,7 +132,7 @@ export function AppShell({
       <SupportNotificationListener userRole={user.role} />
 
       <FlipkartMobileNavBar
-        badges={badges}
+        badges={activeBadges}
         onMore={() => setDrawerOpen(true)}
         drawerOpen={drawerOpen}
       />
@@ -134,7 +142,7 @@ export function AppShell({
           user={user}
           studentNav={studentNav}
           consoleNav={consoleNav}
-          badges={badges}
+          badges={activeBadges}
           onClose={() => setDrawerOpen(false)}
         />
       ) : null}

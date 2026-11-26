@@ -84,6 +84,18 @@ export function TicketConversationModal({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [ticket.messages]);
 
+  // Auto-mark incoming unread messages as read when viewing conversation
+  useEffect(() => {
+    const hasUnread = ticket.messages?.some(
+      (m) => m.senderId !== currentUserId && !m.readAt
+    );
+    if (hasUnread) {
+      fetch(`/api/support/tickets/${ticket.id}/read`, { method: "POST" })
+        .then(() => onTicketUpdated())
+        .catch(() => {});
+    }
+  }, [ticket.id, ticket.messages, currentUserId, onTicketUpdated]);
+
   // Send message
   const handleSendMessage = async () => {
     if (!replyText.trim() || sending) return;

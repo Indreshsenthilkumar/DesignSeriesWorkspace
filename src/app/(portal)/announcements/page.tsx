@@ -28,6 +28,7 @@ export default async function AnnouncementsPage() {
   }
   await markSectionViewed(user.id, "announcements");
 
+  const unreadSet = new Set(unreadItems.map((n) => n.id));
   const rows: AnnouncementRow[] = items.map((item) => ({
     id: item.id,
     title: item.title,
@@ -39,7 +40,7 @@ export default async function AnnouncementsPage() {
     link: item.link,
     createdAt: item.createdAt.toISOString(),
     authorName: item.author.name,
-    read: item.read,
+    read: item.read || unreadSet.has(item.id),
   }));
 
   const unread = rows.filter((row) => !row.read).length;

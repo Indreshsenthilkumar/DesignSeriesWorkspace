@@ -55,17 +55,15 @@ export const GET = handler(async (request: Request, { params }: { params: Promis
     return fail("Unauthorized access to ticket", 403);
   }
 
-  // Auto-mark unread messages as read
-  if (!isStaff) {
-    await prisma.ticketMessage.updateMany({
-      where: {
-        ticketId: id,
-        senderId: { not: user.id },
-        readAt: null,
-      },
-      data: { readAt: new Date() },
-    });
-  }
+  // Auto-mark unread messages as read for whoever is viewing the ticket
+  await prisma.ticketMessage.updateMany({
+    where: {
+      ticketId: id,
+      senderId: { not: user.id },
+      readAt: null,
+    },
+    data: { readAt: new Date() },
+  });
 
   return ok({ ticket, isStaff });
 });
