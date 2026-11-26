@@ -187,7 +187,7 @@ export function SupportNotificationListener({
       {showPrompt ? (
         <aside
           aria-label="Enable Push Notifications"
-          className="fixed bottom-20 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-[9990] flex max-w-[420px] items-center justify-between gap-3 rounded-[16px] border border-[#25D366]/50 bg-white dark:bg-[#1F2937] p-3 shadow-xl backdrop-blur-md"
+          className="fixed top-16 left-3 right-3 sm:top-auto sm:bottom-6 sm:left-auto sm:right-6 z-[60] flex max-w-[420px] mx-auto items-center justify-between gap-3 rounded-[16px] border border-[#25D366]/50 bg-white dark:bg-[#1F2937] p-3 shadow-xl backdrop-blur-md"
           style={{
             boxShadow: "0 8px 24px rgba(37, 211, 102, 0.22), 0 2px 8px rgba(0,0,0,0.08)",
           }}

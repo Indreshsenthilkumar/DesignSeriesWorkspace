@@ -257,100 +257,127 @@ async function MentorDashboard({
       {/* ------------------------------------------------------------------ */}
       {/* Stat Tiles: ONLY for enabled admin console features                 */}
       {/* ------------------------------------------------------------------ */}
-      <StatGrid>
+      <div className="hidden md:block">
+        <StatGrid>
+          {hasLeaveRequests ? (
+            <StatTile
+              label="Leave Requests"
+              value={pendingLeaves.length}
+              unit="pending"
+              icon="calendar"
+              tone={pendingLeaves.length > 0 ? "amber" : "green"}
+              caption={
+                pendingLeaves.length > 0
+                  ? `${pendingLeaves.length} awaiting review · ${menteeLeaves.length} total`
+                  : `${approvedLeaves.length} approved · ${menteeLeaves.length} total`
+              }
+              href="/console/leaves"
+            />
+          ) : null}
+
+          {hasTasks ? (
+            <StatTile
+              label="Active Tasks"
+              value={openTasksCount}
+              unit="open"
+              icon="target"
+              tone={submittedTasksCount > 0 ? "amber" : "blue"}
+              caption={
+                submittedTasksCount > 0
+                  ? `${submittedTasksCount} awaiting sign-off`
+                  : "Sprint tasks in your domain"
+              }
+              href="/console/tasks"
+            />
+          ) : null}
+
+          {hasWorklogs ? (
+            <StatTile
+              label="Worklogs to Review"
+              value={submittedWorklogsCount}
+              unit="submitted"
+              icon="clipboard"
+              tone={submittedWorklogsCount > 0 ? "amber" : "slate"}
+              caption={
+                flaggedWorklogsCount > 0
+                  ? `${flaggedWorklogsCount} flagged for revision`
+                  : "Daily student submissions"
+              }
+              href="/console/worklogs"
+            />
+          ) : null}
+
+          {hasPasses ? (
+            <StatTile
+              label="Gate Passes"
+              value={pendingPassesCount}
+              unit="pending"
+              icon="ticket"
+              tone={pendingPassesCount > 0 ? "amber" : "slate"}
+              caption={pendingPassesCount > 0 ? "Students awaiting approval" : "Queue is clear"}
+              href="/console/passes"
+            />
+          ) : null}
+
+          {hasAttendance ? (
+            <StatTile
+              label="Today's Attendance"
+              value={attendanceTodayCount}
+              unit="logged"
+              icon="check-circle"
+              tone="green"
+              caption="Missed OTP attendance records"
+              href="/console/attendance"
+            />
+          ) : null}
+
+          {hasUsers ? (
+            <StatTile
+              label="Cohort Students"
+              value={studentCount}
+              icon="users"
+              tone="slate"
+              caption="Active student accounts"
+              href="/console/people"
+            />
+          ) : null}
+
+          {enabledModules.length === 0 ? (
+            <StatTile
+              label="Console Access"
+              value="None"
+              icon="alert"
+              tone="slate"
+              caption="No console permissions assigned"
+            />
+          ) : null}
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Compact Glance Bar for Mentors */}
+      <div className="md:hidden grid grid-cols-3 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
         {hasLeaveRequests ? (
-          <StatTile
-            label="Leave Requests"
-            value={pendingLeaves.length}
-            unit="pending"
-            icon="calendar"
-            tone={pendingLeaves.length > 0 ? "amber" : "green"}
-            caption={
-              pendingLeaves.length > 0
-                ? `${pendingLeaves.length} awaiting review · ${menteeLeaves.length} total`
-                : `${approvedLeaves.length} approved · ${menteeLeaves.length} total`
-            }
-            href="/console/leaves"
-          />
+          <Link href="/console/leaves" className="flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Leaves</span>
+            <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{pendingLeaves.length}</span>
+            <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Pending</span>
+          </Link>
         ) : null}
-
         {hasTasks ? (
-          <StatTile
-            label="Active Tasks"
-            value={openTasksCount}
-            unit="open"
-            icon="target"
-            tone={submittedTasksCount > 0 ? "amber" : "blue"}
-            caption={
-              submittedTasksCount > 0
-                ? `${submittedTasksCount} awaiting sign-off`
-                : "Sprint tasks in your domain"
-            }
-            href="/console/tasks"
-          />
+          <Link href="/console/tasks" className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Tasks</span>
+            <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{openTasksCount}</span>
+            <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">{submittedTasksCount} to sign</span>
+          </Link>
         ) : null}
-
         {hasWorklogs ? (
-          <StatTile
-            label="Worklogs to Review"
-            value={submittedWorklogsCount}
-            unit="submitted"
-            icon="clipboard"
-            tone={submittedWorklogsCount > 0 ? "amber" : "slate"}
-            caption={
-              flaggedWorklogsCount > 0
-                ? `${flaggedWorklogsCount} flagged for revision`
-                : "Daily student submissions"
-            }
-            href="/console/worklogs"
-          />
+          <Link href="/console/worklogs" className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Worklogs</span>
+            <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{submittedWorklogsCount}</span>
+            <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Review</span>
+          </Link>
         ) : null}
-
-        {hasPasses ? (
-          <StatTile
-            label="Gate Passes"
-            value={pendingPassesCount}
-            unit="pending"
-            icon="ticket"
-            tone={pendingPassesCount > 0 ? "amber" : "slate"}
-            caption={pendingPassesCount > 0 ? "Students awaiting approval" : "Queue is clear"}
-            href="/console/passes"
-          />
-        ) : null}
-
-        {hasAttendance ? (
-          <StatTile
-            label="Today's Attendance"
-            value={attendanceTodayCount}
-            unit="logged"
-            icon="check-circle"
-            tone="green"
-            caption="Missed OTP attendance records"
-            href="/console/attendance"
-          />
-        ) : null}
-
-        {hasUsers ? (
-          <StatTile
-            label="Cohort Students"
-            value={studentCount}
-            icon="users"
-            tone="slate"
-            caption="Active student accounts"
-            href="/console/people"
-          />
-        ) : null}
-
-        {enabledModules.length === 0 ? (
-          <StatTile
-            label="Console Access"
-            value="None"
-            icon="alert"
-            tone="slate"
-            caption="No console permissions assigned"
-          />
-        ) : null}
-      </StatGrid>
+      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* Main Grid: Active Queues for Enabled Features + Navigation Hub     */}
@@ -861,44 +888,70 @@ async function StudentDashboard({
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* KPI row                                                             */}
+      {/* KPI row: Full StatGrid on desktop, compact 4-column glance on mobile */}
       {/* ------------------------------------------------------------------ */}
-      <StatGrid>
-        <StatTile
-          label="Missed OTP Attendance"
-          value={`${data.attendance.rate}%`}
-          icon="check-circle"
-          tone={data.attendance.rate >= 85 ? "green" : data.attendance.rate >= 70 ? "amber" : "red"}
-          delta={attendanceDelta}
-          caption={`${data.attendance.hoursLogged} of ${data.attendance.hoursPossible} hrs · 30 days`}
-          href="/attendance"
-        />
-        <StatTile
-          label="Worklogs this week"
-          value={data.worklog.thisWeek}
-          unit="/ 6"
-          icon="clipboard"
-          tone={data.worklog.thisWeek >= 5 ? "green" : data.worklog.thisWeek >= 3 ? "amber" : "red"}
-          caption={data.worklog.flagged > 0 ? `${data.worklog.flagged} flagged for revision` : `${data.worklog.thisMonth} this month`}
-          href="/worklog"
-        />
-        <StatTile
-          label="Reward points"
-          value={user.rewardPoints}
-          icon="trophy"
-          tone="amber"
-          caption={data.rank ? `Rank ${data.rank.position} of ${data.rank.total}` : "Not ranked"}
-          href="/leaderboard"
-        />
-        <StatTile
-          label="Open tasks"
-          value={data.openTaskCount}
-          icon="target"
-          tone={data.openTaskCount === 0 ? "green" : data.openTaskCount > 3 ? "red" : "blue"}
-          caption={data.openTaskCount === 0 ? "Nothing pending" : "Assigned by your mentor"}
-          href="/tasks"
-        />
-      </StatGrid>
+      <div className="hidden md:block">
+        <StatGrid>
+          <StatTile
+            label="Missed OTP Attendance"
+            value={`${data.attendance.rate}%`}
+            icon="check-circle"
+            tone={data.attendance.rate >= 85 ? "green" : data.attendance.rate >= 70 ? "amber" : "red"}
+            delta={attendanceDelta}
+            caption={`${data.attendance.hoursLogged} of ${data.attendance.hoursPossible} hrs · 30 days`}
+            href="/attendance"
+          />
+          <StatTile
+            label="Worklogs this week"
+            value={data.worklog.thisWeek}
+            unit="/ 6"
+            icon="clipboard"
+            tone={data.worklog.thisWeek >= 5 ? "green" : data.worklog.thisWeek >= 3 ? "amber" : "red"}
+            caption={data.worklog.flagged > 0 ? `${data.worklog.flagged} flagged for revision` : `${data.worklog.thisMonth} this month`}
+            href="/worklog"
+          />
+          <StatTile
+            label="Reward points"
+            value={user.rewardPoints}
+            icon="trophy"
+            tone="amber"
+            caption={data.rank ? `Rank ${data.rank.position} of ${data.rank.total}` : "Not ranked"}
+            href="/leaderboard"
+          />
+          <StatTile
+            label="Open tasks"
+            value={data.openTaskCount}
+            icon="target"
+            tone={data.openTaskCount === 0 ? "green" : data.openTaskCount > 3 ? "red" : "blue"}
+            caption={data.openTaskCount === 0 ? "Nothing pending" : "Assigned by your mentor"}
+            href="/tasks"
+          />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <Link href="/attendance" className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Attendance</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{data.attendance.rate}%</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">30 days</span>
+        </Link>
+        <Link href="/worklog" className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Worklog</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{data.worklog.thisWeek}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">/6</span></span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">This week</span>
+        </Link>
+        <Link href="/leaderboard" className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Rewards</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{user.rewardPoints}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">pts</span></span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">{data.rank ? `#${data.rank.position}` : "Rank"}</span>
+        </Link>
+        <Link href="/tasks" className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Tasks</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{data.openTaskCount}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Pending</span>
+        </Link>
+      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* Main grid                                                           */}

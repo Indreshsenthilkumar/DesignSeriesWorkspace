@@ -72,105 +72,85 @@ export function FlipkartMobileNavBar({
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-0 right-0 z-40 mx-auto w-[calc(100%-28px)] max-w-[420px] md:hidden pointer-events-auto"
+      className="fixed bottom-0 left-0 right-0 z-40 w-full md:hidden pointer-events-auto bg-[var(--surface-raised)] border-t border-[var(--line-default)] shadow-[0_-2px_12px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
     >
-      {/* Floating Pill Container: White background, fully rounded, soft elegant shadow */}
-      <div
-        className="relative flex h-[64px] w-full items-center rounded-full border px-1 shadow-[0_10px_35px_-4px_rgba(0,0,0,0.14),0_2px_8px_-1px_rgba(0,0,0,0.06)]"
-        style={{
-          backgroundColor: "var(--surface-raised)",
-          borderColor: "var(--line-default)",
-        }}
-      >
-        {/* Dynamic Smooth Moving Active-Tab Background:
-            Occurs smoothly behind selected navigation item with large rounded background */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-1.5 left-0 z-0 transition-transform duration-300 ease-in-out"
-          style={{
-            width: "20%",
-            transform: `translateX(${activeIndex * 100}%)`,
-          }}
-        >
-          <div
-            className="mx-auto h-full w-[calc(100%-6px)] rounded-[20px] transition-colors"
-            style={{
-              backgroundColor: "var(--surface-sunken)",
-            }}
-          />
-        </div>
+      {/* Five Equally Distributed Navigation Items — Native Flipkart Bottom Nav Style */}
+      <div className="relative flex h-[56px] w-full items-center justify-around px-1">
+        {TABS.map((tab, idx) => {
+          const isActive = activeIndex === idx;
+          const IconComponent = tab.icon;
+          const badgeCount = tab.href ? badges[tab.href] : undefined;
 
-        {/* Five Equally Distributed Navigation Items */}
-        <div className="relative z-10 grid h-full w-full grid-cols-5 items-center">
-          {TABS.map((tab, idx) => {
-            const isActive = activeIndex === idx;
-            const IconComponent = tab.icon;
-            const badgeCount = tab.href ? badges[tab.href] : undefined;
-
-            const content = (
-              <div className="relative flex flex-col items-center justify-center gap-1">
-                {/* Icon */}
-                <div className="relative flex items-center justify-center">
-                  <IconComponent
-                    className={`h-[22px] w-[22px] transition-all duration-200 ${
-                      isActive ? "scale-105" : "scale-100"
-                    }`}
-                    style={{
-                      color: isActive ? "var(--color-brand-blue)" : "var(--text-default)",
-                      strokeWidth: isActive ? 2.3 : 1.85,
-                    }}
-                  />
-
-                  {/* Badge indicator */}
-                  {!isActive && badgeCount && badgeCount > 0 ? (
-                    <span
-                      aria-label={`${badgeCount} unread`}
-                      className="absolute -right-1.5 -top-1 flex h-[7px] w-[7px] rounded-full"
-                      style={{ backgroundColor: "var(--color-brand-red)" }}
-                    />
-                  ) : null}
-                </div>
-
-                {/* Text Label */}
+          const content = (
+            <div className="relative flex flex-col items-center justify-center gap-1 py-1 w-full">
+              {/* Active Indicator Bar (Flipkart Style) */}
+              {isActive ? (
                 <span
-                  className="truncate text-[10px] leading-tight transition-all duration-200"
+                  aria-hidden="true"
+                  className="absolute -top-1.5 h-[3px] w-8 rounded-full bg-[var(--color-brand-blue)]"
+                />
+              ) : null}
+
+              {/* Icon */}
+              <div className="relative flex items-center justify-center">
+                <IconComponent
+                  className={`h-[20px] w-[20px] transition-transform duration-150 ${
+                    isActive ? "scale-105" : "scale-100"
+                  }`}
                   style={{
-                    color: isActive ? "var(--color-brand-blue)" : "var(--text-default)",
-                    fontWeight: isActive ? 600 : 450,
+                    color: isActive ? "var(--color-brand-blue)" : "var(--text-muted)",
+                    strokeWidth: isActive ? 2.3 : 1.8,
                   }}
-                >
-                  {tab.label}
-                </span>
+                />
+
+                {/* Badge indicator */}
+                {!isActive && badgeCount && badgeCount > 0 ? (
+                  <span
+                    aria-label={`${badgeCount} unread`}
+                    className="absolute -right-1.5 -top-1 flex h-[7px] w-[7px] rounded-full bg-[var(--color-brand-red)]"
+                  />
+                ) : null}
               </div>
-            );
 
-            if (tab.isAction) {
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={onMore}
-                  aria-label="Open More Menu"
-                  aria-pressed={isActive}
-                  className="flex h-full w-full flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
-                >
-                  {content}
-                </button>
-              );
-            }
+              {/* Text Label */}
+              <span
+                className="truncate text-[10.5px] leading-tight tracking-tight transition-colors duration-150"
+                style={{
+                  color: isActive ? "var(--color-brand-blue)" : "var(--text-muted)",
+                  fontWeight: isActive ? 650 : 500,
+                }}
+              >
+                {tab.label}
+              </span>
+            </div>
+          );
 
+          if (tab.isAction) {
             return (
-              <Link
+              <button
                 key={tab.id}
-                href={tab.href!}
-                aria-current={isActive ? "page" : undefined}
-                className="flex h-full w-full flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
+                type="button"
+                onClick={onMore}
+                aria-label="Open More Menu"
+                aria-pressed={isActive}
+                className="flex h-full flex-1 flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
               >
                 {content}
-              </Link>
+              </button>
             );
-          })}
-        </div>
+          }
+
+          return (
+            <Link
+              key={tab.id}
+              href={tab.href!}
+              aria-current={isActive ? "page" : undefined}
+              className="flex h-full flex-1 flex-col items-center justify-center select-none active:opacity-75 focus:outline-none"
+            >
+              {content}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

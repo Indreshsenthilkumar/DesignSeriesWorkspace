@@ -76,44 +76,70 @@ export default async function SupportPage() {
         description="Raise support requests for portal modules, communicate asynchronously with mentors and staff, and find instant answers."
       />
 
-      {/* Overview Stat Tiles */}
-      <StatGrid className="sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile
-          label="Total Requests"
-          value={total}
-          icon="book"
-          tone="blue"
-          caption="All time submitted"
-        />
-        <StatTile
-          label="Open / In Review"
-          value={openCount}
-          icon="clock"
-          tone={openCount > 0 ? "amber" : "slate"}
-          caption="Awaiting staff action"
-        />
-        <StatTile
-          label="In Progress"
-          value={inProgress}
-          icon="target"
-          tone={inProgress > 0 ? "blue" : "slate"}
-          caption="Under investigation"
-        />
-        <StatTile
-          label="Action Required"
-          value={waitingStudent}
-          icon="alert"
-          tone={waitingStudent > 0 ? "red" : "slate"}
-          caption="Staff awaiting your reply"
-        />
-        <StatTile
-          label="Resolved"
-          value={resolved}
-          icon="check-circle"
-          tone="green"
-          caption="Solutions delivered"
-        />
-      </StatGrid>
+      {/* Desktop StatGrid */}
+      <div className="hidden md:block">
+        <StatGrid className="sm:grid-cols-3 lg:grid-cols-5">
+          <StatTile
+            label="Total Requests"
+            value={total}
+            icon="book"
+            tone="blue"
+            caption="All time submitted"
+          />
+          <StatTile
+            label="Open / In Review"
+            value={openCount}
+            icon="clock"
+            tone={openCount > 0 ? "amber" : "slate"}
+            caption="Awaiting staff action"
+          />
+          <StatTile
+            label="In Progress"
+            value={inProgress}
+            icon="target"
+            tone={inProgress > 0 ? "blue" : "slate"}
+            caption="Under investigation"
+          />
+          <StatTile
+            label="Action Required"
+            value={waitingStudent}
+            icon="alert"
+            tone={waitingStudent > 0 ? "red" : "slate"}
+            caption="Staff awaiting your reply"
+          />
+          <StatTile
+            label="Resolved"
+            value={resolved}
+            icon="check-circle"
+            tone="green"
+            caption="Solutions delivered"
+          />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Total</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{total}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Tickets</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Review</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{openCount + inProgress}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">In Progress</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Reply</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{waitingStudent}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Waiting</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Resolved</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{resolved}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Closed</span>
+        </div>
+      </div>
 
       <SupportClient
         user={{

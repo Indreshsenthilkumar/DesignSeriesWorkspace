@@ -55,18 +55,45 @@ export default async function TasksPage() {
         description="Sprint deliverables assigned by your mentor. Move a task along as you work on it — submitting it puts it in your mentor's review queue, and they close it out."
       />
 
-      <StatGrid>
-        <StatTile label="Open" value={open.length} icon="target" tone={open.length > 3 ? "amber" : "blue"} caption="Assigned to you" />
-        <StatTile
-          label="Overdue"
-          value={overdue.length}
-          icon="alert"
-          tone={overdue.length > 0 ? "red" : "green"}
-          caption={overdue.length > 0 ? "Past the due date" : "Nothing late"}
-        />
-        <StatTile label="Completed" value={done.length} icon="check-circle" tone="green" caption="Signed off by a mentor" />
-        <StatTile label="Points earned" value={earned} icon="trophy" tone="amber" caption="From completed tasks" />
-      </StatGrid>
+      {/* Desktop StatGrid */}
+      <div className="hidden md:block">
+        <StatGrid>
+          <StatTile label="Open" value={open.length} icon="target" tone={open.length > 3 ? "amber" : "blue"} caption="Assigned to you" />
+          <StatTile
+            label="Overdue"
+            value={overdue.length}
+            icon="alert"
+            tone={overdue.length > 0 ? "red" : "green"}
+            caption={overdue.length > 0 ? "Past the due date" : "Nothing late"}
+          />
+          <StatTile label="Completed" value={done.length} icon="check-circle" tone="green" caption="Signed off by a mentor" />
+          <StatTile label="Points earned" value={earned} icon="trophy" tone="amber" caption="From completed tasks" />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Open</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{open.length}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Active</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Overdue</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{overdue.length}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Late</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Done</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{done.length}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Completed</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Points</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{earned}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">pts</span></span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Earned</span>
+        </div>
+      </div>
 
       <TasksClient tasks={rows} />
     </div>

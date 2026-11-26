@@ -66,36 +66,63 @@ export default async function LeavesPage() {
         description="Apply for Leave or OnDuty (OD) permissions, track mentor approval status, and view detailed gate slips."
       />
 
-      <StatGrid>
-        <StatTile
-          label="Total Requests"
-          value={total}
-          icon="calendar"
-          tone="blue"
-          caption="All time submitted"
-        />
-        <StatTile
-          label="Awaiting Approval"
-          value={pending}
-          icon="clock"
-          tone={pending > 0 ? "amber" : "slate"}
-          caption="In mentor review queue"
-        />
-        <StatTile
-          label="Approved"
-          value={approved}
-          icon="check-circle"
-          tone={approved > 0 ? "green" : "slate"}
-          caption="Granted leave permissions"
-        />
-        <StatTile
-          label="Rejected"
-          value={rejected}
-          icon="alert"
-          tone={rejected > 0 ? "red" : "slate"}
-          caption={rejected > 0 ? "Check remarks" : "None"}
-        />
-      </StatGrid>
+      {/* Desktop StatGrid */}
+      <div className="hidden md:block">
+        <StatGrid>
+          <StatTile
+            label="Total Requests"
+            value={total}
+            icon="calendar"
+            tone="blue"
+            caption="All time submitted"
+          />
+          <StatTile
+            label="Awaiting Approval"
+            value={pending}
+            icon="clock"
+            tone={pending > 0 ? "amber" : "slate"}
+            caption="In mentor review queue"
+          />
+          <StatTile
+            label="Approved"
+            value={approved}
+            icon="check-circle"
+            tone={approved > 0 ? "green" : "slate"}
+            caption="Granted leave permissions"
+          />
+          <StatTile
+            label="Rejected"
+            value={rejected}
+            icon="alert"
+            tone={rejected > 0 ? "red" : "slate"}
+            caption={rejected > 0 ? "Check remarks" : "None"}
+          />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Total</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{total}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Requests</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Pending</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{pending}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Review</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Approved</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{approved}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Granted</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Rejected</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{rejected}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Declined</span>
+        </div>
+      </div>
 
       <LeavesClient
         initialLeaves={formatted}

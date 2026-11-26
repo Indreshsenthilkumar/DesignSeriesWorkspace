@@ -61,37 +61,64 @@ export default async function WorklogPage() {
         description="A short, honest write-up of each slot. This is the record your mentor reads before a review, and the thing you will be glad to have when you write your portfolio."
       />
 
-      <StatGrid>
-        <StatTile
-          label="This week"
-          value={summary.thisWeek}
-          unit={`/ ${weekTarget}`}
-          icon="calendar"
-          tone={summary.thisWeek >= 5 ? "green" : summary.thisWeek >= 3 ? "amber" : "red"}
-          caption={`Week of ${weekStart.slice(8)}${weekStart.slice(5, 7) === today.slice(5, 7) ? "" : "/" + weekStart.slice(5, 7)}`}
-        />
-        <StatTile
-          label="This month"
-          value={summary.thisMonth}
-          icon="clipboard"
-          tone="blue"
-          caption="Logs submitted"
-        />
-        <StatTile
-          label="Reviewed"
-          value={reviewed}
-          icon="check-circle"
-          tone="green"
-          caption="Signed off by a mentor"
-        />
-        <StatTile
-          label="Needs revision"
-          value={summary.flagged}
-          icon="alert"
-          tone={summary.flagged > 0 ? "red" : "slate"}
-          caption={summary.flagged > 0 ? "Open them and add detail" : "Nothing flagged"}
-        />
-      </StatGrid>
+      {/* Desktop StatGrid */}
+      <div className="hidden md:block">
+        <StatGrid>
+          <StatTile
+            label="This week"
+            value={summary.thisWeek}
+            unit={`/ ${weekTarget}`}
+            icon="calendar"
+            tone={summary.thisWeek >= 5 ? "green" : summary.thisWeek >= 3 ? "amber" : "red"}
+            caption={`Week of ${weekStart.slice(8)}${weekStart.slice(5, 7) === today.slice(5, 7) ? "" : "/" + weekStart.slice(5, 7)}`}
+          />
+          <StatTile
+            label="This month"
+            value={summary.thisMonth}
+            icon="clipboard"
+            tone="blue"
+            caption="Logs submitted"
+          />
+          <StatTile
+            label="Reviewed"
+            value={reviewed}
+            icon="check-circle"
+            tone="green"
+            caption="Signed off by a mentor"
+          />
+          <StatTile
+            label="Needs revision"
+            value={summary.flagged}
+            icon="alert"
+            tone={summary.flagged > 0 ? "red" : "slate"}
+            caption={summary.flagged > 0 ? "Open them and add detail" : "Nothing flagged"}
+          />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">This Week</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{summary.thisWeek}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">/6</span></span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Logs</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Month</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{summary.thisMonth}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Submitted</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 truncate w-full">Reviewed</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{reviewed}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Approved</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Revision</span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{summary.flagged}</span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Flagged</span>
+        </div>
+      </div>
 
       <WorklogClient logs={logs} tasks={openTasks} todayLog={todayLog} extensions={extensions} />
     </div>

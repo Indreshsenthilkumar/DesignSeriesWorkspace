@@ -266,43 +266,95 @@ export function AttendanceHistoryView({
       />
 
       {/* =====================================================================
-          2. Top 4 KPI Cards (Swipeable horizontal ribbon on mobile, 4-col grid on desktop)
+          2. KPI Overview:
+             - Desktop (hidden md:block): Original full 4-column StatGrid cards
+             - Mobile (md:hidden): Compact 4-column glance bar (height ~50px, no truncation)
           ===================================================================== */}
-      <StatGrid>
-        <StatTile
-          label="Absent Days"
-          value={displayedAbsentDays.toFixed(1)}
-          icon="alert"
-          tone={displayedAbsentDays > 3 ? "red" : displayedAbsentDays > 0 ? "amber" : "slate"}
-          caption={absentDaysCaption}
-        />
-        <StatTile
-          label="Total Hours"
-          value={stats.totalHours}
-          unit="hrs"
-          icon="clock"
-          tone="blue"
-          delta={stats.hoursDeltaPercent ?? 8}
-          caption="from last month"
-        />
-        <StatTile
-          label="Hours Logged Today"
-          value={stats.hoursToday}
-          unit="/ 7"
-          icon="calendar"
-          tone={stats.hoursToday > 0 ? "green" : "blue"}
-          caption="Real-time sync"
-        />
-        <StatTile
-          label="Approved"
-          value={stats.approvedDays}
-          unit="days"
-          icon="check-circle"
-          tone="green"
-          delta={stats.approvedDeltaPercent ?? 15}
-          caption="from last month"
-        />
-      </StatGrid>
+      <div className="hidden md:block">
+        <StatGrid>
+          <StatTile
+            label="Absent Days"
+            value={displayedAbsentDays.toFixed(1)}
+            icon="alert"
+            tone={displayedAbsentDays > 3 ? "red" : displayedAbsentDays > 0 ? "amber" : "slate"}
+            caption={absentDaysCaption}
+          />
+          <StatTile
+            label="Total Hours"
+            value={stats.totalHours}
+            unit="hrs"
+            icon="clock"
+            tone="blue"
+            delta={stats.hoursDeltaPercent ?? 8}
+            caption="from last month"
+          />
+          <StatTile
+            label="Hours Logged Today"
+            value={stats.hoursToday}
+            unit="/ 7"
+            icon="calendar"
+            tone={stats.hoursToday > 0 ? "green" : "blue"}
+            caption="Real-time sync"
+          />
+          <StatTile
+            label="Approved"
+            value={stats.approvedDays}
+            unit="days"
+            icon="check-circle"
+            tone="green"
+            delta={stats.approvedDeltaPercent ?? 15}
+            caption="from last month"
+          />
+        </StatGrid>
+      </div>
+
+      {/* Mobile-Only Android-Style Compact Metric Bar */}
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">
+            Absent
+          </span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+            {displayedAbsentDays.toFixed(1)}
+          </span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
+            {absentDaysCaption}
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">
+            Total
+          </span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+            {stats.totalHours}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">h</span>
+          </span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
+            All logs
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">
+            Today
+          </span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+            {stats.hoursToday}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">/7</span>
+          </span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
+            Hours
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 truncate w-full">
+            Approved
+          </span>
+          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+            {stats.approvedDays}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">d</span>
+          </span>
+          <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
+            Present
+          </span>
+        </div>
+      </div>
 
       {/* =====================================================================
           3. Unified Gmail-Style Advanced Search & Filter Toolbar
