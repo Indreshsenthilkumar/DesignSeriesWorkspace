@@ -31,10 +31,10 @@ export function MobileFAB({
   );
 
   const baseClasses =
-    "fixed bottom-[calc(env(safe-area-inset-bottom)+68px)] right-4 z-50 md:hidden " +
-    "group flex h-13 w-13 items-center justify-center rounded-[18px] " +
-    "bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white " +
-    "shadow-[0_8px_20px_-2px_rgba(37,99,235,0.45),0_2px_8px_rgba(0,0,0,0.12)] " +
+    "fixed bottom-[calc(env(safe-area-inset-bottom)+86px)] right-4 z-50 md:hidden " +
+    "group flex h-14 w-14 items-center justify-center rounded-[20px] " +
+    "bg-[var(--color-brand-blue,#1a73e8)] text-white " +
+    "shadow-[0_8px_24px_rgba(26,115,232,0.45),0_2px_8px_rgba(0,0,0,0.15)] " +
     "hover:brightness-105 active:scale-90 transition-all duration-150 cursor-pointer pointer-events-auto " +
     className;
 
