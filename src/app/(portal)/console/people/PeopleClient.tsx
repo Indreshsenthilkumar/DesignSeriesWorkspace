@@ -156,7 +156,7 @@ export function PeopleClient({
           </div>
 
           {canManage && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden sm:flex flex-wrap items-center gap-2">
               <Button
                 variant="secondary"
                 icon="layers"
@@ -178,7 +178,6 @@ export function PeopleClient({
                 icon="plus"
                 size="sm"
                 onClick={() => setCreating(true)}
-                className="hidden sm:inline-flex"
               >
                 Add Person
               </Button>
@@ -186,7 +185,8 @@ export function PeopleClient({
           )}
         </div>
 
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
+        {/* Desktop Filter Grid (sm:grid) */}
+        <div className="hidden sm:grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <Input
               icon="search"
@@ -228,6 +228,61 @@ export function PeopleClient({
               </option>
             ))}
           </Select>
+        </div>
+
+        {/* Mobile Compact Search & Horizontal Filter Chips (sm:hidden) */}
+        <div className="sm:hidden flex flex-col gap-2 min-w-0 w-full">
+          <Input
+            icon="search"
+            placeholder="Search name, roll, email…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search people"
+          />
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 min-w-0 w-full">
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Role: All</option>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r === "STUDENT" ? "Students" : ROLE_LABEL[r]}
+                </option>
+              ))}
+            </select>
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Dept: All</option>
+              {options.departments.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Year: All</option>
+              {options.years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Domain: All</option>
+              {options.domains.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-2">

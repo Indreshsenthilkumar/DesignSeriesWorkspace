@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
@@ -57,7 +57,7 @@ export default async function ConsoleAnnouncementsPage() {
         description="Publish notices to the whole programme or to a single year, domain or role. Everything you publish is live the moment you hit publish — read receipts are tracked per student."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile label="Published" value={rows.length} icon="bell" tone="blue" caption="Most recent 80 shown" />
         <StatTile label="Pinned" value={pinned} icon="pin" tone={pinned > 3 ? "amber" : "green"} caption={pinned > 3 ? "Consider unpinning some" : "Held at the top"} />
         <StatTile label="Audience" value={audienceSize} icon="users" tone="slate" caption="Active accounts" />
@@ -68,7 +68,7 @@ export default async function ConsoleAnnouncementsPage() {
           tone={avgReadRate >= 60 ? "green" : avgReadRate >= 30 ? "amber" : "red"}
           caption="Across everything published"
         />
-      </div>
+      </StatGrid>
 
       <AnnouncementConsole
         published={rows}

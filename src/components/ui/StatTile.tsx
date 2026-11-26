@@ -21,7 +21,7 @@ export function StatGrid({
   return (
     <div
       className={cn(
-        "stagger mb-3.5 sm:mb-5 flex overflow-x-auto sm:overflow-visible sm:grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4 scrollbar-none snap-x snap-mandatory pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0",
+        "stagger mb-3.5 sm:mb-5 flex overflow-x-auto sm:overflow-visible sm:grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4 scrollbar-none snap-x snap-mandatory pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0 [&>*]:w-[140px] [&>*]:min-w-[130px] [&>*]:max-w-[155px] [&>*]:shrink-0 sm:[&>*]:w-full sm:[&>*]:min-w-0 sm:[&>*]:max-w-none sm:[&>*]:shrink",
         className
       )}
     >
@@ -139,7 +139,7 @@ export function StatTile({
   const classes = cn(
     "surface group relative block rounded-[18px] sm:rounded-[20px] border border-[var(--line-default)]",
     "p-3 sm:p-5 pl-3.5 sm:pl-5.5",
-    "w-[145px] min-w-[135px] max-w-[160px] shrink-0 sm:w-full sm:max-w-none sm:shrink snap-start",
+    "w-full min-w-0 max-w-full snap-start",
     "overflow-hidden transition-all duration-200 shadow-card hover:shadow-raised hover:-translate-y-0.5",
     href && "cursor-pointer",
     className

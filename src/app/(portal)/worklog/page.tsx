@@ -97,7 +97,7 @@ export default async function WorklogPage() {
       </div>
 
       {/* Mobile-Only Android-Style Compact Metric Bar */}
-      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs mb-4">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">This Week</span>
           <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{summary.thisWeek}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">/6</span></span>

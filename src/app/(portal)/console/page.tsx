@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { AnalyticsChart } from "@/components/ui/AnalyticsChart";
 import { ProgressBar, ProgressRing } from "@/components/ui/Progress";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireConsole } from "@/lib/auth";
 import { ATTENDANCE_HOURS } from "@/lib/constants";
 import { formatDay, relativeTime, toDayKey } from "@/lib/dates";
@@ -78,7 +78,7 @@ export default async function ConsolePage() {
       {/* ------------------------------------------------------------------ */}
       {/* Today                                                               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 sm:mb-5">
+      <StatGrid>
         <StatTile
           label="On the floor today"
           value={overview.presentToday}
@@ -113,7 +113,7 @@ export default async function ConsolePage() {
           caption={overview.flaggedWorklogs > 0 ? "Sent back for revision" : "Nothing flagged"}
           href={can(subject, "permWorklogs") ? "/console/worklogs" : undefined}
         />
-      </div>
+      </StatGrid>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] sm:gap-5">
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">

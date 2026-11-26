@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
@@ -156,7 +156,7 @@ export default async function ConsoleWorklogsPage({
         }
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Awaiting review"
           value={awaiting}
@@ -173,7 +173,7 @@ export default async function ConsoleWorklogsPage({
         />
         <StatTile label="Signed off" value={reviewed} icon="check-circle" tone="green" caption="All time" />
         <StatTile label="Submitted today" value={todayCount} icon="calendar" tone="blue" />
-      </div>
+      </StatGrid>
 
       <WorklogConsoleShell
         view={view as "list" | "grid"}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminLike } from "@/lib/permissions";
@@ -102,7 +102,7 @@ export default async function ConsoleSupportPage() {
       />
 
       {/* KPI Stat Tiles */}
-      <div className="stagger mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <StatGrid className="sm:grid-cols-3 lg:grid-cols-6">
         <StatTile
           label="Total Tickets"
           value={total}
@@ -145,7 +145,7 @@ export default async function ConsoleSupportPage() {
           tone="green"
           caption="Completed"
         />
-      </div>
+      </StatGrid>
 
       <AdminSupportClient
         currentUser={{

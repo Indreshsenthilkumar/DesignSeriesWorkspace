@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { PERMISSIONS, type Permission } from "@/lib/constants";
 import { isStaff, can, type PermissionSubject } from "@/lib/permissions";
@@ -83,7 +83,7 @@ export default async function PeoplePage() {
         }
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile label="Students" value={students} icon="users" tone="blue" />
         <StatTile label="Staff accounts" value={staff} icon="shield" tone="green" caption="Mentors and admins" />
         <StatTile
@@ -100,7 +100,7 @@ export default async function PeoplePage() {
           tone={neverSignedIn > 0 ? "amber" : "green"}
           caption={neverSignedIn > 0 ? "Still on the issued password" : "Everyone has logged in"}
         />
-      </div>
+      </StatGrid>
 
       <PeopleClient people={rows} options={options} actorRole={admin.role} canManage />
     </div>

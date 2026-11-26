@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission } from "@/lib/auth";
 import { ATTENDANCE_HOURS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -52,7 +52,7 @@ export default async function ScanPage() {
         description="Record attendance on a student's behalf at the studio door. Use a handheld barcode reader, or type a roll number — either way the entry is marked as admin-sourced and written to the audit log."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="On the floor"
           value={present}
@@ -70,7 +70,7 @@ export default async function ScanPage() {
           tone={rows.length - present > 0 ? "red" : "green"}
           caption="No hours logged at all"
         />
-      </div>
+      </StatGrid>
 
       <ScanConsole students={rows} />
     </div>

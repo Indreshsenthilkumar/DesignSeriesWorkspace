@@ -10,7 +10,7 @@ import { Card, CardHeader, DataRow } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { MiniBars, ProgressRing } from "@/components/ui/Progress";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireConsole } from "@/lib/auth";
 import {
   ATTENDANCE_HOURS,
@@ -169,7 +169,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
       </Card>
 
       {/* KPIs ----------------------------------------------------------- */}
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 sm:mb-5">
+      <StatGrid>
         {attendance ? (
           <StatTile
             label="Attendance"
@@ -188,7 +188,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
           tone="red"
           caption={`${linkedin.length} submitted`}
         />
-      </div>
+      </StatGrid>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] sm:gap-5">
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toDayKey } from "@/lib/dates";
@@ -74,7 +74,7 @@ export default async function ConsolePassesPage({
         }
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Waiting on you"
           value={pending}
@@ -85,7 +85,7 @@ export default async function ConsolePassesPage({
         <StatTile label="Active passes" value={activeToday} icon="ticket" tone="green" caption="Approved, today or later" />
         <StatTile label="Approved (all time)" value={approved} icon="check-circle" tone="blue" />
         <StatTile label="Rejected" value={rejected} icon="close" tone="slate" />
-      </div>
+      </StatGrid>
 
       <ApprovalsClient passes={rows} filter={status} />
     </div>

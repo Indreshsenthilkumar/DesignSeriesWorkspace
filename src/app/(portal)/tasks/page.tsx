@@ -72,25 +72,25 @@ export default async function TasksPage() {
       </div>
 
       {/* Mobile-Only Android-Style Compact Metric Bar */}
-      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs mb-4">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Open</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{open.length}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{open.length}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Active</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Overdue</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{overdue.length}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{overdue.length}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Late</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Done</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{done.length}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{done.length}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Completed</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Points</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{earned}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">pts</span></span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{earned}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">pts</span></span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Earned</span>
         </div>
       </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminLike, type PermissionSubject } from "@/lib/permissions";
@@ -94,7 +94,7 @@ export default async function ConsoleLeavesPage() {
         }
       />
 
-      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Pending Approvals"
           value={pending}
@@ -114,7 +114,7 @@ export default async function ConsoleLeavesPage() {
           value={rejected}
           icon="alert"
           tone={rejected > 0 ? "red" : "slate"}
-          caption="Declined requests"
+          caption={rejected > 0 ? "Declined requests" : "None"}
         />
         <StatTile
           label="Total History"
@@ -123,7 +123,7 @@ export default async function ConsoleLeavesPage() {
           tone="blue"
           caption={isGlobalAdmin ? "All cohort submissions" : "All mentee requests"}
         />
-      </div>
+      </StatGrid>
 
       <ConsoleLeavesClient
         initialLeaves={formatted}

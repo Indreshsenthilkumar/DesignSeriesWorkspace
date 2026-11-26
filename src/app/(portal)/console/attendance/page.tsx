@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission } from "@/lib/auth";
 import { addDays, toDayKey } from "@/lib/dates";
 import { cohortAttendance, filterOptions } from "@/lib/queries";
@@ -52,7 +52,7 @@ export default async function ConsoleAttendancePage({
         description="View and manage missed OTP attendance for all users including students, mentors, and administrators. Click any day cell or '+ Add' to log or edit hours."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Cohort average"
           value={`${average}%`}
@@ -69,7 +69,7 @@ export default async function ConsoleAttendancePage({
         />
         <StatTile label="At 100%" value={perfect} icon="trophy" tone="green" caption="Perfect attendance" />
         <StatTile label="Hours logged" value={totalHours} icon="clock" tone="blue" caption="Across all members" />
-      </div>
+      </StatGrid>
 
       <AttendanceMatrix
         students={rows}

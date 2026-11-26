@@ -309,12 +309,12 @@ export function AttendanceHistoryView({
       </div>
 
       {/* Mobile-Only Android-Style Compact Metric Bar */}
-      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs mb-4">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">
             Absent
           </span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">
             {displayedAbsentDays.toFixed(1)}
           </span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
@@ -325,7 +325,7 @@ export function AttendanceHistoryView({
           <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">
             Total
           </span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">
             {stats.totalHours}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">h</span>
           </span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
@@ -336,7 +336,7 @@ export function AttendanceHistoryView({
           <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">
             Today
           </span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">
             {stats.hoursToday}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">/7</span>
           </span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">
@@ -347,7 +347,7 @@ export function AttendanceHistoryView({
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 truncate w-full">
             Approved
           </span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">
             {stats.approvedDays}<span className="text-[10px] font-semibold text-[var(--text-muted)] ml-0.5">d</span>
           </span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">

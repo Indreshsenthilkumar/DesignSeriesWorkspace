@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { TBody, TD, TH, THead, TR, Table, TableWrap } from "@/components/ui/Table";
 import { requirePermission } from "@/lib/auth";
 import { relativeTime } from "@/lib/dates";
@@ -107,12 +107,12 @@ export default async function DatabasePage() {
         description="Export any table as CSV, and read the trail of every privileged action taken in the console. Exports are themselves recorded — the audit log is not something the console can be used to hide from."
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile label="Total rows" value={totalRows.toLocaleString()} icon="layers" tone="blue" caption="Across all tables" />
         <StatTile label="Attendance records" value={attendance.toLocaleString()} icon="check-circle" tone="green" />
         <StatTile label="Worklog entries" value={worklogs.toLocaleString()} icon="clipboard" tone="amber" />
         <StatTile label="Audit entries" value={auditCount.toLocaleString()} icon="shield" tone="red" caption="Every privileged action" />
-      </div>
+      </StatGrid>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] sm:gap-5">
         {/* Exports ------------------------------------------------------- */}

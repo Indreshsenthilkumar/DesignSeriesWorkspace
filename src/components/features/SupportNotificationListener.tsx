@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 
 export type ReplyItem = {
@@ -55,6 +55,7 @@ export function SupportNotificationListener({
   userRole: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const lastCheckedRef = useRef<string>(new Date().toISOString());
   const [activeToast, setActiveToast] = useState<ReplyItem | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -69,14 +70,16 @@ export function SupportNotificationListener({
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       }
-      if ("Notification" in window && Notification.permission === "default" && !isStaff) {
+      // Only show push prompt contextually on the support desk page so other pages stay clean & uncluttered
+      const isSupportDesk = pathname?.startsWith("/support") || pathname?.startsWith("/console/support");
+      if ("Notification" in window && Notification.permission === "default" && !isStaff && isSupportDesk) {
         const dismissed = sessionStorage.getItem("push_notif_prompt_dismissed");
         if (!dismissed) {
           setShowPrompt(true);
         }
       }
     }
-  }, [isStaff]);
+  }, [isStaff, pathname]);
 
   const requestPermission = async () => {
     if (typeof window !== "undefined" && "Notification" in window) {

@@ -118,25 +118,25 @@ export default async function SupportPage() {
       </div>
 
       {/* Mobile-Only Android-Style Compact Metric Bar */}
-      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs">
+      <div className="md:hidden grid grid-cols-4 gap-1 rounded-2xl bg-[var(--surface-raised)] border border-[var(--line-default)] p-2.5 shadow-xs mb-4">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 truncate w-full">Total</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{total}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{total}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Tickets</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate w-full">Review</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{openCount + inProgress}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{openCount + inProgress}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">In Progress</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 truncate w-full">Reply</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{waitingStudent}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{waitingStudent}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Waiting</span>
         </div>
         <div className="flex flex-col items-center justify-center text-center border-l border-[var(--line-soft)]">
           <span className="text-[10px] font-bold uppercase tracking-wider text-green-500 truncate w-full">Resolved</span>
-          <span className="text-[16px] font-extrabold text-[var(--text-strong)] tabular-nums leading-tight mt-0.5">{resolved}</span>
+          <span className="text-[17px] font-extrabold text-[var(--text-strong)] tabular-nums leading-snug py-0.5">{resolved}</span>
           <span className="text-[9.5px] font-medium text-[var(--text-faint)] truncate w-full">Closed</span>
         </div>
       </div>

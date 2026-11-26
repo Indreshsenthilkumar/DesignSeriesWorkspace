@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
@@ -70,7 +70,7 @@ export default async function ConsoleTasksPage() {
         }
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile label="Open" value={open} icon="target" tone="blue" caption="Not yet signed off" />
         <StatTile
           label="Awaiting sign-off"
@@ -87,7 +87,7 @@ export default async function ConsoleTasksPage() {
           caption={blocked > 0 ? "Students flagged a blocker" : "None"}
         />
         <StatTile label="Overdue" value={overdue} icon="calendar" tone={overdue > 0 ? "red" : "green"} caption="Past the due date" />
-      </div>
+      </StatGrid>
 
       <TaskConsole
         tasks={rows}

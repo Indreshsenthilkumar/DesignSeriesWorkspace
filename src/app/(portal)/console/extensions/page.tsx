@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -56,7 +56,7 @@ export default async function ExtensionsPage({
         description="Worklogs lock one day after their date. This is the escape hatch: a student asks for one specific day to be reopened, and granting it lets them submit that single late worklog."
       />
 
-      <div className="stagger mb-4 grid grid-cols-3 gap-3">
+      <StatGrid className="sm:grid-cols-3 lg:grid-cols-3">
         <StatTile
           label="Waiting on you"
           value={pending}
@@ -66,7 +66,7 @@ export default async function ExtensionsPage({
         />
         <StatTile label="Granted" value={approved} icon="check-circle" tone="green" caption="All time" />
         <StatTile label="Rejected" value={rejected} icon="close" tone="slate" />
-      </div>
+      </StatGrid>
 
       <ExtensionsClient requests={requests} filter={status} />
     </div>

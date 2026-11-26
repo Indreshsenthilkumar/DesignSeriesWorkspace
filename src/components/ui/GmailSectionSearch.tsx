@@ -49,7 +49,7 @@ export function GmailSectionSearch({
   totalResults,
   onRefresh,
   refreshing = false,
-  hideMobileRefresh = false,
+  hideMobileRefresh = true,
   onClearAll,
   hasActiveFilters = false,
   className,

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { LinkButton } from "@/components/ui/Button";
-import { StatTile } from "@/components/ui/StatTile";
+import { StatGrid, StatTile } from "@/components/ui/StatTile";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { filterOptions } from "@/lib/queries";
@@ -72,7 +72,7 @@ export default async function ConsoleLinkedinPage({
         }
       />
 
-      <div className="stagger mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="Awaiting verification"
           value={unverified}
@@ -89,7 +89,7 @@ export default async function ConsoleLinkedinPage({
           tone="amber"
           caption="Total engagement recorded"
         />
-      </div>
+      </StatGrid>
 
       <LinkedinConsole posts={rows} filter={status} options={{ domains: options.domains }} />
     </div>
