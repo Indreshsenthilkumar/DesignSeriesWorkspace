@@ -210,7 +210,7 @@ function TopBar({
               className="flex h-11 w-full items-center gap-3 rounded-full border border-transparent bg-[var(--surface-inset)] hover:bg-[var(--surface-sunken)] hover:shadow-xs px-4 text-left text-[14px] text-[var(--text-muted)] transition-all cursor-pointer select-none"
             >
               <Icon name="search" className="h-4 w-4 text-[var(--text-faint)] shrink-0" />
-              <span className="flex-1 truncate">Search in DesignSeries portal, students, logs...</span>
+              <span className="flex-1 truncate">Search in DesignSeries, students, logs...</span>
               <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-[6px] border border-[var(--line-default)] bg-[var(--surface-raised)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-faint)]">
                 ⌘K
               </kbd>

@@ -59,7 +59,7 @@ export function LogoMark({
 /** Mark + product name lockup. */
 export function LogoLockup({
   height = 30,
-  subtitle = "Portal",
+  subtitle,
   className,
 }: {
   height?: number;
@@ -84,13 +84,13 @@ export function LogoLockup({
           className="h-full w-full object-contain"
         />
       </div>
-      <div className="flex flex-col">
-        <span className="font-bold leading-tight tracking-tight text-[var(--text-strong)] text-[16px]">
+      <div className="flex flex-col justify-center">
+        <span className="font-bold leading-none tracking-tight text-[var(--text-strong)] text-[16px]">
           Design<span className="text-[var(--color-brand-blue)]">Series</span>
         </span>
         {subtitle ? (
           <span
-            className="text-[9.5px] font-semibold uppercase tracking-[0.14em]"
+            className="text-[9.5px] font-semibold uppercase tracking-[0.14em] mt-0.5"
             style={{ color: "var(--text-muted)" }}
           >
             {subtitle}
