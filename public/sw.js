@@ -1,12 +1,13 @@
 // Service Worker for DesignSeries Portal (PWA & Push Notifications)
 
-const CACHE_NAME = "designseries-v1";
+const CACHE_NAME = "designseries-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/brand/designseries-logo.png",
+  "/brand/designseries-square.png",
 ];
 
 // Install: Cache essential assets
