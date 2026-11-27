@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/shell/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardHeader, DataRow } from "@/components/ui/Card";
+import { Card, CardHeader } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { ProgressRing } from "@/components/ui/Progress";
 import { requireUser } from "@/lib/auth";
 import { PERMISSION_LABEL, ROLE_LABEL, type Permission, type Role } from "@/lib/constants";
-import { formatDay, relativeTime, toDayKey } from "@/lib/dates";
 import { grantedPermissions, type PermissionSubject } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, leaderboardRank } from "@/lib/queries";
@@ -16,7 +16,7 @@ import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSec
 import { matchesMentor } from "@/lib/leaves";
 import { cn, titleCase } from "@/lib/utils";
 
-import { PasswordForm, ProfileLinksForm, ProfilePersonalHub } from "./ProfileClient";
+import { PasswordForm, ProfileLinksForm, ProfilePreferencesCard } from "./ProfileClient";
 
 export const metadata: Metadata = { title: "Profile" };
 export const dynamic = "force-dynamic";
@@ -153,17 +153,18 @@ export default async function ProfilePage() {
       />
 
       {/* ------------------------------------------------------------------ */}
-      {/* Identity banner                                                     */}
+      {/* 1. Hero Profile Banner with Interactive Metric Shortcuts           */}
       {/* ------------------------------------------------------------------ */}
       <Card thread className="mb-4 sm:mb-5">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          {/* Identity & Badges */}
           <div className="flex items-center gap-4">
-            <Avatar name={user.name} seed={user.id} size={68} ring />
+            <Avatar name={user.name} seed={user.id} size={64} ring />
             <div className="min-w-0">
-              <h2 className="text-[20px] font-bold leading-tight" style={{ letterSpacing: "-0.028em" }}>
+              <h2 className="text-[20px] font-bold leading-tight text-[var(--text-strong)]" style={{ letterSpacing: "-0.028em" }}>
                 {titleCase(user.name)}
               </h2>
-              <p className="mt-1 font-mono text-[12.5px]" style={{ color: "var(--text-muted)" }}>
+              <p className="mt-1 font-mono text-[12.5px] text-[var(--text-muted)]">
                 {user.rollNo}
               </p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -171,80 +172,155 @@ export default async function ProfilePage() {
                 <Badge tone={user.systemStatus === "ACTIVE" ? "green" : "red"} dot>
                   {user.systemStatus.toLowerCase()}
                 </Badge>
-                {rank ? <Badge tone="amber" icon="trophy">Rank {rank.position} of {rank.total}</Badge> : null}
+                {user.domain ? (
+                  <Badge tone="slate">{user.domain}</Badge>
+                ) : null}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-5 sm:ml-auto">
-            <ProgressRing
-              value={attendance.rate}
-              size={78}
-              thickness={8}
-              tone={attendance.rate >= 85 ? "green" : attendance.rate >= 70 ? "amber" : "red"}
-              sublabel="attend."
-            />
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-              <MiniStat label="Points" value={user.rewardPoints} tone="amber" />
-              <MiniStat label="Worklogs" value={worklogCount} tone="blue" />
-              <MiniStat label="Tasks done" value={taskCount} tone="green" />
-              <MiniStat label="Passes" value={passCount} tone="red" />
+          {/* Attendance Ring & Interactive Quick Actions */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 border-t lg:border-t-0 pt-4 lg:pt-0 border-[var(--line-soft)]">
+            <div className="flex items-center gap-3 pr-2">
+              <ProgressRing
+                value={attendance.rate}
+                size={72}
+                thickness={7.5}
+                tone={attendance.rate >= 85 ? "green" : attendance.rate >= 70 ? "amber" : "red"}
+                sublabel="attend."
+              />
+              <div className="text-left">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Rate</p>
+                <p className="text-[17px] font-bold text-[var(--text-strong)] tabular-nums">{attendance.rate}%</p>
+                <p className="text-[10.5px] text-[var(--text-muted)]">{attendance.hoursLogged}/{attendance.hoursPossible} hrs</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+              {/* Reward Points Tile */}
+              <Link
+                href="/rewards"
+                className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-2.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-95"
+                title="View points history & score breakdown"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Points
+                  </span>
+                  <Icon name="arrow-up-right" className="h-3 w-3 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
+                </div>
+                <p className="mt-1 text-[16px] font-bold text-[var(--text-strong)] tabular-nums leading-none">
+                  {user.rewardPoints} <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">pts</span>
+                </p>
+              </Link>
+
+              {/* Leaderboard Tile */}
+              <Link
+                href="/leaderboard"
+                className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-2.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-95"
+                title="View cohort rankings"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                    Rank
+                  </span>
+                  <Icon name="arrow-up-right" className="h-3 w-3 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
+                </div>
+                <p className="mt-1 text-[16px] font-bold text-[var(--text-strong)] tabular-nums leading-none">
+                  {rank ? `#${rank.position}` : "—"}
+                </p>
+              </Link>
+
+              {/* Private Notes Tile */}
+              <Link
+                href="/notes"
+                className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-2.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-95"
+                title="Open private scratchpad"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+                    Notes
+                  </span>
+                  <Icon name="arrow-up-right" className="h-3 w-3 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
+                </div>
+                <p className="mt-1 text-[13.5px] font-bold text-[var(--text-strong)] leading-none">
+                  Scratchpad
+                </p>
+              </Link>
             </div>
           </div>
         </div>
       </Card>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Personal Hub & App Preferences (Points, Leaderboard, Notes, Theme)  */}
+      {/* 2. Structured Two-Column Content Grid                              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="mb-4 sm:mb-5">
-        <ProfilePersonalHub rewardPoints={user.rewardPoints} rank={rank} />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] sm:gap-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] sm:gap-5">
+        {/* Left Column: Academic & Programme Details + Build in Public */}
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-          {/* If the user is STUDENT / STUDENT + ADMIN / ADMIN:
-              User details will be displayed on one grid card and Academic Mentor details on one card */}
           {isStudentOrAdmin ? (
-            <>
-              {/* Card 1: User Details Grid Card */}
-              <Card>
-                <CardHeader
-                  icon="user"
-                  title="User Details"
-                  subtitle="Your personal & academic programme record."
-                />
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
-                  <ProfileInfoTile label="NAME" value={titleCase(user.name)} />
-                  <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} mono />
-                  <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
-                  <ProfileInfoTile label="EMAIL" value={user.email} mono />
-                  <ProfileInfoTile label="YEAR" value={displayYear} />
-                  <ProfileInfoTile label="MENTOR" value={mentorDisplayName} />
-                  <ProfileInfoTile label="GENDER" value={displayGender} />
-                  <ProfileInfoTile label="DOMAIN" value={user.domain || "—"} />
-                </dl>
-              </Card>
+            <Card>
+              <CardHeader
+                icon="user"
+                title="Academic & Mentor Details"
+                subtitle="Your cohort enrollment and assigned faculty mentor."
+              />
 
-              {/* Card 2: Academic Mentor Details Card */}
-              <Card>
-                <CardHeader
-                  icon="shield"
-                  title="Academic Mentor Details"
-                  subtitle="Assigned faculty mentor."
-                />
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
-                  <ProfileInfoTile label="NAME" value={mentorDisplayName} />
-                  <ProfileInfoTile label="ID" value={academicMentor?.rollNo || "—"} mono />
-                  <ProfileInfoTile label="DEPARTMENT" value={academicMentor?.department || "—"} />
-                  <ProfileInfoTile label="GENDER" value={academicMentor?.gender || "—"} />
-                  <ProfileInfoTile label="LEGEND" value={academicMentor?.legend || "—"} />
-                  <ProfileInfoTile label="EMAIL" value={academicMentor?.email || "—"} mono />
-                  <ProfileInfoTile label="PHONE" value={academicMentor?.mobile || "—"} mono />
-                  <ProfileInfoTile label="DESIGNATION" value={mentorDesignation} />
-                </dl>
-              </Card>
-            </>
+              <div className="space-y-4">
+                {/* Programme Enrollment Details */}
+                <div>
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">
+                    Programme Enrollment
+                  </h4>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
+                    <ProfileInfoTile label="BATCH / YEAR" value={displayYear} />
+                    <ProfileInfoTile label="COLLEGE EMAIL" value={user.email} mono />
+                    <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} mono />
+                  </dl>
+                </div>
+
+                {/* Assigned Mentor Details with Quick Contact Actions */}
+                <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/60 p-3.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+                        Assigned Faculty Mentor
+                      </span>
+                      <p className="mt-0.5 text-[15px] font-bold text-[var(--text-strong)]">
+                        {mentorDisplayName}
+                      </p>
+                      <p className="text-[12px] text-[var(--text-muted)]">
+                        {mentorDesignation} · {academicMentor?.department || titleCase(user.department) || "BIT"}
+                      </p>
+                    </div>
+
+                    {/* Quick Contact Buttons */}
+                    <div className="flex items-center gap-2">
+                      {academicMentor?.email && academicMentor.email !== "—" ? (
+                        <a
+                          href={`mailto:${academicMentor.email}`}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs"
+                        >
+                          <Icon name="mail" className="h-3.5 w-3.5 text-[var(--color-brand-blue)]" />
+                          Email
+                        </a>
+                      ) : null}
+
+                      {academicMentor?.mobile && academicMentor.mobile !== "—" ? (
+                        <a
+                          href={`tel:${academicMentor.mobile.replace(/\s+/g, "")}`}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs"
+                        >
+                          <Icon name="phone" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          Call
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
           ) : (
             /* Faculty Mentor Profile Card */
             <Card>
@@ -253,7 +329,7 @@ export default async function ProfilePage() {
                 title="Faculty Mentor Details"
                 subtitle="Official faculty record in the portal."
               />
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <ProfileInfoTile
                   label="Faculty Name"
                   value={user.legend ? `${user.legend}. ${titleCase(user.name)}` : titleCase(user.name)}
@@ -261,79 +337,39 @@ export default async function ProfilePage() {
                 <ProfileInfoTile label="Faculty ID" value={user.rollNo} mono />
                 <ProfileInfoTile label="Faculty Designation" value={user.designation || "Faculty Mentor"} />
                 <ProfileInfoTile label="Faculty Department" value={titleCase(user.department) || "—"} />
-                <ProfileInfoTile label="Gender" value={user.gender || "—"} />
-                <ProfileInfoTile label="Legend" value={user.legend || "—"} />
-                <ProfileInfoTile label="Faculty Official Email" value={user.email} mono />
-                <ProfileInfoTile label="Faculty Phone" value={user.mobile || "—"} mono />
+                <ProfileInfoTile label="Official Email" value={user.email} mono />
+                <ProfileInfoTile label="Phone Number" value={user.mobile || "—"} mono />
               </dl>
             </Card>
           )}
 
+          {/* Build in Public Section */}
+          <StudentLinkedinSection initialPosts={linkedinPosts} />
+        </div>
+
+        {/* Right Column: Editable Links, App Preferences & Account Security */}
+        <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
+          {/* Editable Contact & Social Links */}
           <ProfileLinksForm
             initial={{ mobile: user.mobile, linkedin: user.linkedin, github: user.github }}
           />
 
-          <StudentLinkedinSection initialPosts={linkedinPosts} />
+          {/* App Preferences & PWA Download */}
+          <ProfilePreferencesCard />
 
+          {/* Password Security Form */}
           <div id="security" className="scroll-mt-20">
             <PasswordForm mustChange={user.mustChangePassword} />
           </div>
-        </div>
 
-        <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-          <Card>
-            <CardHeader icon="chart" title="At a glance" subtitle="Last 30 days." />
-            <ul className="flex flex-col gap-2.5">
-              <GlanceRow
-                tone={attendance.rate >= 75 ? "green" : "red"}
-                icon="check-circle"
-                label="Attendance"
-                value={`${attendance.rate}%`}
-                detail={`${attendance.hoursLogged} of ${attendance.hoursPossible} hours`}
+          {/* Unlocked Console Permissions (Shown only if special permissions exist) */}
+          {permissions.length > 0 ? (
+            <Card>
+              <CardHeader
+                icon="shield"
+                title="Administrative Access"
+                subtitle={`${permissions.length} console ${permissions.length === 1 ? "module" : "modules"} unlocked.`}
               />
-              <GlanceRow
-                tone="blue"
-                icon="calendar"
-                label="Full days"
-                value={String(attendance.fullDays)}
-                detail={`out of ${attendance.daysTracked} tracked days`}
-              />
-              <GlanceRow
-                tone="amber"
-                icon="sparkle"
-                label="Current streak"
-                value={`${attendance.streak} days`}
-                detail="consecutive days present"
-              />
-              <GlanceRow
-                tone="red"
-                icon="linkedin"
-                label="Verified posts"
-                value={String(linkedinCount)}
-                detail="build-in-public submissions"
-              />
-            </ul>
-          </Card>
-
-          <Card>
-            <CardHeader
-              icon="shield"
-              title="Access"
-              subtitle={
-                permissions.length === 0
-                  ? "You have the standard student access."
-                  : `${permissions.length} console ${permissions.length === 1 ? "module" : "modules"} unlocked.`
-              }
-            />
-            {permissions.length === 0 ? (
-              <div className="inset-panel flex items-start gap-2.5 p-3">
-                <Icon name="user" className="mt-px h-4 w-4 shrink-0" style={{ color: "var(--text-muted)" }} />
-                <p className="text-[12.5px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                  Student access: your own attendance, worklogs, tasks, passes and notes. Everything
-                  in your account is visible only to you and the DesignSeries staff.
-                </p>
-              </div>
-            ) : (
               <ul className="flex flex-wrap gap-1.5">
                 {permissions.map((permission) => (
                   <li key={permission}>
@@ -343,28 +379,8 @@ export default async function ProfilePage() {
                   </li>
                 ))}
               </ul>
-            )}
-          </Card>
-
-          <Card>
-            <CardHeader icon="link" title="Links" />
-            <div className="flex flex-col gap-2">
-              <ExternalLink
-                href={user.linkedin}
-                icon="linkedin"
-                label="LinkedIn"
-                placeholder="Not added yet"
-              />
-              <ExternalLink href={user.github} icon="github" label="GitHub" placeholder="Not added yet" />
-              <ExternalLink
-                href={user.mobile ? `tel:${user.mobile}` : ""}
-                icon="phone"
-                label={user.mobile || "No number on file"}
-                placeholder="No number on file"
-                plain
-              />
-            </div>
-          </Card>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>
@@ -372,92 +388,6 @@ export default async function ProfilePage() {
 }
 
 // ---------------------------------------------------------------------------
-
-function MiniStat({ label, value, tone }: { label: string; value: number; tone: "blue" | "red" | "amber" | "green" }) {
-  return (
-    <div data-accent={tone}>
-      <p className="text-[19px] font-bold leading-none tabular-nums" style={{ color: "var(--tone)", letterSpacing: "-0.03em" }}>
-        {value}
-      </p>
-      <p className="mt-1 text-[10.5px] font-semibold uppercase tracking-[0.09em]" style={{ color: "var(--text-faint)" }}>
-        {label}
-      </p>
-    </div>
-  );
-}
-
-function GlanceRow({
-  tone,
-  icon,
-  label,
-  value,
-  detail,
-}: {
-  tone: "blue" | "red" | "amber" | "green";
-  icon: "check-circle" | "calendar" | "sparkle" | "linkedin";
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <li data-accent={tone} className="flex items-center gap-3">
-      <span
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px]"
-        style={{ background: "var(--tone-soft)", color: "var(--tone)" }}
-      >
-        <Icon name={icon} className="h-[17px] w-[17px]" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[12.5px] font-semibold" style={{ color: "var(--text-strong)" }}>
-          {label}
-        </span>
-        <span className="block truncate text-[11px]" style={{ color: "var(--text-muted)" }}>
-          {detail}
-        </span>
-      </span>
-      <span className="shrink-0 text-[14px] font-bold tabular-nums" style={{ color: "var(--tone)" }}>
-        {value}
-      </span>
-    </li>
-  );
-}
-
-function ExternalLink({
-  href,
-  icon,
-  label,
-  placeholder,
-  plain = false,
-}: {
-  href: string;
-  icon: "linkedin" | "github" | "phone";
-  label: string;
-  placeholder: string;
-  plain?: boolean;
-}) {
-  if (!href) {
-    return (
-      <span className="inset-panel flex items-center gap-2.5 p-2.5 text-[12.5px]" style={{ color: "var(--text-faint)" }}>
-        <Icon name={icon} className="h-4 w-4" />
-        {placeholder}
-      </span>
-    );
-  }
-
-  return (
-    <a
-      href={href}
-      target={plain ? undefined : "_blank"}
-      rel={plain ? undefined : "noopener noreferrer"}
-      className="inset-panel flex items-center gap-2.5 p-2.5 text-[12.5px] font-medium transition-colors hover:border-[var(--accent)]"
-      style={{ color: "var(--text-default)" }}
-    >
-      <Icon name={icon} className="h-4 w-4 shrink-0" style={{ color: "var(--text-muted)" }} />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {plain ? null : <Icon name="arrow-up-right" className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-faint)" }} />}
-    </a>
-  );
-}
 
 function ProfileInfoTile({
   label,

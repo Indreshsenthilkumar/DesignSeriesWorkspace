@@ -301,17 +301,10 @@ function scorePassword(value: string): { score: number; label: string; tone: "re
 }
 
 /**
- * Mobile-optimised Personal Hub & App Preferences for the Profile section.
- * Holds personal features (Reward Points, Leaderboard, Scratchpad, Theme & PWA Install)
- * keeping the main mobile drawer streamlined and uncluttered.
+ * App Preferences & Standalone Installation Card for the Profile section.
+ * Houses Theme mode, Download App (PWA install), and Account Sign Out.
  */
-export function ProfilePersonalHub({
-  rewardPoints,
-  rank,
-}: {
-  rewardPoints: number;
-  rank: { position: number; total: number } | null;
-}) {
+export function ProfilePreferencesCard() {
   const router = useRouter();
   const toast = useToast();
   const { canInstall, isInstalled, triggerInstall } = usePwaInstall();
@@ -346,172 +339,95 @@ export function ProfilePersonalHub({
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5">
-      {/* 1. Personal Modules Hub */}
-      <Card>
-        <CardHeader
-          icon="sparkle"
-          title="Personal Hub"
-          subtitle="Direct access to your points, cohort leaderboard standing, and private scratchpad."
-        />
+    <Card>
+      <CardHeader
+        icon="settings"
+        title="App Preferences & Installation"
+        subtitle="Customize display appearance, download mobile app, or sign out."
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Reward Points Tile */}
-          <Link
-            href="/rewards"
-            className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-98"
-          >
-            <div className="flex items-center justify-between">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <Icon name="award" className="h-4 w-4" />
-              </span>
-              <Icon name="arrow-up-right" className="h-3.5 w-3.5 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
+      <div className="flex flex-col gap-3">
+        {/* Theme Row */}
+        <div className="flex items-center justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--surface-sunken)] text-[var(--text-muted)]">
+              <Icon name="moon" className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-bold text-[var(--text-strong)]">Theme & Appearance</p>
+              <p className="text-[11px] text-[var(--text-muted)]">Switch between light and dark display modes</p>
             </div>
-            <div className="mt-3">
-              <p className="text-[18px] font-bold text-[var(--text-strong)] tabular-nums">
-                {rewardPoints} <span className="text-[12px] font-semibold text-amber-600 dark:text-amber-400">pts</span>
-              </p>
-              <p className="text-[11.5px] font-medium text-[var(--text-muted)] mt-0.5">
-                Reward Points & Score
-              </p>
-            </div>
-          </Link>
-
-          {/* Leaderboard Tile */}
-          <Link
-            href="/leaderboard"
-            className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-98"
-          >
-            <div className="flex items-center justify-between">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400">
-                <Icon name="trophy" className="h-4 w-4" />
-              </span>
-              <Icon name="arrow-up-right" className="h-3.5 w-3.5 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
-            </div>
-            <div className="mt-3">
-              <p className="text-[18px] font-bold text-[var(--text-strong)] tabular-nums">
-                {rank ? `Rank #${rank.position}` : "—"}
-              </p>
-              <p className="text-[11.5px] font-medium text-[var(--text-muted)] mt-0.5">
-                Cohort Leaderboard
-              </p>
-            </div>
-          </Link>
-
-          {/* Notes Scratchpad Tile */}
-          <Link
-            href="/notes"
-            className="group flex flex-col justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3.5 transition-all hover:border-[var(--color-brand-blue)] hover:shadow-xs active:scale-98"
-          >
-            <div className="flex items-center justify-between">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500/15 text-[var(--color-brand-blue)]">
-                <Icon name="note" className="h-4 w-4" />
-              </span>
-              <Icon name="arrow-up-right" className="h-3.5 w-3.5 text-[var(--text-faint)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
-            </div>
-            <div className="mt-3">
-              <p className="text-[15px] font-bold text-[var(--text-strong)]">
-                Private Scratchpad
-              </p>
-              <p className="text-[11.5px] font-medium text-[var(--text-muted)] mt-0.5">
-                My Notes & Ideas
-              </p>
-            </div>
-          </Link>
+          </div>
+          <ThemeToggle compact />
         </div>
-      </Card>
 
-      {/* 2. Preferences & App Installation Card */}
-      <Card>
-        <CardHeader
-          icon="settings"
-          title="App Preferences & Installation"
-          subtitle="Customize visual appearance and install the standalone mobile app."
-        />
-
-        <div className="flex flex-col gap-3">
-          {/* Theme Row */}
-          <div className="flex items-center justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--surface-sunken)] text-[var(--text-muted)]">
-                <Icon name="moon" className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[13px] font-bold text-[var(--text-strong)]">Theme & Appearance</p>
-                <p className="text-[11px] text-[var(--text-muted)]">Switch between light and dark display modes</p>
-              </div>
+        {/* Download App (PWA) Row */}
+        <div className="flex items-center justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--color-brand-blue)] text-white shadow-xs">
+              <Icon name={isInstalled ? "check" : "download"} className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-bold text-[var(--text-strong)]">
+                {isInstalled ? "DesignSeries App Installed" : "Download as Mobile App"}
+              </p>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                {isInstalled ? "Running as installed application" : "Add to home screen for fullscreen mobile comfort"}
+              </p>
             </div>
-            <ThemeToggle compact />
           </div>
 
-          {/* Download App (PWA) Row */}
-          <div className="flex items-center justify-between rounded-xl border border-[var(--line-soft)] bg-[var(--surface-inset)] p-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--color-brand-blue)] text-white shadow-xs">
-                <Icon name={isInstalled ? "check" : "download"} className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[13px] font-bold text-[var(--text-strong)]">
-                  {isInstalled ? "DesignSeries App Installed" : "Download as Mobile App"}
-                </p>
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  {isInstalled ? "Running as installed application" : "Add to home screen for fullscreen mobile comfort"}
-                </p>
-              </div>
-            </div>
-
-            {!isInstalled ? (
-              <button
-                type="button"
-                onClick={handleInstallClick}
-                disabled={installing}
-                className="shrink-0 flex items-center gap-1.5 rounded-xl bg-[var(--color-brand-blue)] px-3.5 py-2 text-[12px] font-bold text-white shadow-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-              >
-                <Icon name="download" className="h-3.5 w-3.5" />
-                Install
-              </button>
-            ) : (
-              <span className="shrink-0 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                Installed
-              </span>
-            )}
-          </div>
-
-          {/* iOS Safari Guide */}
-          {showIosGuide && (
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[12px] text-blue-900 dark:text-blue-200">
-              <div className="flex items-center justify-between font-bold mb-1">
-                <span>Install on Safari (iPhone / iPad):</span>
-                <button
-                  type="button"
-                  onClick={() => setShowIosGuide(false)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <Icon name="close" className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <p>1. Tap the <strong>Share</strong> button (⎋) in your browser toolbar.</p>
-              <p>2. Scroll down and tap <strong>Add to Home Screen</strong>.</p>
-            </div>
-          )}
-
-          {/* Sign Out Button */}
-          <div className="pt-1">
+          {!isInstalled ? (
             <button
               type="button"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-2.5 text-[13px] font-bold text-[var(--color-brand-red)] transition-all active:scale-98 disabled:opacity-50 cursor-pointer shadow-xs"
+              onClick={handleInstallClick}
+              disabled={installing}
+              className="shrink-0 flex items-center gap-1.5 rounded-xl bg-[var(--color-brand-blue)] px-3.5 py-2 text-[12px] font-bold text-white shadow-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
             >
-              <Icon
-                name={signingOut ? "spinner" : "logout"}
-                className={cn("h-4 w-4", signingOut && "animate-spin")}
-              />
-              {signingOut ? "Signing out..." : "Sign Out of Account"}
+              <Icon name="download" className="h-3.5 w-3.5" />
+              Install
             </button>
-          </div>
+          ) : (
+            <span className="shrink-0 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              Installed
+            </span>
+          )}
         </div>
-      </Card>
-    </div>
+
+        {/* iOS Safari Guide */}
+        {showIosGuide && (
+          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[12px] text-blue-900 dark:text-blue-200">
+            <div className="flex items-center justify-between font-bold mb-1">
+              <span>Install on Safari (iPhone / iPad):</span>
+              <button
+                type="button"
+                onClick={() => setShowIosGuide(false)}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                <Icon name="close" className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <p>1. Tap the <strong>Share</strong> button (⎋) in your browser toolbar.</p>
+            <p>2. Scroll down and tap <strong>Add to Home Screen</strong>.</p>
+          </div>
+        )}
+
+        {/* Sign Out Button */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-2.5 text-[13px] font-bold text-[var(--color-brand-red)] transition-all active:scale-98 disabled:opacity-50 cursor-pointer shadow-xs"
+          >
+            <Icon
+              name={signingOut ? "spinner" : "logout"}
+              className={cn("h-4 w-4", signingOut && "animate-spin")}
+            />
+            {signingOut ? "Signing out..." : "Sign Out of Account"}
+          </button>
+        </div>
+      </div>
+    </Card>
   );
 }
