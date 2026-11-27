@@ -27,7 +27,7 @@ import {
   type Role,
 } from "@/lib/constants";
 import { relativeTime } from "@/lib/dates";
-import { shortYear } from "@/lib/utils";
+import { shortYear, toCsv } from "@/lib/utils";
 import { ManageRosterOptionsModal } from "@/components/features/ManageRosterOptionsModal";
 import { BulkImportUsersModal } from "@/components/features/BulkImportUsersModal";
 
@@ -73,6 +73,8 @@ export function PeopleClient({
   const [department, setDepartment] = useState("ALL");
   const [year, setYear] = useState("ALL");
   const [domain, setDomain] = useState("ALL");
+  const [mentor, setMentor] = useState("ALL");
+  const [gender, setGender] = useState("ALL");
   const [status, setStatus] = useState("ALL");
 
   const [editing, setEditing] = useState<PersonRow | null>(null);
@@ -80,6 +82,7 @@ export function PeopleClient({
   const [creating, setCreating] = useState(false);
   const [managingOptions, setManagingOptions] = useState(false);
   const [importingBulk, setImportingBulk] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const filtered = useMemo(() => {
@@ -93,15 +96,26 @@ export function PeopleClient({
         }
       }
       if (department !== "ALL" && person.department !== department) return false;
-      if (year !== "ALL" && person.year !== year) return false;
+      if (year !== "ALL" && !person.year.includes(year)) return false;
       if (domain !== "ALL" && person.domain !== domain) return false;
       if (status !== "ALL" && person.systemStatus !== status) return false;
+
+      if (mentor !== "ALL") {
+        if (!person.mentorName.toLowerCase().includes(mentor.toLowerCase())) return false;
+      }
+
+      if (gender !== "ALL") {
+        const resolvedGender = person.gender?.trim() ||
+          (/\bfemale\b/i.test(person.year) ? "Female" : /\bmale\b/i.test(person.year) ? "Male" : "");
+        if (resolvedGender.toLowerCase() !== gender.toLowerCase()) return false;
+      }
+
       if (!q) return true;
       return `${person.name} ${person.rollNo} ${person.email} ${person.department} ${person.domain} ${person.mentorName}`
         .toLowerCase()
         .includes(q);
     });
-  }, [people, query, role, department, year, domain, status]);
+  }, [people, query, role, department, year, domain, mentor, gender, status]);
 
   const suspend = async () => {
     if (!suspending) return;
@@ -133,6 +147,8 @@ export function PeopleClient({
     setDepartment("ALL");
     setYear("ALL");
     setDomain("ALL");
+    setMentor("ALL");
+    setGender("ALL");
     setStatus("ALL");
   };
 
@@ -142,6 +158,8 @@ export function PeopleClient({
     department !== "ALL" ||
     year !== "ALL" ||
     domain !== "ALL" ||
+    mentor !== "ALL" ||
+    gender !== "ALL" ||
     status !== "ALL";
 
   return (
@@ -156,11 +174,20 @@ export function PeopleClient({
           </div>
 
           {canManage && (
-            <div className="hidden sm:flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                icon="download"
+                size="sm"
+                onClick={() => setExporting(true)}
+              >
+                Export CSV
+              </Button>
               <Button
                 variant="secondary"
                 icon="layers"
                 size="sm"
+                className="hidden sm:inline-flex"
                 onClick={() => setManagingOptions(true)}
               >
                 Manage Categories
@@ -169,6 +196,7 @@ export function PeopleClient({
                 variant="secondary"
                 icon="upload"
                 size="sm"
+                className="hidden sm:inline-flex"
                 onClick={() => setImportingBulk(true)}
               >
                 Import Sheet / CSV
@@ -186,11 +214,11 @@ export function PeopleClient({
         </div>
 
         {/* Desktop Filter Grid (sm:grid) */}
-        <div className="hidden sm:grid gap-2.5 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="lg:col-span-2">
+        <div className="hidden sm:grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          <div className="lg:col-span-2 xl:col-span-2">
             <Input
               icon="search"
-              placeholder="Search name, roll, email, dept…"
+              placeholder="Search name, roll, email…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search people"
@@ -200,15 +228,7 @@ export function PeopleClient({
             <option value="ALL">All roles</option>
             {ROLES.map((r) => (
               <option key={r} value={r}>
-                {r === "STUDENT" ? "Students (incl. Student+ Admin)" : ROLE_LABEL[r]}
-              </option>
-            ))}
-          </Select>
-          <Select value={department} onChange={(e) => setDepartment(e.target.value)} aria-label="Filter by department">
-            <option value="ALL">All departments</option>
-            {options.departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
+                {r === "STUDENT" ? "Students (incl. Admin)" : ROLE_LABEL[r]}
               </option>
             ))}
           </Select>
@@ -219,6 +239,19 @@ export function PeopleClient({
                 {y}
               </option>
             ))}
+          </Select>
+          <Select value={mentor} onChange={(e) => setMentor(e.target.value)} aria-label="Filter by mentor">
+            <option value="ALL">All mentors</option>
+            {options.mentors.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </Select>
+          <Select value={gender} onChange={(e) => setGender(e.target.value)} aria-label="Filter by gender">
+            <option value="ALL">All genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
           </Select>
           <Select value={domain} onChange={(e) => setDomain(e.target.value)} aria-label="Filter by domain">
             <option value="ALL">All domains</option>
@@ -253,16 +286,6 @@ export function PeopleClient({
               ))}
             </select>
             <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
-            >
-              <option value="ALL">Dept: All</option>
-              {options.departments.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
               className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
@@ -273,12 +296,41 @@ export function PeopleClient({
               ))}
             </select>
             <select
+              value={mentor}
+              onChange={(e) => setMentor(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Mentor: All</option>
+              {options.mentors.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Gender: All</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
             >
               <option value="ALL">Domain: All</option>
               {options.domains.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="shrink-0 rounded-full border border-[var(--line-default)] bg-[var(--surface-sunken)] px-3 py-1.5 text-xs font-semibold text-[var(--text-default)]"
+            >
+              <option value="ALL">Dept: All</option>
+              {options.departments.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
@@ -446,6 +498,22 @@ export function PeopleClient({
         onSuccess={() => router.refresh()}
       />
 
+      <ExportPeopleModal
+        open={exporting}
+        onClose={() => setExporting(false)}
+        people={people}
+        options={options}
+        initialFilters={{
+          role,
+          department,
+          year,
+          domain,
+          mentor,
+          gender,
+          status,
+        }}
+      />
+
       <ConfirmDialog
         open={Boolean(suspending)}
         onClose={() => setSuspending(null)}
@@ -459,6 +527,307 @@ export function PeopleClient({
 
       {canManage && <MobileFAB onClick={() => setCreating(true)} label="Add Person" />}
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export function ExportPeopleModal({
+  open,
+  onClose,
+  people,
+  options,
+  initialFilters,
+}: {
+  open: boolean;
+  onClose: () => void;
+  people: PersonRow[];
+  options: { departments: string[]; years: string[]; domains: string[]; mentors: string[] };
+  initialFilters?: {
+    role?: string;
+    department?: string;
+    year?: string;
+    domain?: string;
+    mentor?: string;
+    gender?: string;
+    status?: string;
+  };
+}) {
+  const toast = useToast();
+  const [role, setRole] = useState(initialFilters?.role || "ALL");
+  const [year, setYear] = useState(initialFilters?.year || "ALL");
+  const [gender, setGender] = useState(initialFilters?.gender || "ALL");
+  const [mentor, setMentor] = useState(initialFilters?.mentor || "ALL");
+  const [domain, setDomain] = useState(initialFilters?.domain || "ALL");
+  const [department, setDepartment] = useState(initialFilters?.department || "ALL");
+  const [status, setStatus] = useState(initialFilters?.status || "ALL");
+
+  const resetFilters = () => {
+    setRole("ALL");
+    setYear("ALL");
+    setGender("ALL");
+    setMentor("ALL");
+    setDomain("ALL");
+    setDepartment("ALL");
+    setStatus("ALL");
+  };
+
+  const matching = useMemo(() => {
+    return people.filter((p) => {
+      if (role !== "ALL") {
+        if (role === "STUDENT") {
+          if (p.role !== "STUDENT" && p.role !== "STUDENT_ADMIN") return false;
+        } else if (p.role !== role) {
+          return false;
+        }
+      }
+      if (year !== "ALL" && !p.year.includes(year)) return false;
+      if (domain !== "ALL" && p.domain !== domain) return false;
+      if (department !== "ALL" && p.department !== department) return false;
+      if (status !== "ALL" && p.systemStatus !== status) return false;
+
+      if (mentor !== "ALL") {
+        if (!p.mentorName.toLowerCase().includes(mentor.toLowerCase())) return false;
+      }
+
+      if (gender !== "ALL") {
+        const resolvedGender = p.gender?.trim() ||
+          (/\bfemale\b/i.test(p.year) ? "Female" : /\bmale\b/i.test(p.year) ? "Male" : "");
+        if (resolvedGender.toLowerCase() !== gender.toLowerCase()) return false;
+      }
+
+      return true;
+    });
+  }, [people, role, year, gender, mentor, domain, department, status]);
+
+  const handleDownload = () => {
+    if (matching.length === 0) {
+      toast.warning("No matching people", "Change your filter selection to include at least one person.");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "Roll No",
+      "College Email",
+      "Contact Number",
+      "Department",
+      "Batch / Year",
+      "Gender",
+      "Domain",
+      "Mentor Name",
+      "Designation",
+      "Role",
+      "System Status",
+      "Reward Points",
+      "LinkedIn Profile",
+      "GitHub Profile",
+      "Last Login",
+    ];
+
+    const rows = matching.map((p) => {
+      const resolvedGender = p.gender?.trim() ||
+        (/\bfemale\b/i.test(p.year) ? "Female" : /\bmale\b/i.test(p.year) ? "Male" : "");
+      return [
+        p.name,
+        p.rollNo,
+        p.email,
+        p.mobile || "",
+        p.department,
+        p.year,
+        resolvedGender,
+        p.domain,
+        p.mentorName,
+        p.designation || "",
+        p.role,
+        p.systemStatus,
+        p.rewardPoints,
+        p.linkedin || "",
+        p.github || "",
+        p.lastLoginAt ? new Date(p.lastLoginAt).toLocaleString() : "Never",
+      ];
+    });
+
+    const csvContent = toCsv(headers, rows);
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    const parts = ["designseries-people"];
+    if (role !== "ALL") parts.push(role.toLowerCase());
+    if (year !== "ALL") parts.push(year.replace(/[^a-zA-Z0-9]/g, "-").slice(0, 10));
+    if (gender !== "ALL") parts.push(gender.toLowerCase());
+    if (mentor !== "ALL") parts.push(mentor.replace(/[^a-zA-Z0-9]/g, "-").slice(0, 12));
+    parts.push(new Date().toISOString().slice(0, 10));
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${parts.join("-")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("CSV Downloaded", `Exported ${matching.length} people records.`);
+    onClose();
+  };
+
+  const isFiltered =
+    role !== "ALL" ||
+    year !== "ALL" ||
+    gender !== "ALL" ||
+    mentor !== "ALL" ||
+    domain !== "ALL" ||
+    department !== "ALL" ||
+    status !== "ALL";
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title="Export People"
+      description="Filter by any combination of attributes (Year + Mentor + Gender, etc.) and download a formatted CSV spreadsheet."
+      footer={
+        <>
+          {isFiltered && (
+            <Button variant="ghost" onClick={resetFilters} className="mr-auto text-[var(--text-muted)] font-sans">
+              Reset Filters
+            </Button>
+          )}
+          <Button variant="secondary" onClick={onClose} className="font-sans">
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            icon="download"
+            onClick={handleDownload}
+            disabled={matching.length === 0}
+            className="font-sans"
+          >
+            Download CSV ({matching.length})
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4 font-sans">
+        {/* Match Count Badge Banner */}
+        <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/60 p-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--color-brand-blue-050)] text-[var(--color-brand-blue)]">
+              <Icon name="users" className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-semibold text-[var(--text-strong)] leading-snug">
+                {matching.length} {matching.length === 1 ? "person" : "people"} matching
+              </p>
+              <p className="text-[11.5px] text-[var(--text-muted)]">
+                {isFiltered ? "Filtered dataset ready for export" : "Full programme directory will be exported"}
+              </p>
+            </div>
+          </div>
+          <Badge tone={matching.length > 0 ? "blue" : "red"}>
+            {matching.length} / {people.length}
+          </Badge>
+        </div>
+
+        {/* Filter Controls Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* 1. Batch / Year */}
+          <Field label="Batch / Year" htmlFor="exp-year">
+            <Select id="exp-year" value={year} onChange={(e) => setYear(e.target.value)}>
+              <option value="ALL">All years</option>
+              {options.years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* 2. Faculty Mentor */}
+          <Field label="Faculty Mentor" htmlFor="exp-mentor">
+            <Select id="exp-mentor" value={mentor} onChange={(e) => setMentor(e.target.value)}>
+              <option value="ALL">All mentors</option>
+              {options.mentors.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* 3. Gender */}
+          <Field label="Gender" htmlFor="exp-gender">
+            <Select id="exp-gender" value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="ALL">All genders</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </Select>
+          </Field>
+
+          {/* 4. Domain */}
+          <Field label="Domain" htmlFor="exp-domain">
+            <Select id="exp-domain" value={domain} onChange={(e) => setDomain(e.target.value)}>
+              <option value="ALL">All domains</option>
+              {options.domains.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* 5. Role */}
+          <Field label="Role" htmlFor="exp-role">
+            <Select id="exp-role" value={role} onChange={(e) => setRole(e.target.value)}>
+              <option value="ALL">All roles</option>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r === "STUDENT" ? "Students (incl. Student Admin)" : ROLE_LABEL[r]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* 6. Department */}
+          <Field label="Department" htmlFor="exp-dept">
+            <Select id="exp-dept" value={department} onChange={(e) => setDepartment(e.target.value)}>
+              <option value="ALL">All departments</option>
+              {options.departments.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          {/* 7. Status */}
+          <div className="sm:col-span-2">
+            <Field label="Account Status" htmlFor="exp-status">
+              <Select id="exp-status" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="ALL">All statuses (Active & Suspended)</option>
+                <option value="ACTIVE">Active accounts only</option>
+                <option value="SUSPENDED">Suspended accounts only</option>
+              </Select>
+            </Field>
+          </div>
+        </div>
+
+        {/* Active Filters Badges */}
+        {isFiltered ? (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-semibold text-[var(--text-faint)]">Active filters:</span>
+            {year !== "ALL" && <Badge tone="slate">Year: {year}</Badge>}
+            {mentor !== "ALL" && <Badge tone="blue">Mentor: {mentor}</Badge>}
+            {gender !== "ALL" && <Badge tone="amber">Gender: {gender}</Badge>}
+            {domain !== "ALL" && <Badge tone="green">Domain: {domain}</Badge>}
+            {role !== "ALL" && <Badge tone="slate">Role: {role}</Badge>}
+            {department !== "ALL" && <Badge tone="slate">Dept: {department}</Badge>}
+            {status !== "ALL" && <Badge tone={status === "ACTIVE" ? "green" : "red"}>{status}</Badge>}
+          </div>
+        ) : null}
+      </div>
+    </Modal>
   );
 }
 

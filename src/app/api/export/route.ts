@@ -44,21 +44,80 @@ export const GET = handler(async (request: Request) => {
 
   switch (table) {
     case "students": {
+      const roleParam = url.searchParams.get("role") ?? "";
+      const yearParam = url.searchParams.get("year") ?? "";
+      const genderParam = url.searchParams.get("gender") ?? "";
+      const domainParam = url.searchParams.get("domain") ?? "";
+      const mentorParam = url.searchParams.get("mentor") ?? "";
+      const deptParam = url.searchParams.get("department") ?? "";
+      const statusParam = url.searchParams.get("status") ?? "";
+
+      const where: any = {};
+
+      if (roleParam && roleParam !== "ALL") {
+        if (roleParam === "STUDENT") {
+          where.role = { in: ["STUDENT", "STUDENT_ADMIN"] };
+        } else {
+          where.role = roleParam;
+        }
+      }
+
+      if (yearParam && yearParam !== "ALL") {
+        where.year = { contains: yearParam };
+      }
+
+      if (deptParam && deptParam !== "ALL") {
+        where.department = deptParam;
+      }
+
+      if (domainParam && domainParam !== "ALL") {
+        where.domain = domainParam;
+      }
+
+      if (mentorParam && mentorParam !== "ALL") {
+        where.mentorName = { contains: mentorParam };
+      }
+
+      if (statusParam && statusParam !== "ALL") {
+        where.systemStatus = statusParam;
+      }
+
       const rows = await prisma.user.findMany({
+        where,
         orderBy: [{ role: "asc" }, { name: "asc" }],
         select: {
           name: true, rollNo: true, email: true, department: true, year: true,
-          mobile: true, domain: true, mentorName: true, linkedin: true, github: true,
-          role: true, systemStatus: true, rewardPoints: true, lastLoginAt: true,
+          gender: true, mobile: true, domain: true, mentorName: true, designation: true,
+          linkedin: true, github: true, role: true, systemStatus: true, rewardPoints: true,
+          lastLoginAt: true, createdAt: true,
         },
       });
+
+      // Filter by gender in memory if specified to also handle legacy records with gender in year
+      const filteredRows = genderParam && genderParam !== "ALL"
+        ? rows.filter((r) => {
+            const resolvedGender = r.gender?.trim() ||
+              (/\bfemale\b/i.test(r.year || "") ? "Female" : /\bmale\b/i.test(r.year || "") ? "Male" : "");
+            return resolvedGender.toLowerCase() === genderParam.toLowerCase();
+          })
+        : rows;
+
       csv = toCsv(
-        ["Name", "Roll No", "Email", "Department", "Year", "Mobile", "Domain", "Mentor", "LinkedIn", "GitHub", "Role", "Status", "Points", "Last login"],
-        rows.map((r) => [
-          r.name, r.rollNo, r.email, r.department, r.year, r.mobile, r.domain,
-          r.mentorName, r.linkedin, r.github, r.role, r.systemStatus, r.rewardPoints,
-          r.lastLoginAt ? r.lastLoginAt.toISOString() : "",
-        ])
+        [
+          "Name", "Roll No", "Email", "Mobile", "Department", "Batch / Year", "Gender",
+          "Domain", "Mentor", "Designation", "Role", "Status", "Points", "LinkedIn", "GitHub", "Last Login", "Created At"
+        ],
+        filteredRows.map((r) => {
+          const resolvedGender = r.gender?.trim() ||
+            (/\bfemale\b/i.test(r.year || "") ? "Female" : /\bmale\b/i.test(r.year || "") ? "Male" : "");
+          return [
+            r.name, r.rollNo, r.email, r.mobile || "", r.department, r.year, resolvedGender,
+            r.domain, r.mentorName, r.designation || "", r.role, r.systemStatus, r.rewardPoints,
+            r.linkedin || "", r.github || "",
+            r.lastLoginAt ? r.lastLoginAt.toISOString() : "Never",
+            r.createdAt ? r.createdAt.toISOString() : "",
+          ];
+        })
       );
       break;
     }

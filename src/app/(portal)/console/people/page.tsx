@@ -76,11 +76,6 @@ export default async function PeoplePage() {
       <PageHeader
         title="People"
         description="The programme roster. Change a role, grant a console module, reset a password, or suspend an account — every action here is written to the audit log."
-        actions={
-          <LinkButton href="/api/export?table=students" variant="secondary" icon="download" size="sm">
-            Export CSV
-          </LinkButton>
-        }
       />
 
       <StatGrid>
