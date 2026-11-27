@@ -16,7 +16,7 @@ import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSec
 import { matchesMentor } from "@/lib/leaves";
 import { cn, titleCase } from "@/lib/utils";
 
-import { PasswordForm, ProfileLinksForm } from "./ProfileClient";
+import { PasswordForm, ProfileLinksForm, ProfilePersonalHub } from "./ProfileClient";
 
 export const metadata: Metadata = { title: "Profile" };
 export const dynamic = "force-dynamic";
@@ -193,6 +193,13 @@ export default async function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Personal Hub & App Preferences (Points, Leaderboard, Notes, Theme)  */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mb-4 sm:mb-5">
+        <ProfilePersonalHub rewardPoints={user.rewardPoints} rank={rank} />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] sm:gap-5">
         <div className="flex min-w-0 flex-col gap-4 sm:gap-5">

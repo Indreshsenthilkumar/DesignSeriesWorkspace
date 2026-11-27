@@ -103,12 +103,14 @@ export function SidebarNav({
   badges = {},
   onNavigate,
   mobile,
+  sectionTitle,
 }: {
   studentNav: NavItem[];
   consoleNav: NavItem[];
   badges?: NavBadges;
   onNavigate?: () => void;
   mobile?: boolean;
+  sectionTitle?: string;
 }) {
   const pathname = usePathname();
 
@@ -116,7 +118,7 @@ export function SidebarNav({
     <nav className="flex flex-col px-3 pb-4" aria-label="Main">
       {studentNav.length > 0 ? (
         <>
-          <SectionLabel>My portal</SectionLabel>
+          <SectionLabel>{sectionTitle ?? "My portal"}</SectionLabel>
           <div className="flex flex-col gap-1">
             {studentNav.map((item) => (
               <NavLink

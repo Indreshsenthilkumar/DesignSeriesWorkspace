@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     "Attendance, worklogs, sprint tasks, gate passes and programme analytics for the DesignSeries cohort.",
   applicationName: APP_NAME,
   icons: {
-    icon: "/icons/icon-192.png",
-    shortcut: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: "/brand/designseries-logo.png",
+    shortcut: "/brand/designseries-logo.png",
+    apple: "/brand/designseries-logo.png",
   },
   appleWebApp: { capable: true, title: "DesignSeries", statusBarStyle: "default" },
   formatDetection: { telephone: false },
