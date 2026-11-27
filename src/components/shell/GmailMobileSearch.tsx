@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { ThemeToggle } from "@/components/ui/Theme";
-import { useToast } from "@/components/ui/Toast";
 import { ROLE_LABEL, type Role } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { formatDay } from "@/lib/dates";
@@ -112,25 +111,11 @@ export function GmailMobileSearch({
   onOpenDrawer,
 }: GmailMobileSearchProps) {
   const router = useRouter();
-  const toast = useToast();
+  const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<SearchCategory>("all");
   const [loading, setLoading] = useState(false);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Could not sign out", "Check your connection and try again.");
-      setSigningOut(false);
-    }
-  };
   const [results, setResults] = useState<SearchResults>({
     people: [],
     tasks: [],
@@ -141,6 +126,10 @@ export function GmailMobileSearch({
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Focus input automatically when search screen opens
   useEffect(() => {
@@ -252,116 +241,23 @@ export function GmailMobileSearch({
             ) : null}
           </Link>
 
-          {/* User Profile Avatar Trigger (Opens Account & Theme Sheet) */}
-          <button
-            type="button"
-            onClick={() => setAccountOpen(true)}
-            aria-label="Account options & Theme"
-            className="shrink-0 transition-transform active:scale-90"
+          {/* User Profile Avatar: Direct link to Profile & Settings */}
+          <Link
+            href="/profile"
+            aria-label="My Profile"
+            className="shrink-0 flex items-center justify-center transition-transform active:scale-90 hover:opacity-90 cursor-pointer"
           >
             <Avatar name={user.name} seed={user.id} size={30} />
-          </button>
+          </Link>
         </div>
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Google Account Modal Sheet (Theme toggle, Profile & Sign Out)      */}
+      {/* Full-Screen Gmail Search Experience (Opened on tap via Portal)     */}
       {/* ------------------------------------------------------------------ */}
-      {accountOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:hidden">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setAccountOpen(false)}
-            aria-hidden
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Account details"
-            className="relative z-10 w-full max-w-[400px] overflow-hidden rounded-t-[24px] sm:rounded-[24px] border border-[var(--line-default)] bg-[var(--surface-raised)] p-5 shadow-2xl animate-sheet"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--line-soft)]">
-              <span className="text-[13px] font-bold text-[var(--text-strong)] tracking-tight">Account & Appearance</span>
-              <button
-                type="button"
-                onClick={() => setAccountOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-full text-[var(--text-muted)] hover:bg-[var(--surface-inset)]"
-              >
-                <Icon name="close" className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Profile Info Card */}
-            <div className="mt-4 flex items-center gap-3.5 rounded-[16px] bg-[var(--surface-inset)] p-3.5 border border-[var(--line-soft)]">
-              <Avatar name={user.name} seed={user.id} size={46} ring />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-bold text-[var(--text-strong)]">{user.name}</p>
-                <p className="truncate text-[12px] text-[var(--text-muted)]">{user.email}</p>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  <Badge tone="blue">{ROLE_LABEL[user.role as Role] ?? user.role}</Badge>
-                  <Badge tone="amber" icon="trophy">{user.rewardPoints} pts</Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Theme Toggle Strip */}
-            <div className="mt-3.5 flex items-center justify-between rounded-[14px] border border-[var(--line-default)] bg-[var(--surface-raised)] px-3.5 py-2.5">
-              <div className="flex items-center gap-2.5">
-                <Icon name="sparkle" className="h-4 w-4 text-[var(--color-brand-blue)]" />
-                <span className="text-[13px] font-semibold text-[var(--text-strong)]">Appearance</span>
-              </div>
-              <ThemeToggle />
-            </div>
-
-            {/* Quick Links */}
-            <div className="mt-3 space-y-0.5 rounded-[14px] border border-[var(--line-default)] p-1">
-              <Link
-                href="/profile"
-                onClick={() => setAccountOpen(false)}
-                className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[var(--text-default)] hover:bg-[var(--surface-inset)]"
-              >
-                <Icon name="user" className="h-4 w-4 text-[var(--text-muted)]" />
-                <span>My Profile</span>
-              </Link>
-              <Link
-                href="/profile#security"
-                onClick={() => setAccountOpen(false)}
-                className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[var(--text-default)] hover:bg-[var(--surface-inset)]"
-              >
-                <Icon name="lock" className="h-4 w-4 text-[var(--text-muted)]" />
-                <span>Password & Security</span>
-              </Link>
-              <Link
-                href="/notes"
-                onClick={() => setAccountOpen(false)}
-                className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[var(--text-default)] hover:bg-[var(--surface-inset)]"
-              >
-                <Icon name="note" className="h-4 w-4 text-[var(--text-muted)]" />
-                <span>My Notes</span>
-              </Link>
-            </div>
-
-            {/* Sign Out Button */}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-[12px] border border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red-050)] py-3 text-[13.5px] font-bold text-[var(--color-brand-red)] transition-all active:scale-98 disabled:opacity-50"
-            >
-              <Icon name={signingOut ? "spinner" : "logout"} className={cn("h-4 w-4", signingOut && "animate-spin")} />
-              {signingOut ? "Signing out..." : "Sign Out"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* 2. Full-Screen Gmail Search Experience (Opened on tap)             */}
-      {/* ------------------------------------------------------------------ */}
-      {active && (
+      {active && mounted && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-[var(--surface-page)] text-[var(--text-strong)] lg:hidden animate-in fade-in duration-150"
+          className="fixed inset-0 z-[100] flex flex-col bg-[var(--surface-page)] text-[var(--text-strong)] lg:hidden animate-in fade-in duration-150"
           role="dialog"
           aria-modal="true"
         >
@@ -675,7 +571,8 @@ export function GmailMobileSearch({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
