@@ -8,8 +8,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { ProgressRing } from "@/components/ui/Progress";
 import { requireUser } from "@/lib/auth";
-import { PERMISSION_LABEL, ROLE_LABEL, type Permission, type Role } from "@/lib/constants";
-import { grantedPermissions, type PermissionSubject } from "@/lib/permissions";
+import { ROLE_LABEL, type Role } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, leaderboardRank } from "@/lib/queries";
 import { StudentLinkedinSection } from "@/components/features/StudentLinkedinSection";
@@ -47,7 +46,6 @@ export default async function ProfilePage() {
     }),
   ]);
 
-  const permissions = grantedPermissions(user as PermissionSubject);
 
   let academicMentor: {
     name: string;
@@ -263,46 +261,52 @@ export default async function ProfilePage() {
               <CardHeader
                 icon="user"
                 title="Academic & Mentor Details"
-                subtitle="Your cohort enrollment and assigned faculty mentor."
+                subtitle="Your academic profile and assigned faculty mentor."
               />
 
-              <div className="space-y-5">
-                {/* 1. Student Programme Enrollment Details */}
+              <div className="space-y-6">
+                {/* 1. Student Details (Google Account List Style) */}
                 <div>
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5 font-sans">
-                    Student Details
-                  </h4>
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <ProfileInfoTile label="NAME" value={titleCase(user.name)} />
-                    <ProfileInfoTile label="COLLEGE EMAIL" value={user.email} />
-                    <ProfileInfoTile label="CONTACT NUMBER" value={user.mobile || "—"} />
-                    <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
-                    <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} />
-                    <ProfileInfoTile label="GENDER" value={displayGender} />
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <span className="text-[11.5px] font-semibold text-[var(--color-brand-blue)] font-sans uppercase tracking-wider">
+                      Student Details
+                    </span>
+                  </div>
+
+                  <dl className="rounded-2xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/30 p-1 sm:p-2 divide-y divide-[var(--line-soft)]">
+                    <GoogleInfoRow label="Name" value={titleCase(user.name)} />
+                    <GoogleInfoRow label="College Email" value={user.email} />
+                    <GoogleInfoRow label="Contact Number" value={user.mobile || "—"} />
+                    <GoogleInfoRow label="Department" value={titleCase(user.department) || "—"} />
+                    <GoogleInfoRow label="Roll Number" value={user.rollNo} />
+                    <GoogleInfoRow label="Gender" value={displayGender} isLast />
                   </dl>
                 </div>
 
-                {/* 2. Assigned Faculty Mentor Details */}
-                <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/60 p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3.5 pb-3.5 border-b border-[var(--line-soft)]">
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-brand-blue)] font-sans">
-                        Assigned Faculty Mentor
-                      </span>
-                      <h3 className="text-[16px] font-bold text-[var(--text-strong)] leading-snug font-sans">
-                        {mentorDisplayName}
-                      </h3>
-                      <p className="text-[12px] text-[var(--text-muted)] font-sans">
-                        {mentorDesignation} · {academicMentor?.department || titleCase(user.department) || "BIT"}
-                      </p>
+                {/* 2. Assigned Faculty Mentor (Google Workspace Profile Card Style) */}
+                <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/40 p-4 sm:p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-3.5 border-b border-[var(--line-soft)]">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={mentorDisplayName} seed={academicMentor?.rollNo || mentorDisplayName} size={44} ring />
+                      <div>
+                        <span className="text-[11px] font-semibold text-[var(--color-brand-blue)] font-sans uppercase tracking-wider block">
+                          Assigned Faculty Mentor
+                        </span>
+                        <h4 className="text-[16px] font-semibold text-[var(--text-strong)] leading-snug font-sans">
+                          {mentorDisplayName}
+                        </h4>
+                        <p className="text-[12.5px] text-[var(--text-muted)] font-sans">
+                          {mentorDesignation} · {academicMentor?.department || titleCase(user.department) || "BIT"}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Quick Contact Buttons */}
-                    <div className="flex items-center gap-2">
+                    {/* Quick Contact Action Chips */}
+                    <div className="flex items-center gap-2 shrink-0">
                       {academicMentor?.email && academicMentor.email !== "—" ? (
                         <a
                           href={`mailto:${academicMentor.email}`}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs font-sans"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-default)] bg-[var(--surface-raised)] px-3.5 py-1.5 text-[12px] font-medium text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-050)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs font-sans"
                         >
                           <Icon name="mail" className="h-3.5 w-3.5 text-[var(--color-brand-blue)]" />
                           Email
@@ -312,23 +316,22 @@ export default async function ProfilePage() {
                       {academicMentor?.mobile && academicMentor.mobile !== "—" ? (
                         <a
                           href={`tel:${academicMentor.mobile.replace(/\s+/g, "")}`}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs font-sans"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-default)] bg-[var(--surface-raised)] px-3.5 py-1.5 text-[12px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 active:scale-95 transition-all shadow-xs font-sans"
                         >
-                          <Icon name="phone" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <Icon name="phone" className="h-3.5 w-3.5" />
                           Call
                         </a>
                       ) : null}
                     </div>
                   </div>
 
-                  {/* Mentor Detailed Grid */}
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <ProfileInfoTile label="MENTOR NAME" value={mentorDisplayName} />
-                    <ProfileInfoTile label="FACULTY ID" value={academicMentor?.rollNo || "—"} />
-                    <ProfileInfoTile label="OFFICIAL EMAIL" value={academicMentor?.email || "—"} />
-                    <ProfileInfoTile label="PHONE NUMBER" value={academicMentor?.mobile || "—"} />
-                    <ProfileInfoTile label="DEPARTMENT" value={academicMentor?.department || titleCase(user.department) || "—"} />
-                    <ProfileInfoTile label="DESIGNATION" value={mentorDesignation} />
+                  {/* Mentor Detailed Rows (Clean, non-repetitive) */}
+                  <dl className="rounded-xl bg-[var(--surface-raised)] p-1 sm:p-2 divide-y divide-[var(--line-soft)] border border-[var(--line-soft)]">
+                    <GoogleInfoRow label="Faculty ID" value={academicMentor?.rollNo || "—"} />
+                    <GoogleInfoRow label="Official Email" value={academicMentor?.email || "—"} />
+                    <GoogleInfoRow label="Phone Number" value={academicMentor?.mobile || "—"} />
+                    <GoogleInfoRow label="Department" value={academicMentor?.department || titleCase(user.department) || "—"} />
+                    <GoogleInfoRow label="Designation" value={mentorDesignation} isLast />
                   </dl>
                 </div>
               </div>
@@ -341,16 +344,16 @@ export default async function ProfilePage() {
                 title="Faculty Mentor Details"
                 subtitle="Official faculty record in the portal."
               />
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <ProfileInfoTile
-                  label="FACULTY NAME"
+              <dl className="rounded-2xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/30 p-1 sm:p-2 divide-y divide-[var(--line-soft)]">
+                <GoogleInfoRow
+                  label="Faculty Name"
                   value={user.legend ? `${user.legend}. ${titleCase(user.name)}` : titleCase(user.name)}
                 />
-                <ProfileInfoTile label="FACULTY ID" value={user.rollNo} />
-                <ProfileInfoTile label="DESIGNATION" value={user.designation || "Faculty Mentor"} />
-                <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
-                <ProfileInfoTile label="OFFICIAL EMAIL" value={user.email} />
-                <ProfileInfoTile label="PHONE NUMBER" value={user.mobile || "—"} />
+                <GoogleInfoRow label="Faculty ID" value={user.rollNo} />
+                <GoogleInfoRow label="Designation" value={user.designation || "Faculty Mentor"} />
+                <GoogleInfoRow label="Department" value={titleCase(user.department) || "—"} />
+                <GoogleInfoRow label="Official Email" value={user.email} />
+                <GoogleInfoRow label="Phone Number" value={user.mobile || "—"} isLast />
               </dl>
             </Card>
           )}
@@ -373,26 +376,6 @@ export default async function ProfilePage() {
           <div id="security" className="scroll-mt-20">
             <PasswordForm mustChange={user.mustChangePassword} />
           </div>
-
-          {/* Unlocked Console Permissions (Shown only if special permissions exist) */}
-          {permissions.length > 0 ? (
-            <Card>
-              <CardHeader
-                icon="shield"
-                title="Administrative Access"
-                subtitle={`${permissions.length} console ${permissions.length === 1 ? "module" : "modules"} unlocked.`}
-              />
-              <ul className="flex flex-wrap gap-1.5">
-                {permissions.map((permission) => (
-                  <li key={permission}>
-                    <Badge tone="green" icon="check">
-                      {PERMISSION_LABEL[permission as Permission]}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
         </div>
       </div>
     </div>
@@ -401,20 +384,27 @@ export default async function ProfilePage() {
 
 // ---------------------------------------------------------------------------
 
-function ProfileInfoTile({
+function GoogleInfoRow({
   label,
   value,
+  isLast = false,
 }: {
   label: string;
   value: React.ReactNode;
+  isLast?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-raised)] p-3 sm:p-3.5 flex flex-col justify-between transition-colors hover:border-[var(--line-strong)]">
-      <dt className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] font-sans">
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-center justify-between py-2.5 sm:py-3 px-2 sm:px-3 gap-0.5 sm:gap-4 transition-colors hover:bg-[var(--surface-sunken)]/50 rounded-xl",
+        !isLast && "border-b border-[var(--line-soft)]"
+      )}
+    >
+      <dt className="text-[12.5px] sm:text-[13px] font-normal text-[var(--text-muted)] shrink-0 sm:w-40 font-sans">
         {label}
       </dt>
-      <dd className="mt-1 text-[13px] sm:text-[13.5px] font-semibold text-[var(--text-strong)] leading-snug break-words font-sans">
-        {value}
+      <dd className="text-[13.5px] sm:text-[14px] font-medium text-[var(--text-strong)] break-words font-sans sm:text-right">
+        {value || "—"}
       </dd>
     </div>
   );
