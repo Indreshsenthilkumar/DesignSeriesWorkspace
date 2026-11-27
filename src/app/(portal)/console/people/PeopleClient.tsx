@@ -464,7 +464,7 @@ export function PeopleClient({
 
 // ---------------------------------------------------------------------------
 
-function ManageDialog({
+export function ManageDialog({
   person,
   options,
   actorRole,
