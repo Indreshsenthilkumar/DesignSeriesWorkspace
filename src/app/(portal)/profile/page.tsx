@@ -266,31 +266,33 @@ export default async function ProfilePage() {
                 subtitle="Your cohort enrollment and assigned faculty mentor."
               />
 
-              <div className="space-y-4">
-                {/* Programme Enrollment Details */}
+              <div className="space-y-5">
+                {/* 1. Student Programme Enrollment Details */}
                 <div>
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5">
-                    Programme Enrollment
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2.5 font-sans">
+                    Student Details
                   </h4>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <ProfileInfoTile label="NAME" value={titleCase(user.name)} />
+                    <ProfileInfoTile label="COLLEGE EMAIL" value={user.email} />
+                    <ProfileInfoTile label="CONTACT NUMBER" value={user.mobile || "—"} />
                     <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
-                    <ProfileInfoTile label="BATCH / YEAR" value={displayYear} />
-                    <ProfileInfoTile label="COLLEGE EMAIL" value={user.email} mono />
-                    <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} mono />
+                    <ProfileInfoTile label="ROLL NUMBER" value={user.rollNo} />
+                    <ProfileInfoTile label="GENDER" value={displayGender} />
                   </dl>
                 </div>
 
-                {/* Assigned Mentor Details with Quick Contact Actions */}
-                <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/60 p-3.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                {/* 2. Assigned Faculty Mentor Details */}
+                <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/60 p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3.5 pb-3.5 border-b border-[var(--line-soft)]">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-brand-blue)] font-sans">
                         Assigned Faculty Mentor
                       </span>
-                      <p className="mt-0.5 text-[15px] font-bold text-[var(--text-strong)]">
+                      <h3 className="text-[16px] font-bold text-[var(--text-strong)] leading-snug font-sans">
                         {mentorDisplayName}
-                      </p>
-                      <p className="text-[12px] text-[var(--text-muted)]">
+                      </h3>
+                      <p className="text-[12px] text-[var(--text-muted)] font-sans">
                         {mentorDesignation} · {academicMentor?.department || titleCase(user.department) || "BIT"}
                       </p>
                     </div>
@@ -300,7 +302,7 @@ export default async function ProfilePage() {
                       {academicMentor?.email && academicMentor.email !== "—" ? (
                         <a
                           href={`mailto:${academicMentor.email}`}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs font-sans"
                         >
                           <Icon name="mail" className="h-3.5 w-3.5 text-[var(--color-brand-blue)]" />
                           Email
@@ -310,7 +312,7 @@ export default async function ProfilePage() {
                       {academicMentor?.mobile && academicMentor.mobile !== "—" ? (
                         <a
                           href={`tel:${academicMentor.mobile.replace(/\s+/g, "")}`}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--line-default)] bg-[var(--surface-raised)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-strong)] hover:border-[var(--color-brand-blue)] active:scale-95 transition-all shadow-xs font-sans"
                         >
                           <Icon name="phone" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                           Call
@@ -318,6 +320,16 @@ export default async function ProfilePage() {
                       ) : null}
                     </div>
                   </div>
+
+                  {/* Mentor Detailed Grid */}
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <ProfileInfoTile label="MENTOR NAME" value={mentorDisplayName} />
+                    <ProfileInfoTile label="FACULTY ID" value={academicMentor?.rollNo || "—"} />
+                    <ProfileInfoTile label="OFFICIAL EMAIL" value={academicMentor?.email || "—"} />
+                    <ProfileInfoTile label="PHONE NUMBER" value={academicMentor?.mobile || "—"} />
+                    <ProfileInfoTile label="DEPARTMENT" value={academicMentor?.department || titleCase(user.department) || "—"} />
+                    <ProfileInfoTile label="DESIGNATION" value={mentorDesignation} />
+                  </dl>
                 </div>
               </div>
             </Card>
@@ -331,14 +343,14 @@ export default async function ProfilePage() {
               />
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <ProfileInfoTile
-                  label="Faculty Name"
+                  label="FACULTY NAME"
                   value={user.legend ? `${user.legend}. ${titleCase(user.name)}` : titleCase(user.name)}
                 />
-                <ProfileInfoTile label="Faculty ID" value={user.rollNo} mono />
-                <ProfileInfoTile label="Faculty Designation" value={user.designation || "Faculty Mentor"} />
-                <ProfileInfoTile label="Faculty Department" value={titleCase(user.department) || "—"} />
-                <ProfileInfoTile label="Official Email" value={user.email} mono />
-                <ProfileInfoTile label="Phone Number" value={user.mobile || "—"} mono />
+                <ProfileInfoTile label="FACULTY ID" value={user.rollNo} />
+                <ProfileInfoTile label="DESIGNATION" value={user.designation || "Faculty Mentor"} />
+                <ProfileInfoTile label="DEPARTMENT" value={titleCase(user.department) || "—"} />
+                <ProfileInfoTile label="OFFICIAL EMAIL" value={user.email} />
+                <ProfileInfoTile label="PHONE NUMBER" value={user.mobile || "—"} />
               </dl>
             </Card>
           )}
@@ -392,23 +404,16 @@ export default async function ProfilePage() {
 function ProfileInfoTile({
   label,
   value,
-  mono = false,
 }: {
   label: string;
   value: React.ReactNode;
-  mono?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-sunken)]/50 p-3 sm:p-3.5 flex flex-col justify-between transition-colors hover:border-[var(--line-strong)]">
-      <dt className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--surface-raised)] p-3 sm:p-3.5 flex flex-col justify-between transition-colors hover:border-[var(--line-strong)]">
+      <dt className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] font-sans">
         {label}
       </dt>
-      <dd
-        className={cn(
-          "mt-1 text-[13px] sm:text-[13.5px] font-semibold text-[var(--text-strong)] leading-snug break-words",
-          mono && "font-mono text-[12px]"
-        )}
-      >
+      <dd className="mt-1 text-[13px] sm:text-[13.5px] font-semibold text-[var(--text-strong)] leading-snug break-words font-sans">
         {value}
       </dd>
     </div>
